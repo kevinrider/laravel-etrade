@@ -4,5 +4,7 @@ namespace KevinRider\LaravelEtrade;
 
 class EtradeApiClient
 {
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 }

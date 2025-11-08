@@ -15,7 +15,8 @@ class LaravelEtradeServiceProvider extends ServiceProvider
             return new EtradeApiClient();
         });
         $this->mergeConfigFrom(
-            __DIR__.'/../config/laravel-etrade.php', 'laravel-etrade'
+            __DIR__.'/../config/laravel-etrade.php',
+            'laravel-etrade'
         );
     }
 
