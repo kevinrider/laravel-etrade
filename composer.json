@@ -22,7 +22,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Laravel-etrade\\": "src/"
+            "KevinRider\\LaravelEtrade\\": "src/"
         }
     },
     "autoload-dev": {
@@ -42,5 +42,12 @@
         "coverage": "vendor/bin/phpunit --coverage-text"
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "extra": {
+        "laravel": {
+            "providers": [
+                "KevinRider\\LaravelEtrade\\LaravelEtradeServiceProvider"
+            ]
+        }
+    }
 }
