@@ -6,8 +6,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 
@@ -54,8 +52,8 @@ class EtradeApiClient
         }
 
         parse_str($response->getBody()->getContents(), $token);
-        
-        if(!isset($token['oauth_token']) && !isset($token['oauth_token_secret'])) {
+
+        if (!isset($token['oauth_token']) && !isset($token['oauth_token_secret'])) {
             throw new EtradeApiException('Malformed get request token response');
         }
 
