@@ -8,6 +8,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 
 class EtradeApiClient
@@ -24,11 +25,11 @@ class EtradeApiClient
     }
 
     /**
-     * @return array{authorizationUrl: string, oauthToken: string, oauthTokenSecret: string}
+     * @return AuthorizationUrlDTO
      * @throws EtradeApiException
      * @throws GuzzleException
      */
-    public function getAuthorizationUrl(): array
+    public function getAuthorizationUrl(): AuthorizationUrlDTO
     {
         $stack = HandlerStack::create();
 
@@ -53,11 +54,15 @@ class EtradeApiClient
         }
 
         parse_str($response->getBody()->getContents(), $token);
+        
+        if(!isset($token['oauth_token']) && !isset($token['oauth_token_secret'])) {
+            throw new EtradeApiException('Malformed get request token response');
+        }
 
-        return [
+        return new AuthorizationUrlDTO([
             'authorizationUrl' => EtradeConfig::AUTHORIZE_URL . '?key=' . $this->appKey . '&token=' . $token['oauth_token'],
             'oauthToken' => $token['oauth_token'],
             'oauthTokenSecret' => $token['oauth_token_secret'],
-        ];
+        ]);
     }
 }
