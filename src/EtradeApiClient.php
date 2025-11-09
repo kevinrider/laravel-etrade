@@ -8,6 +8,9 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Carbon;
 
 class EtradeApiClient
 {
@@ -58,7 +61,7 @@ class EtradeApiClient
         }
 
         Cache::put(
-            config('oauth_request_token_key'),
+            config('laravel-etrade.oauth_request_token_key'),
             Crypt::encryptString(json_encode(
                 [
                     'oauth_token' => $token['oauth_token'],
@@ -72,5 +75,74 @@ class EtradeApiClient
             'authorizationUrl' => EtradeConfig::AUTHORIZE_URL . '?key=' . $this->appKey . '&token=' . $token['oauth_token'],
             'oauthToken' => $token['oauth_token'],
         ]);
+    }
+
+    /**
+     * @param string $verifierCode
+     * @return void
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function requestAccessTokenAndStore(string $verifierCode): void
+    {
+        $encryptedTokenArray = Cache::get(config('laravel-etrade.oauth_request_token_key'));
+        if(!$encryptedTokenArray) {
+            throw new EtradeApiException('Request tokens missing or expired.');
+        } else {
+            $oauthTokenArray = json_decode(Crypt::decryptString($encryptedTokenArray), true);
+            $oauthToken = $oauthTokenArray['oauth_token'];
+            $oauthTokenSecret = $oauthTokenArray['oauth_token_secret'];
+        }
+
+        $stack = HandlerStack::create();
+
+        $middleware = new Oauth1([
+            'consumer_key' => $this->appKey,
+            'consumer_secret' => $this->appSecret,
+            'token' => $oauthToken,
+            'token_secret' => $oauthTokenSecret,
+            'verifier' => $verifierCode,
+        ]);
+
+        $stack->push($middleware);
+
+        $this->client = new Client([
+            'base_uri' => $this->baseUrl,
+            'handler' => $stack,
+            'auth' => 'oauth'
+        ]);
+
+        $response = $this->client->get(EtradeConfig::OAUTH_ACCESS_TOKEN);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get access token');
+        }
+
+        parse_str($response->getBody()->getContents(), $accessToken);
+
+        if (!isset($accessToken['oauth_token']) && !isset($accessToken['oauth_token_secret'])) {
+            throw new EtradeApiException('Malformed get access token response');
+        }
+
+        Cache::put(
+            config('laravel-etrade.oauth_access_token_key'),
+            Crypt::encryptString(json_encode($accessToken)),
+            $this->accessTokenExpirationTime()
+        );
+    }
+
+    /**
+     * 1.) Access tokens hard expire at midnight EST
+     * 2.) Also must be renewed after two hours of inactivity if before #1
+     * https://apisb.etrade.com/docs/api/authorization/get_access_token.html
+     * @return Carbon
+     */
+    protected function accessTokenExpirationTime(): Carbon {
+        $now = now();
+        $twoHoursFromNow = now()->addHour(2);
+        $midnight = Carbon::createFromTime(0, 0, 0, 'America/New_York');
+        $diffTwoHours = $twoHoursFromNow->diffInMinutes($now);
+        $diffMidnight = $midnight->diffInMinutes($now);
+        return ($diffTwoHours < $diffMidnight) ? $twoHoursFromNow : $midnight;
     }
 }
