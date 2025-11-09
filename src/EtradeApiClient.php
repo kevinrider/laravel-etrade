@@ -137,6 +137,7 @@ class EtradeApiClient
     /**
      * @return EtradeAccessTokenDTO
      * @throws EtradeApiException
+     * @throws GuzzleException
      */
     public function getAccessToken(): EtradeAccessTokenDTO
     {
