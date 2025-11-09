@@ -11,4 +11,5 @@ return [
     | true: prod
     */
     'production' => false,
+    'oauth_request_token_key' => 'laravel_etrade_oauth_request_token',
 ];
