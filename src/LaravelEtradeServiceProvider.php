@@ -11,7 +11,7 @@ class LaravelEtradeServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton('EtradeApiClient', function ($app) {
+        $this->app->singleton(EtradeApiClient::class, function ($app) {
             return new EtradeApiClient(
                 config('laravel-etrade.app_key'),
                 config('laravel-etrade.app_secret'),
