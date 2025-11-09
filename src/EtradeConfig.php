@@ -47,4 +47,9 @@ class EtradeConfig
     public const string ORDER_CANCEL = 'v1/accounts/{accountIdKey}/orders/cancel';
     public const string ORDER_CHANGE_PREVIEW = 'v1/accounts/{accountIdKey}/orders/{orderId}/change/preview';
     public const string ORDER_PLACE_CHANGE = 'v1/accounts/{accountIdKey}/orders/{orderId}/change/place';
+
+    /*
+     * API response constants
+     */
+    public const string OAUTH_RENEW_ACCESS_TOKEN_SUCCESS = 'Access Token has been renewed';
 }
