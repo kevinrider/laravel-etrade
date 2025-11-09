@@ -78,6 +78,8 @@ class EtradeApiClient
     }
 
     /**
+     * Access tokens hard expire at midnight EST
+     * https://apisb.etrade.com/docs/api/authorization/get_access_token.html
      * @param string $verifierCode
      * @return void
      * @throws EtradeApiException
@@ -124,25 +126,11 @@ class EtradeApiClient
             throw new EtradeApiException('Malformed get access token response');
         }
 
+        $accessToken['inactive_at'] = now()->addHour(2)->getTimestamp();
         Cache::put(
             config('laravel-etrade.oauth_access_token_key'),
             Crypt::encryptString(json_encode($accessToken)),
-            $this->accessTokenExpirationTime()
+            Carbon::createFromTime(23, 59, 59, 'America/New_York')
         );
-    }
-
-    /**
-     * 1.) Access tokens hard expire at midnight EST
-     * 2.) Also must be renewed after two hours of inactivity if before #1
-     * https://apisb.etrade.com/docs/api/authorization/get_access_token.html
-     * @return Carbon
-     */
-    protected function accessTokenExpirationTime(): Carbon {
-        $now = now();
-        $twoHoursFromNow = now()->addHour(2);
-        $midnight = Carbon::createFromTime(0, 0, 0, 'America/New_York');
-        $diffTwoHours = $twoHoursFromNow->diffInMinutes($now);
-        $diffMidnight = $midnight->diffInMinutes($now);
-        return ($diffTwoHours < $diffMidnight) ? $twoHoursFromNow : $midnight;
     }
 }
