@@ -57,10 +57,20 @@ class EtradeApiClient
             throw new EtradeApiException('Malformed get request token response');
         }
 
+        Cache::put(
+            config('oauth_request_token_key'),
+            Crypt::encryptString(json_encode(
+                [
+                    'oauth_token' => $token['oauth_token'],
+                    'oauth_token_secret' => $token['oauth_token_secret'],
+                ]
+            )),
+            now()->addMinutes(5),
+        );
+
         return new AuthorizationUrlDTO([
             'authorizationUrl' => EtradeConfig::AUTHORIZE_URL . '?key=' . $this->appKey . '&token=' . $token['oauth_token'],
             'oauthToken' => $token['oauth_token'],
-            'oauthTokenSecret' => $token['oauth_token_secret'],
         ]);
     }
 }
