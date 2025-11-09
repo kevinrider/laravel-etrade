@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -88,13 +89,12 @@ class EtradeApiClient
     public function requestAccessTokenAndStore(string $verifierCode): void
     {
         $encryptedTokenArray = Cache::get(config('laravel-etrade.oauth_request_token_key'));
-        if(!$encryptedTokenArray) {
+        if (!$encryptedTokenArray) {
             throw new EtradeApiException('Request tokens missing or expired.');
-        } else {
-            $oauthTokenArray = json_decode(Crypt::decryptString($encryptedTokenArray), true);
-            $oauthToken = $oauthTokenArray['oauth_token'];
-            $oauthTokenSecret = $oauthTokenArray['oauth_token_secret'];
         }
+        $oauthTokenArray = json_decode(Crypt::decryptString($encryptedTokenArray), true);
+        $oauthToken = $oauthTokenArray['oauth_token'];
+        $oauthTokenSecret = $oauthTokenArray['oauth_token_secret'];
 
         $stack = HandlerStack::create();
 
@@ -132,5 +132,82 @@ class EtradeApiClient
             Crypt::encryptString(json_encode($accessToken)),
             Carbon::createFromTime(23, 59, 59, 'America/New_York')
         );
+    }
+
+    /**
+     * @return EtradeAccessTokenDTO
+     * @throws EtradeApiException
+     */
+    public function getAccessToken(): EtradeAccessTokenDTO
+    {
+        $accessTokenDto = $this->getCachedAccessToken();
+        if (now()->getTimestamp() > ($accessTokenDto->inactiveAt->getTimestamp() - config('laravel-etrade.inactive_buffer_in_seconds'))) {
+            $accessTokenDto = $this->renewAccessToken($accessTokenDto);
+        }
+        return $accessTokenDto;
+    }
+
+    /**
+     * @param EtradeAccessTokenDTO|null $accessTokenDTO
+     * @return EtradeAccessTokenDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function renewAccessToken(?EtradeAccessTokenDTO $accessTokenDTO = null): EtradeAccessTokenDTO
+    {
+        if (!$accessTokenDTO) {
+            $accessTokenDTO = $this->getCachedAccessToken();
+        }
+        $stack = HandlerStack::create();
+
+        $middleware = new Oauth1([
+            'consumer_key' => $this->appKey,
+            'consumer_secret' => $this->appSecret,
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $stack->push($middleware);
+
+        $this->client = new Client([
+            'base_uri' => $this->baseUrl,
+            'handler' => $stack,
+            'auth' => 'oauth'
+        ]);
+
+        $response = $this->client->get(EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN);
+
+        if ($response->getStatusCode() !== 200 || $response->getBody()->getContents() != EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN_SUCCESS) {
+            throw new EtradeApiException('Failed to renew access token');
+        }
+        $accessToken['oauth_token'] = $accessTokenDTO->oauthToken;
+        $accessToken['oauth_token_secret'] = $accessTokenDTO->oauthTokenSecret;
+        $twoHoursFromNow = now()->addHour(2);
+        $accessToken['inactive_at'] = $twoHoursFromNow->getTimestamp();
+        $accessTokenDTO->inactiveAt = $twoHoursFromNow;
+        Cache::put(
+            config('laravel-etrade.oauth_access_token_key'),
+            Crypt::encryptString(json_encode($accessToken)),
+            Carbon::createFromTime(23, 59, 59, 'America/New_York')
+        );
+        return $accessTokenDTO;
+    }
+
+    /**
+     * @return EtradeAccessTokenDTO
+     * @throws EtradeApiException
+     */
+    protected function getCachedAccessToken(): EtradeAccessTokenDTO
+    {
+        $encryptedTokenArray = Cache::get(config('laravel-etrade.oauth_access_token_key'));
+        if (!$encryptedTokenArray) {
+            throw new EtradeApiException('Cached access tokens missing or expired.');
+        }
+        $oauthTokenArray = json_decode(Crypt::decryptString($encryptedTokenArray), true);
+        return new EtradeAccessTokenDTO([
+            'oauthToken' => $oauthTokenArray['oauth_token'],
+            'oauthTokenSecret' => $oauthTokenArray['oauth_token_secret'],
+            'inactiveAt' => Carbon::createFromTimestamp($oauthTokenArray['inactive_at']),
+        ]);
     }
 }
