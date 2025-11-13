@@ -33,21 +33,7 @@ class EtradeApiClient
      */
     public function getAuthorizationUrl(): AuthorizationUrlDTO
     {
-        $stack = HandlerStack::create();
-
-        $middleware = new Oauth1([
-            'consumer_key'    => $this->appKey,
-            'consumer_secret' => $this->appSecret,
-            'callback' => 'oob',
-        ]);
-
-        $stack->push($middleware);
-
-        $this->client = new Client([
-            'base_uri' => $this->baseUrl,
-            'handler' => $stack,
-            'auth' => 'oauth'
-        ]);
+        $this->client = $this->createOauthClient(['callback' => 'oob']);
 
         $response = $this->client->get(EtradeConfig::OAUTH_REQUEST_TOKEN);
 
@@ -61,15 +47,13 @@ class EtradeApiClient
             throw new EtradeApiException('Malformed get request token response');
         }
 
-        Cache::put(
+        $this->storeTokenInCache(
             config('laravel-etrade.oauth_request_token_key'),
-            Crypt::encryptString(json_encode(
-                [
-                    'oauth_token' => $token['oauth_token'],
-                    'oauth_token_secret' => $token['oauth_token_secret'],
-                ]
-            )),
-            now()->addMinutes(5),
+            [
+                'oauth_token' => $token['oauth_token'],
+                'oauth_token_secret' => $token['oauth_token_secret'],
+            ],
+            now()->addMinutes(5)
         );
 
         return new AuthorizationUrlDTO([
@@ -96,22 +80,10 @@ class EtradeApiClient
         $oauthToken = $oauthTokenArray['oauth_token'];
         $oauthTokenSecret = $oauthTokenArray['oauth_token_secret'];
 
-        $stack = HandlerStack::create();
-
-        $middleware = new Oauth1([
-            'consumer_key' => $this->appKey,
-            'consumer_secret' => $this->appSecret,
+        $this->client = $this->createOauthClient([
             'token' => $oauthToken,
             'token_secret' => $oauthTokenSecret,
             'verifier' => $verifierCode,
-        ]);
-
-        $stack->push($middleware);
-
-        $this->client = new Client([
-            'base_uri' => $this->baseUrl,
-            'handler' => $stack,
-            'auth' => 'oauth'
         ]);
 
         $response = $this->client->get(EtradeConfig::OAUTH_ACCESS_TOKEN);
@@ -126,10 +98,10 @@ class EtradeApiClient
             throw new EtradeApiException('Malformed get access token response');
         }
 
-        $accessToken['inactive_at'] = now()->addHour(2)->getTimestamp();
-        Cache::put(
+        $accessToken['inactive_at'] = now()->addHours(2)->getTimestamp();
+        $this->storeTokenInCache(
             config('laravel-etrade.oauth_access_token_key'),
-            Crypt::encryptString(json_encode($accessToken)),
+            $accessToken,
             Carbon::createFromTime(23, 59, 59, 'America/New_York')
         );
     }
@@ -159,21 +131,10 @@ class EtradeApiClient
         if (!$accessTokenDTO) {
             $accessTokenDTO = $this->getCachedAccessToken();
         }
-        $stack = HandlerStack::create();
 
-        $middleware = new Oauth1([
-            'consumer_key' => $this->appKey,
-            'consumer_secret' => $this->appSecret,
+        $this->client = $this->createOauthClient([
             'token' => $accessTokenDTO->oauthToken,
             'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
-
-        $stack->push($middleware);
-
-        $this->client = new Client([
-            'base_uri' => $this->baseUrl,
-            'handler' => $stack,
-            'auth' => 'oauth'
         ]);
 
         $response = $this->client->get(EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN);
@@ -186,11 +147,13 @@ class EtradeApiClient
         $twoHoursFromNow = now()->addHour(2);
         $accessToken['inactive_at'] = $twoHoursFromNow->getTimestamp();
         $accessTokenDTO->inactiveAt = $twoHoursFromNow;
-        Cache::put(
+
+        $this->storeTokenInCache(
             config('laravel-etrade.oauth_access_token_key'),
-            Crypt::encryptString(json_encode($accessToken)),
+            $accessToken,
             Carbon::createFromTime(23, 59, 59, 'America/New_York')
         );
+
         return $accessTokenDTO;
     }
 
@@ -210,5 +173,42 @@ class EtradeApiClient
             'oauthTokenSecret' => $oauthTokenArray['oauth_token_secret'],
             'inactiveAt' => Carbon::createFromTimestamp($oauthTokenArray['inactive_at']),
         ]);
+    }
+
+    /**
+     * @param array $oauthParams
+     * @return Client
+     */
+    private function createOauthClient(array $oauthParams = []): Client
+    {
+        $stack = HandlerStack::create();
+
+        $middleware = new Oauth1(array_merge([
+            'consumer_key'    => $this->appKey,
+            'consumer_secret' => $this->appSecret,
+        ], $oauthParams));
+
+        $stack->push($middleware);
+
+        return new Client([
+            'base_uri' => $this->baseUrl,
+            'handler' => $stack,
+            'auth' => 'oauth'
+        ]);
+    }
+
+    /**
+     * @param string $key
+     * @param array $tokenData
+     * @param Carbon $expiresAt
+     * @return void
+     */
+    private function storeTokenInCache(string $key, array $tokenData, Carbon $expiresAt): void
+    {
+        Cache::put(
+            $key,
+            Crypt::encryptString(json_encode($tokenData)),
+            $expiresAt
+        );
     }
 }
