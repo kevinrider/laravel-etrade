@@ -3,6 +3,7 @@
 use GuzzleHttp\Psr7\Response;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\EtradeConfig;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 use Illuminate\Support\Facades\Cache;
@@ -12,6 +13,7 @@ use Illuminate\Support\Carbon;
 beforeEach(function () {
     \Config::set('laravel-etrade.oauth_request_token_key', 'etrade.oauth.request_token');
     \Config::set('laravel-etrade.oauth_access_token_key', 'etrade.oauth.access_token');
+    \Config::set('laravel-etrade.inactive_buffer_in_seconds', 300); // 5 minutes
     Cache::clear();
 });
 
@@ -159,4 +161,69 @@ it('throws exception on malformed response for access token request', function (
     expect(function () use ($etradeClient) {
         $etradeClient->requestAccessTokenAndStore('test_verifier_code');
     })->toThrow(EtradeApiException::class, 'Malformed get access token response');
+});
+
+it('can get access token successfully from cache', function () {
+    // Cache a valid, non-expired access token
+    $accessToken = [
+        'oauth_token' => 'cached_access_token',
+        'oauth_token_secret' => 'cached_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(), // Not expiring soon
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $etradeClient = \Mockery::mock(EtradeApiClient::class, ['test_key', 'test_secret'])->makePartial();
+    $etradeClient->shouldNotReceive('renewAccessToken');
+
+    $returnedTokenDto = $etradeClient->getAccessToken();
+
+    expect($returnedTokenDto)->toBeInstanceOf(EtradeAccessTokenDTO::class)
+        ->and($returnedTokenDto->oauthToken)->toBe('cached_access_token')
+        ->and($returnedTokenDto->oauthTokenSecret)->toBe('cached_access_token_secret');
+});
+
+it('renews access token if it is about to expire', function () {
+    // Cache an access token that is about to expire
+    $accessToken = [
+        'oauth_token' => 'expiring_access_token',
+        'oauth_token_secret' => 'expiring_access_token_secret',
+        'inactive_at' => now()->addSeconds(config('laravel-etrade.inactive_buffer_in_seconds') - 1)->getTimestamp(), // Expiring soon
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $renewedAccessTokenDto = new EtradeAccessTokenDTO([
+        'oauthToken' => 'renewed_access_token',
+        'oauthTokenSecret' => 'renewed_access_token_secret',
+        'inactiveAt' => now()->addHour(2),
+    ]);
+
+    $etradeClient = \Mockery::mock(EtradeApiClient::class, ['test_key', 'test_secret'])->makePartial();
+    $etradeClient->shouldAllowMockingProtectedMethods();
+    $etradeClient->shouldReceive('renewAccessToken')
+        ->once()
+        ->andReturn($renewedAccessTokenDto);
+
+    $returnedTokenDto = $etradeClient->getAccessToken();
+
+    expect($returnedTokenDto)->toBeInstanceOf(EtradeAccessTokenDTO::class)
+        ->and($returnedTokenDto->oauthToken)->toBe('renewed_access_token');
+});
+
+it('throws exception if cached access tokens are missing', function () {
+    // Ensure the cache is empty for the access token
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getAccessToken();
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
