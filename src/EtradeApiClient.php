@@ -72,17 +72,14 @@ class EtradeApiClient
      */
     public function requestAccessTokenAndStore(string $verifierCode): void
     {
-        $encryptedTokenArray = Cache::get(config('laravel-etrade.oauth_request_token_key'));
-        if (!$encryptedTokenArray) {
-            throw new EtradeApiException('Request tokens missing or expired.');
-        }
-        $oauthTokenArray = json_decode(Crypt::decryptString($encryptedTokenArray), true);
-        $oauthToken = $oauthTokenArray['oauth_token'];
-        $oauthTokenSecret = $oauthTokenArray['oauth_token_secret'];
+        $oauthTokenArray = $this->getTokenInCache(
+            config('laravel-etrade.oauth_request_token_key'),
+            'Request tokens missing or expired.'
+        );
 
         $this->client = $this->createOauthClient([
-            'token' => $oauthToken,
-            'token_secret' => $oauthTokenSecret,
+            'token' => $oauthTokenArray['oauth_token'],
+            'token_secret' => $oauthTokenArray['oauth_token_secret'],
             'verifier' => $verifierCode,
         ]);
 
@@ -163,16 +160,30 @@ class EtradeApiClient
      */
     protected function getCachedAccessToken(): EtradeAccessTokenDTO
     {
-        $encryptedTokenArray = Cache::get(config('laravel-etrade.oauth_access_token_key'));
-        if (!$encryptedTokenArray) {
-            throw new EtradeApiException('Cached access tokens missing or expired.');
-        }
-        $oauthTokenArray = json_decode(Crypt::decryptString($encryptedTokenArray), true);
+        $oauthTokenArray = $this->getTokenInCache(
+            config('laravel-etrade.oauth_access_token_key'),
+            'Cached access tokens missing or expired.'
+        );
         return new EtradeAccessTokenDTO([
             'oauthToken' => $oauthTokenArray['oauth_token'],
             'oauthTokenSecret' => $oauthTokenArray['oauth_token_secret'],
             'inactiveAt' => Carbon::createFromTimestamp($oauthTokenArray['inactive_at']),
         ]);
+    }
+
+    /**
+     * @param string $key
+     * @param string $exceptionMessage
+     * @return array
+     * @throws EtradeApiException
+     */
+    private function getTokenInCache(string $key, string $exceptionMessage): array
+    {
+        $encryptedTokenArray = Cache::get($key);
+        if (!$encryptedTokenArray) {
+            throw new EtradeApiException($exceptionMessage);
+        }
+        return json_decode(Crypt::decryptString($encryptedTokenArray), true);
     }
 
     /**
