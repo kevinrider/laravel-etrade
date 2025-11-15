@@ -155,6 +155,23 @@ class EtradeApiClient
     }
 
     /**
+     * @return void
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function revokeAccessToken(): void {
+        $accessTokenDTO = $this->getCachedAccessToken();
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+        $response = $this->client->get(EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN);
+        if ($response->getStatusCode() !== 200 || $response->getBody()->getContents() != EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN_SUCCESS) {
+            throw new EtradeApiException('Failed to revoke access token');
+        }
+    }
+
+    /**
      * @return EtradeAccessTokenDTO
      * @throws EtradeApiException
      */
