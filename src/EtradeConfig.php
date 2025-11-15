@@ -52,4 +52,5 @@ class EtradeConfig
      * API response constants
      */
     public const string OAUTH_RENEW_ACCESS_TOKEN_SUCCESS = 'Access Token has been renewed';
+    public const string OAUTH_REVOKE_ACCESS_TOKEN_SUCCESS = 'Revoked Access Token';
 }
