@@ -414,3 +414,90 @@ it('throws exception if revoking access token when no token is cached', function
         $etradeClient->revokeAccessToken();
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
+
+it('can get account list successfully', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a successful Guzzle response with the XML fixture
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/AccountListResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $accountListDto = $etradeClient->getAccountList();
+
+    expect($accountListDto)->toBeInstanceOf(\KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO::class)
+        ->and($accountListDto->accounts)->toBeArray()
+        ->and(count($accountListDto->accounts))->toBe(2);
+
+    $account1 = $accountListDto->accounts[0];
+    expect($account1->accountId)->toBe('840104290')
+        ->and($account1->accountIdKey)->toBe('JIdOIAcSpwR1Jva7RQBraQ')
+        ->and($account1->accountMode)->toBe('MARGIN')
+        ->and($account1->accountDesc)->toBe('INDIVIDUAL')
+        ->and($account1->accountName)->toBe('Individual Brokerage')
+        ->and($account1->accountType)->toBe('INDIVIDUAL')
+        ->and($account1->institutionType)->toBe('BROKERAGE')
+        ->and($account1->accountStatus)->toBe('ACTIVE')
+        ->and($account1->closedDate)->toBe(0);
+
+    $account2 = $accountListDto->accounts[1];
+    expect($account2->accountId)->toBe('840104291')
+        ->and($account2->accountIdKey)->toBe('JIdOIAcSpwR1Jva7RQBraq')
+        ->and($account2->accountMode)->toBe('MARGIN')
+        ->and($account2->accountDesc)->toBe('INDIVIDUAL')
+        ->and($account2->accountName)->toBe('')
+        ->and($account2->accountType)->toBe('INDIVIDUAL')
+        ->and($account2->institutionType)->toBe('BROKERAGE')
+        ->and($account2->accountStatus)->toBe('ACTIVE')
+        ->and($account2->closedDate)->toBe(0);
+});
+
+it('throws exception on non-200 response for get account list', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a non-200 Guzzle response
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getAccountList();
+    })->toThrow(EtradeApiException::class, 'Failed to get account list');
+});
+
+it('throws exception if getting account list when no token is cached', function () {
+    // Ensure the cache is empty for the access token
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getAccountList();
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});

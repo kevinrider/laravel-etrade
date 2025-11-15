@@ -22,7 +22,7 @@ class AccountListResponseDTO extends BaseDTO
             if (isset($accountsData['accountId'])) {
                 $accountsData = [$accountsData];
             }
-            $this->accounts = array_map(fn($accountData) => new AccountDTO($accountData), $accountsData);
+            $this->accounts = array_map(fn ($accountData) => new AccountDTO($accountData), $accountsData);
         }
     }
 }
