@@ -40,8 +40,26 @@ abstract class BaseDTO implements Arrayable
     {
         foreach ($data as $key => $value) {
             if (property_exists($this, $key)) {
+                $reflectionProperty = new ReflectionProperty($this, $key);
+                $propertyType = $reflectionProperty->getType();
+
+                if ($propertyType && $propertyType->getName() === 'string' && is_array($value) && empty($value)) {
+                    $value = '';
+                }
+
                 $this->{$key} = $value;
             }
         }
+    }
+
+    /**
+     * @param string $xml
+     * @return static
+     */
+    public static function fromXml(string $xml): static
+    {
+        $data = json_decode(json_encode(simplexml_load_string($xml)), true);
+
+        return new static($data);
     }
 }
