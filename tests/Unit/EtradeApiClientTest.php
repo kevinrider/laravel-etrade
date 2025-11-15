@@ -325,3 +325,92 @@ it('throws exception if renewing access token when no token is cached', function
         $etradeClient->renewAccessToken();
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
+
+it('can revoke access token successfully', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'access_token_to_revoke',
+        'oauth_token_secret' => 'access_token_secret_to_revoke',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a successful Guzzle response for the revoke token request
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN_SUCCESS));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $etradeClient->revokeAccessToken();
+
+    // No exception should be thrown, so the test passes if it reaches here.
+    expect(true)->toBeTrue();
+});
+
+it('throws exception on non-200 response for revoke access token request', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'access_token_to_revoke',
+        'oauth_token_secret' => 'access_token_secret_to_revoke',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a non-200 Guzzle response for the revoke token request
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->revokeAccessToken();
+    })->toThrow(EtradeApiException::class, 'Failed to revoke access token');
+});
+
+it('throws exception on malformed response for revoke access token request', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'access_token_to_revoke',
+        'oauth_token_secret' => 'access_token_secret_to_revoke',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a 200 Guzzle response but with malformed body
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], 'failure'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->revokeAccessToken();
+    })->toThrow(EtradeApiException::class, 'Failed to revoke access token');
+});
+
+it('throws exception if revoking access token when no token is cached', function () {
+    // Ensure the cache is empty for the access token
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->revokeAccessToken();
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});

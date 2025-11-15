@@ -159,7 +159,8 @@ class EtradeApiClient
      * @throws EtradeApiException
      * @throws GuzzleException
      */
-    public function revokeAccessToken(): void {
+    public function revokeAccessToken(): void
+    {
         $accessTokenDTO = $this->getCachedAccessToken();
         $this->client = $this->createOauthClient([
             'token' => $accessTokenDTO->oauthToken,
