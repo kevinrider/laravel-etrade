@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
@@ -170,6 +171,29 @@ class EtradeApiClient
         if ($response->getStatusCode() !== 200 || $response->getBody()->getContents() != EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN_SUCCESS) {
             throw new EtradeApiException('Failed to revoke access token');
         }
+    }
+
+    /**
+     * @return AccountListResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getAccountList(): AccountListResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $response = $this->client->get(EtradeConfig::ACCOUNTS_LIST);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get account list');
+        }
+
+        return AccountListResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
