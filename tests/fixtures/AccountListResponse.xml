@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AccountListResponse>
+   <Accounts>
+      <Account>
+         <accountId>840104290</accountId>
+         <accountIdKey>JIdOIAcSpwR1Jva7RQBraQ</accountIdKey>
+         <accountMode>MARGIN</accountMode>
+         <accountDesc>INDIVIDUAL</accountDesc>
+         <accountName>Individual Brokerage</accountName>
+         <accountType>INDIVIDUAL</accountType>
+         <institutionType>BROKERAGE</institutionType>
+         <accountStatus>ACTIVE</accountStatus>
+         <closedDate>0</closedDate>
+      </Account>
+      <Account>
+         <accountId>840104291</accountId>
+         <accountIdKey>JIdOIAcSpwR1Jva7RQBraq</accountIdKey>
+         <accountMode>MARGIN</accountMode>
+         <accountDesc>INDIVIDUAL</accountDesc>
+         <accountName/>
+         <accountType>INDIVIDUAL</accountType>
+         <institutionType>BROKERAGE</institutionType>
+         <accountStatus>ACTIVE</accountStatus>
+         <closedDate>0</closedDate>
+      </Account>
+   </Accounts>
+</AccountListResponse>
