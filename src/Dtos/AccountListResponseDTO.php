@@ -2,6 +2,8 @@
 
 namespace KevinRider\LaravelEtrade\Dtos;
 
+use KevinRider\LaravelEtrade\Dtos\ListAccounts\AccountDTO;
+
 class AccountListResponseDTO extends BaseDTO
 {
     /**
