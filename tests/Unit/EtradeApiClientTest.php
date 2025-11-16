@@ -5,7 +5,10 @@ use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
@@ -604,5 +607,89 @@ it('throws exception if getting account balance when no token is cached', functi
 
     expect(function () use ($etradeClient, $accountBalanceRequestDto) {
         $etradeClient->getAccountBalance($accountBalanceRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can get account transactions successfully', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a successful Guzzle response with the XML fixture
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/ListTransactionsResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listTransactionsRequestDto = new ListTransactionsRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+    $listTransactionsDto = $etradeClient->getAccountTransactions($listTransactionsRequestDto);
+
+    expect($listTransactionsDto)->toBeInstanceOf(ListTransactionsResponseDTO::class)
+        ->and($listTransactionsDto->transactions)->toBeArray()
+        ->and(count($listTransactionsDto->transactions))->toBe(3);
+
+    $transaction1 = $listTransactionsDto->transactions[0];
+    expect($transaction1->transactionId)->toBe('18165100001766')
+        ->and($transaction1->accountId)->toBe('835649790')
+        ->and($transaction1->transactionDate)->toBe(1528948800000)
+        ->and($transaction1->postDate)->toBe(1528948800000)
+        ->and($transaction1->amount)->toBe(-2.0)
+        ->and($transaction1->description)->toBe('ACH WITHDRAWL REFID:109187276;')
+        ->and($transaction1->transactionType)->toBe('Transfer')
+        ->and($transaction1->instType)->toBe('BROKERAGE');
+});
+
+it('throws exception on non-200 response for get account transactions', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a non-200 Guzzle response
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listTransactionsRequestDto = new ListTransactionsRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+
+    expect(function () use ($etradeClient, $listTransactionsRequestDto) {
+        $etradeClient->getAccountTransactions($listTransactionsRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to get account transactions');
+});
+
+it('throws exception if getting account transactions when no token is cached', function () {
+    // Ensure the cache is empty for the access token
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listTransactionsRequestDto = new ListTransactionsRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+
+    expect(function () use ($etradeClient, $listTransactionsRequestDto) {
+        $etradeClient->getAccountTransactions($listTransactionsRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
