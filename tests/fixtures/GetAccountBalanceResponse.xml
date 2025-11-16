@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BalanceResponse>
+    <accountId>835649790</accountId>
+    <accountType>PDT_ACCOUNT</accountType>
+    <optionLevel>LEVEL_4</optionLevel>
+    <accountDescription>KRITHH TT</accountDescription>
+    <quoteMode>6</quoteMode>
+    <dayTraderStatus>PDT_MIN_EQUITY_RES_1XK</dayTraderStatus>
+    <accountMode>PDT ACCOUNT</accountMode>
+    <Cash>
+        <fundsForOpenOrdersCash>0</fundsForOpenOrdersCash>
+        <moneyMktBalance>0</moneyMktBalance>
+    </Cash>
+    <Computed>
+        <cashAvailableForInvestment>0</cashAvailableForInvestment>
+        <netCash>93921.44</netCash>
+        <cashBalance>93921.44</cashBalance>
+        <settledCashForInvestment>0</settledCashForInvestment>
+        <unSettledCashForInvestment>0</unSettledCashForInvestment>
+        <fundsWithheldFromPurchasePower>0</fundsWithheldFromPurchasePower>
+        <fundsWithheldFromWithdrawal>0</fundsWithheldFromWithdrawal>
+        <marginBuyingPower>0</marginBuyingPower>
+        <cashBuyingPower>93921.44</cashBuyingPower>
+        <dtMarginBuyingPower>0</dtMarginBuyingPower>
+        <dtCashBuyingPower>0</dtCashBuyingPower>
+        <shortAdjustBalance>0</shortAdjustBalance>
+        <regtEquity>0</regtEquity>
+        <regtEquityPercent>0</regtEquityPercent>
+        <accountBalance>0</accountBalance>
+    </Computed>
+    <Margin>
+        <dtCashOpenOrderReserve>0</dtCashOpenOrderReserve>
+        <dtMarginOpenOrderReserve>0</dtMarginOpenOrderReserve>
+    </Margin>
+</BalanceResponse>
