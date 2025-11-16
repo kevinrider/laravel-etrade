@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TransactionDetailsResponse>
+    <transactionId>18144100000861</transactionId>
+    <accountId>835649790</accountId>
+    <transactionDate>1527134400000</transactionDate>
+    <amount>-2.0</amount>
+    <description>ACH WITHDRAWL REFID:77521276;</description>
+    <Category>
+        <categoryId>0</categoryId>
+        <parentId>0</parentId>
+        <categoryName />
+        <parentName />
+    </Category>
+    <Brokerage>
+        <transactionType>Transfer</transactionType>
+        <Product />
+        <quantity>0.0</quantity>
+        <price>0.0</price>
+        <settlementCurrency>USD</settlementCurrency>
+        <paymentCurrency>USD</paymentCurrency>
+        <fee>0.0</fee>
+        <memo />
+        <orderNo>0</orderNo>
+    </Brokerage>
+</TransactionDetailsResponse>
