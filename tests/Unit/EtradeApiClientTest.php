@@ -5,10 +5,10 @@ use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Transaction\BrokerageDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
@@ -638,7 +638,11 @@ it('can get account transactions successfully', function () {
 
     expect($listTransactionsDto)->toBeInstanceOf(ListTransactionsResponseDTO::class)
         ->and($listTransactionsDto->transactions)->toBeArray()
-        ->and(count($listTransactionsDto->transactions))->toBe(3);
+        ->and(count($listTransactionsDto->transactions))->toBe(3)
+        ->and($listTransactionsDto->pageMarkers)->toBe('eNptjkEOgjAQRfecogcgoYNSJGm6YUWixqgXqDAxRqSx0B2Ht1AwWuiiSf%2F8vjeEn%2BQdc2WarmhyqZVpsRYxj9bigPCr6mR9xlLpapyKhEeLbO59GQPQS2xneBzN64b6gm%2BDTYmChjSEMLY3dSt484C4b0W1f7QDhEzBQeonagE7YAlQeyBlrO97R5mmwdx2VAG%2FjpEdefCFzLdtM2sDlmabZM32p4t9nef7AOzdfmc%3D')
+        ->and($listTransactionsDto->moreTransactions)->toBe('false')
+        ->and($listTransactionsDto->transactionCount)->toBe('3')
+        ->and($listTransactionsDto->totalCount)->toBe('5');
 
     $transaction1 = $listTransactionsDto->transactions[0];
     expect($transaction1->transactionId)->toBe('18165100001766')
@@ -648,7 +652,42 @@ it('can get account transactions successfully', function () {
         ->and($transaction1->amount)->toBe(-2.0)
         ->and($transaction1->description)->toBe('ACH WITHDRAWL REFID:109187276;')
         ->and($transaction1->transactionType)->toBe('Transfer')
-        ->and($transaction1->instType)->toBe('BROKERAGE');
+        ->and($transaction1->brokerage)->toBeInstanceOf(BrokerageDTO::class)
+        ->and($transaction1->brokerage->quantity)->toBe(0.0)
+        ->and($transaction1->brokerage->price)->toBe(0.0)
+        ->and($transaction1->brokerage->settlementCurrency)->toBe('USD')
+        ->and($transaction1->brokerage->paymentCurrency)->toBe('USD')
+        ->and($transaction1->brokerage->fee)->toBe(0.0);
+
+    $transaction2 = $listTransactionsDto->transactions[1];
+    expect($transaction2->transactionId)->toBe('18158100000983')
+        ->and($transaction2->accountId)->toBe('835649790')
+        ->and($transaction2->transactionDate)->toBe(1528344000000)
+        ->and($transaction2->postDate)->toBe(1528344000000)
+        ->and($transaction2->amount)->toBe(-2.0)
+        ->and($transaction2->description)->toBe('ACH WITHDRAWL REFID:98655276;')
+        ->and($transaction2->transactionType)->toBe('Transfer')
+        ->and($transaction2->brokerage)->toBeInstanceOf(BrokerageDTO::class)
+        ->and($transaction2->brokerage->quantity)->toBe(0.0)
+        ->and($transaction2->brokerage->price)->toBe(0.0)
+        ->and($transaction2->brokerage->settlementCurrency)->toBe('USD')
+        ->and($transaction2->brokerage->paymentCurrency)->toBe('USD')
+        ->and($transaction2->brokerage->fee)->toBe(0.0);
+
+    $transaction3 = $listTransactionsDto->transactions[2];
+    expect($transaction3->transactionId)->toBe('18151100002634')
+        ->and($transaction3->accountId)->toBe('835649790')
+        ->and($transaction3->transactionDate)->toBe(1527739200000)
+        ->and($transaction3->postDate)->toBe(1527739200000)
+        ->and($transaction3->amount)->toBe(-2.0)
+        ->and($transaction3->description)->toBe('ACH WITHDRAWL REFID:87756276;')
+        ->and($transaction3->transactionType)->toBe('Transfer')
+        ->and($transaction3->brokerage)->toBeInstanceOf(BrokerageDTO::class)
+        ->and($transaction3->brokerage->quantity)->toBe(0.0)
+        ->and($transaction3->brokerage->price)->toBe(0.0)
+        ->and($transaction3->brokerage->settlementCurrency)->toBe('USD')
+        ->and($transaction3->brokerage->paymentCurrency)->toBe('USD')
+        ->and($transaction3->brokerage->fee)->toBe(0.0);
 });
 
 it('throws exception on non-200 response for get account transactions', function () {
