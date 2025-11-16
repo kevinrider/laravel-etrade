@@ -6,6 +6,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
@@ -194,6 +196,41 @@ class EtradeApiClient
         }
 
         return AccountListResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param AccountBalanceRequestDTO $accountBalanceRequestDTO
+     * @return AccountBalanceResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getAccountBalance(AccountBalanceRequestDTO $accountBalanceRequestDTO): AccountBalanceResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        if(!isset($accountBalanceRequestDTO->accountIdKey)) {
+            throw new EtradeApiException('accountIdKey is required!');
+        }
+
+        $uri = str_replace('{accountIdKey}', $accountBalanceRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_BALANCE);
+
+        $queryParams = [];
+        foreach(AccountBalanceRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if(isset($accountBalanceRequestDTO->$param)) {
+                $queryParams[$param] = $accountBalanceRequestDTO->$param;
+            }
+        }
+        $response = $this->client->get($uri, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get account balance');
+        }
+        return AccountBalanceResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
