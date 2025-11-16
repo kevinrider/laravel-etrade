@@ -1,6 +1,11 @@
 <?php
 
 use GuzzleHttp\Psr7\Response;
+use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
+use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
+use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
+use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
@@ -499,5 +504,105 @@ it('throws exception if getting account list when no token is cached', function 
 
     expect(function () use ($etradeClient) {
         $etradeClient->getAccountList();
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can get account balance successfully', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a successful Guzzle response with the XML fixture
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/GetAccountBalanceResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $accountBalanceRequestDto = new AccountBalanceRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+    $accountBalanceDto = $etradeClient->getAccountBalance($accountBalanceRequestDto);
+
+    expect($accountBalanceDto)->toBeInstanceOf(AccountBalanceResponseDTO::class)
+        ->and($accountBalanceDto->accountId)->toBe('835649790')
+        ->and($accountBalanceDto->accountType)->toBe('PDT_ACCOUNT')
+        ->and($accountBalanceDto->optionLevel)->toBe('LEVEL_4')
+        ->and($accountBalanceDto->accountDescription)->toBe('KRITHH TT')
+        ->and($accountBalanceDto->quoteMode)->toBe('6')
+        ->and($accountBalanceDto->dayTraderStatus)->toBe('PDT_MIN_EQUITY_RES_1XK')
+        ->and($accountBalanceDto->accountMode)->toBe('PDT ACCOUNT')
+        ->and($accountBalanceDto->cash)->toBeInstanceOf(CashDTO::class)
+        ->and($accountBalanceDto->cash->fundsForOpenOrdersCash)->toBe(0.0)
+        ->and($accountBalanceDto->cash->moneyMktBalance)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance)->toBeInstanceOf(ComputedBalanceDTO::class)
+        ->and($accountBalanceDto->computedBalance->cashAvailableForInvestment)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->netCash)->toBe(93921.44)
+        ->and($accountBalanceDto->computedBalance->cashBalance)->toBe(93921.44)
+        ->and($accountBalanceDto->computedBalance->settledCashForInvestment)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->unSettledCashForInvestment)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->fundsWithheldFromPurchasePower)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->marginBuyingPower)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->cashBuyingPower)->toBe(93921.44)
+        ->and($accountBalanceDto->computedBalance->dtMarginBuyingPower)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->dtCashBuyingPower)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->shortAdjustBalance)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->regtEquity)->toBe(0.0)
+        ->and($accountBalanceDto->computedBalance->regtEquityPercent)->toBe(0.0)
+        ->and($accountBalanceDto->margin)->toBeInstanceOf(MarginDTO::class)
+        ->and($accountBalanceDto->margin->dtCashOpenOrderReserve)->toBe(0.0)
+        ->and($accountBalanceDto->margin->dtMarginOpenOrderReserve)->toBe(0.0)
+        ->and(property_exists($accountBalanceDto, 'lending') && isset($accountBalanceDto->lending))->toBeFalse();
+});
+
+it('throws exception on non-200 response for get account balance', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a non-200 Guzzle response
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $accountBalanceRequestDto = new AccountBalanceRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+
+    expect(function () use ($etradeClient, $accountBalanceRequestDto) {
+        $etradeClient->getAccountBalance($accountBalanceRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to get account balance');
+});
+
+it('throws exception if getting account balance when no token is cached', function () {
+    // Ensure the cache is empty for the access token
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $accountBalanceRequestDto = new AccountBalanceRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+
+    expect(function () use ($etradeClient, $accountBalanceRequestDto) {
+        $etradeClient->getAccountBalance($accountBalanceRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
