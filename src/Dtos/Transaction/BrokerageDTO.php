@@ -23,10 +23,14 @@ class BrokerageDTO extends BaseDTO
      */
     public function __construct(array $data)
     {
-        parent::__construct($data);
-
+        if (isset($data['Product'])) {
+            $this->product = new ProductDTO($data['Product']);
+            unset($data['Product']);
+        }
         if (isset($data['product'])) {
             $this->product = new ProductDTO($data['product']);
+            unset($data['product']);
         }
+        parent::__construct($data);
     }
 }

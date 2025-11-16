@@ -2,7 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos;
 
-use KevinRider\LaravelEtrade\Transaction\Dtos\TransactionDTO;
+use KevinRider\LaravelEtrade\Dtos\Transaction\TransactionDTO;
 
 class ListTransactionDetailsResponseDTO extends BaseDTO
 {
@@ -10,10 +10,7 @@ class ListTransactionDetailsResponseDTO extends BaseDTO
 
     public function __construct(array $data)
     {
+        $this->transaction = new TransactionDTO($data);
         parent::__construct($data);
-
-        if (isset($data['Transaction'])) {
-            $this->transaction = new TransactionDTO($data['Transaction']);
-        }
     }
 }
