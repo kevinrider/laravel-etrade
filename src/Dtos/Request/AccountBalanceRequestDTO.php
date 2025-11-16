@@ -6,7 +6,7 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class AccountBalanceRequestDTO extends BaseDTO
 {
-    const array ALLOWED_QUERY_PARAMS = ['instType', 'realTimeNAV', 'accountType'];
+    public const array ALLOWED_QUERY_PARAMS = ['instType', 'realTimeNAV', 'accountType'];
     public string $accountType;
     public string $instType = 'BROKERAGE';
     public string $realTimeNAV;

@@ -15,7 +15,7 @@ class AccountBalanceResponseDTO extends BaseDTO
     public string $asOfDate;
     public string $optionLevel;
     public string $accountDescription;
-    public string $queryMode;
+    public string $quoteMode;
     public string $dayTraderStatus;
     public string $accountMode;
     public CashDTO $cash;

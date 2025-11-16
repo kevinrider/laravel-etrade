@@ -213,15 +213,15 @@ class EtradeApiClient
             'token_secret' => $accessTokenDTO->oauthTokenSecret,
         ]);
 
-        if(!isset($accountBalanceRequestDTO->accountIdKey)) {
+        if (!isset($accountBalanceRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
 
         $uri = str_replace('{accountIdKey}', $accountBalanceRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_BALANCE);
 
         $queryParams = [];
-        foreach(AccountBalanceRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if(isset($accountBalanceRequestDTO->$param)) {
+        foreach (AccountBalanceRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($accountBalanceRequestDTO->$param)) {
                 $queryParams[$param] = $accountBalanceRequestDTO->$param;
             }
         }
