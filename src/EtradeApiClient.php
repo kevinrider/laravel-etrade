@@ -8,9 +8,13 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
+use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -231,6 +235,70 @@ class EtradeApiClient
             throw new EtradeApiException('Failed to get account balance');
         }
         return AccountBalanceResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param ListTransactionsRequestDTO $listTransactionsRequestDTO
+     * @return ListTransactionsResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getAccountTransactions(ListTransactionsRequestDTO $listTransactionsRequestDTO): ListTransactionsResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace('{accountIdKey}', $listTransactionsRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_TRANSACTIONS);
+
+        $queryParams = [];
+        foreach (ListTransactionsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($listTransactionsRequestDTO->$param)) {
+                $queryParams[$param] = $listTransactionsRequestDTO->$param;
+            }
+        }
+        $response = $this->client->get($uri, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get account transactions');
+        }
+
+        return ListTransactionsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param ListTransactionDetailsRequestDTO $listTransactionDetailsRequestDTO
+     * @return ListTransactionDetailsResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getAccountTransactionDetails(ListTransactionDetailsRequestDTO $listTransactionDetailsRequestDTO): ListTransactionDetailsResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace(['{accountIdKey}', '{transactionId}'], [$listTransactionDetailsRequestDTO->accountIdKey, $listTransactionDetailsRequestDTO->transactionId], EtradeConfig::ACCOUNTS_TRANSACTIONS_DETAILS);
+
+        $queryParams = [];
+        foreach (ListTransactionDetailsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($listTransactionDetailsRequestDTO->$param)) {
+                $queryParams[$param] = $listTransactionDetailsRequestDTO->$param;
+            }
+        }
+        $response = $this->client->get($uri, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get account transaction details');
+        }
+
+        return ListTransactionDetailsResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
