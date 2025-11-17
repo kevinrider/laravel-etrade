@@ -36,9 +36,10 @@ class ViewPortfolioResponseDTO extends BaseDTO
      * @param array $array
      * @return bool
      */
-    protected function isMultiDimensional(array $array): bool {
-        foreach($array as $element) {
-            if(!is_array($element)) {
+    protected function isMultiDimensional(array $array): bool
+    {
+        foreach ($array as $element) {
+            if (!is_array($element)) {
                 return false;
             }
         }
