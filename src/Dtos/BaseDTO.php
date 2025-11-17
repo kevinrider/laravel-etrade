@@ -43,8 +43,15 @@ abstract class BaseDTO implements Arrayable
                 $reflectionProperty = new ReflectionProperty($this, $key);
                 $propertyType = $reflectionProperty->getType();
 
-                if ($propertyType && $propertyType->getName() === 'string' && is_array($value) && empty($value)) {
-                    $value = '';
+                if ($propertyType) {
+                    $typeName = $propertyType->getName();
+                    if ($typeName === 'string' && is_array($value) && empty($value)) {
+                        $value = '';
+                    }
+
+                    if ($typeName === 'bool' && is_string($value) && preg_match('/(true|false)/i', $value)) {
+                        $value = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    }
                 }
 
                 $this->{$key} = $value;
