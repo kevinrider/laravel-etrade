@@ -7,14 +7,16 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
-use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
-use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -299,6 +301,42 @@ class EtradeApiClient
         }
 
         return ListTransactionDetailsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param ViewPortfolioRequestDTO $viewPortfolioRequestDTO
+     * @return ViewPortfolioResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getViewPortfolio(ViewPortfolioRequestDTO $viewPortfolioRequestDTO): ViewPortfolioResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        if (!isset($viewPortfolioRequestDTO->accountIdKey)) {
+            throw new EtradeApiException('accountIdKey is required!');
+        }
+
+        $uri = str_replace('{accountIdKey}', $viewPortfolioRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_PORTFOLIO);
+
+        $queryParams = [];
+        foreach (ViewPortfolioRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($viewPortfolioRequestDTO->$param)) {
+                $queryParams[$param] = $viewPortfolioRequestDTO->$param;
+            }
+        }
+
+        $response = $this->client->get($uri, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to view account portfolio');
+        }
+        return ViewPortfolioResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
