@@ -10,8 +10,12 @@ use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\BrokerageDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\CategoryDTO;
+use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\ProductDTO;
+use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\QuickViewDTO;
+use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
@@ -829,5 +833,141 @@ it('throws exception if getting account transaction details when no token is cac
 
     expect(function () use ($etradeClient, $listTransactionDetailsRequestDto) {
         $etradeClient->getAccountTransactionDetails($listTransactionDetailsRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can view portfolio successfully', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a successful response using the fixture
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/ViewPortfolioResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $viewPortfolioRequestDto = new ViewPortfolioRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+    $portfolioDto = $etradeClient->getViewPortfolio($viewPortfolioRequestDto);
+
+    expect($portfolioDto)->toBeInstanceOf(ViewPortfolioResponseDTO::class)
+        ->and($portfolioDto->accountId)->toEqual(835547880)
+        ->and($portfolioDto->totalPages)->toEqual(1)
+        ->and($portfolioDto->positions)->toBeArray()
+        ->and(count($portfolioDto->positions))->toBe(2);
+
+    $firstPosition = $portfolioDto->positions[0];
+    expect($firstPosition->positionId)->toEqual(10087531)
+        ->and($firstPosition->symbolDescription)->toBe('A')
+        ->and($firstPosition->dateAcquired)->toEqual(-68400000)
+        ->and($firstPosition->pricePaid)->toEqual(0.0)
+        ->and($firstPosition->commissions)->toEqual(0.0)
+        ->and($firstPosition->otherFees)->toEqual(0.0)
+        ->and($firstPosition->quantity)->toEqual(-120.0)
+        ->and($firstPosition->positionIndicator)->toBe('TYPE2')
+        ->and($firstPosition->positionType)->toBe('SHORT')
+        ->and($firstPosition->daysGain)->toEqual(190.80)
+        ->and($firstPosition->daysGainPct)->toEqual(2.4472)
+        ->and($firstPosition->marketValue)->toEqual(-7605.60)
+        ->and($firstPosition->totalCost)->toEqual(0.0)
+        ->and($firstPosition->totalGain)->toEqual(-7605.60)
+        ->and($firstPosition->pctOfPortfolio)->toEqual(-0.0008)
+        ->and($firstPosition->costPerShare)->toEqual(0.0)
+        ->and($firstPosition->todayCommissions)->toEqual(0.0)
+        ->and($firstPosition->todayFees)->toEqual(0.0)
+        ->and($firstPosition->todayPricePaid)->toEqual(0.0)
+        ->and($firstPosition->todayQuantity)->toEqual(0.0)
+        ->and($firstPosition->adjPrevClose)->toEqual(64.97)
+        ->and($firstPosition->lotsDetails)->toBe('https://api.etrade.com/v1/accounts/JDIozUumZpHdgbIjMnAAHQ/portfolio/10087531')
+        ->and($firstPosition->quoteDetails)->toBe('https://api.etrade.com/v1/market/quote/A')
+        ->and($firstPosition->product)->toBeInstanceOf(ProductDTO::class)
+        ->and($firstPosition->product->symbol)->toBe('A')
+        ->and($firstPosition->product->securityType)->toBe('EQ')
+        ->and($firstPosition->product->expiryDay)->toEqual(0)
+        ->and($firstPosition->product->expiryMonth)->toEqual(0)
+        ->and($firstPosition->product->expiryYear)->toEqual(0)
+        ->and($firstPosition->product->strikePrice)->toEqual(0.0)
+        ->and($firstPosition->quick)->toBeInstanceOf(QuickViewDTO::class)
+        ->and($firstPosition->quick->change)->toEqual(-1.59)
+        ->and($firstPosition->quick->changePct)->toEqual(-2.4472)
+        ->and($firstPosition->quick->lastTrade)->toEqual(63.38)
+        ->and($firstPosition->quick->lastTradeTime)->toEqual(1529429280)
+        ->and($firstPosition->quick->quoteStatus)->toBe('DELAYED')
+        ->and($firstPosition->quick->volume)->toEqual(2431617);
+
+    $secondPosition = $portfolioDto->positions[1];
+    expect($secondPosition->positionId)->toEqual(140357348131)
+        ->and($secondPosition->symbolDescription)->toBe('TWTR')
+        ->and($secondPosition->pricePaid)->toEqual(0.0)
+        ->and($secondPosition->quantity)->toEqual(3.0)
+        ->and($secondPosition->positionType)->toBe('LONG')
+        ->and($secondPosition->daysGain)->toEqual(-3.915)
+        ->and($secondPosition->daysGainPct)->toEqual(-2.8369)
+        ->and($secondPosition->marketValue)->toEqual(134.085)
+        ->and($secondPosition->pctOfPortfolio)->toEqual(0.0235)
+        ->and($secondPosition->quick)->toBeInstanceOf(QuickViewDTO::class)
+        ->and($secondPosition->quick->change)->toEqual(-1.305)
+        ->and($secondPosition->quick->changePct)->toEqual(-2.8369)
+        ->and($secondPosition->quick->lastTrade)->toEqual(44.695)
+        ->and($secondPosition->quick->volume)->toEqual(26582141)
+        ->and($secondPosition->lotsDetails)->toBe('https://api.etrade.com/v1/accounts/yIFaUoJ81qyAhgxLWRQ42g/portfolio/140357348131')
+        ->and($secondPosition->quoteDetails)->toBe('https://api.etrade.com/v1/market/quote/TWTR')
+        ->and($secondPosition->product)->toBeInstanceOf(ProductDTO::class)
+        ->and($secondPosition->product->symbol)->toBe('TWTR')
+        ->and($secondPosition->product->securityType)->toBe('EQ')
+        ->and($secondPosition->product->strikePrice)->toEqual(0.0);
+});
+
+it('throws exception on non-200 response for view portfolio', function () {
+    // Cache an access token
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    // Mock a failing response
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $viewPortfolioRequestDto = new ViewPortfolioRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+
+    expect(function () use ($etradeClient, $viewPortfolioRequestDto) {
+        $etradeClient->getViewPortfolio($viewPortfolioRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to view account portfolio');
+});
+
+it('throws exception if viewing portfolio when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $viewPortfolioRequestDto = new ViewPortfolioRequestDTO([
+        'accountIdKey' => 'test_account_id_key',
+    ]);
+
+    expect(function () use ($etradeClient, $viewPortfolioRequestDto) {
+        $etradeClient->getViewPortfolio($viewPortfolioRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
