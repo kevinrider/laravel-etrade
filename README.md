@@ -9,7 +9,7 @@ This package aims to provide a robust and easy-to-use client for the ETrade API 
 ## Current status
 -   **EtradeApiClient**: Handles requests, manages tokens, and maps responses to DTOs.
     - ✅ Authorization (Oauth handling, GetAccessToken, RenewAccessToken, RevokeAccessToken)
-    -  ❌ Accounts (GetAccountList, GetAccountBalance, GetAccountTransactions, GetAccountTransactionDetails, GetAccountPorfolio)
+    -  ✅ Accounts (GetAccountList, GetAccountBalance, GetAccountTransactions, GetAccountTransactionDetails, GetAccountPorfolio)
     -  ❌ Alerts (AlertsList, AlertsListDetails, AlertsDelete)
 
     -  ❌ Market (MarketGetQuotes, MarketLookUp, MarketGetOptionChain, MarketGetOptionExp)
