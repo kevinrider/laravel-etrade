@@ -150,7 +150,7 @@ class EtradeApiClient
         }
         $accessToken['oauth_token'] = $accessTokenDTO->oauthToken;
         $accessToken['oauth_token_secret'] = $accessTokenDTO->oauthTokenSecret;
-        $twoHoursFromNow = now()->addHour(2);
+        $twoHoursFromNow = now()->addHours(2);
         $accessToken['inactive_at'] = $twoHoursFromNow->getTimestamp();
         $accessTokenDTO->inactiveAt = $twoHoursFromNow;
 
