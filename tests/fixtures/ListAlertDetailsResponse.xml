@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AlertDetailsResponse>
+    <id>6773</id>
+    <createTime>1529416825</createTime>
+    <subject>AAPL down by at least 2.00%</subject>
+    <symbol>AAPL</symbol>
+    <msgText>APPLE INC COM (AAPL) stock has met your target percentage decrease of 2.00%. The stock is currently trading at $184.96.
+        ""
+        ""
+        ""
+        ""
+        ""
+        APPLE INC COMnbsp;AAPL Stock
+        ""
+        ""
+        ""
+        ""
+        ""
+        ""
+        ""
+        ""
+        LastPrice184.96Bid (size)184.92 (x600)
+        ""
+        Today'sChange -3.78 (-2.00%)Ask (size)184.93 (x100)</msgText>
+    <readTime>0</readTime>
+    <deleteTime>0</deleteTime>
+    <next>https://api.etrade.com/v1/user/alerts/6772</next>
+    <prev>https://api.etrade.com/v1/user/alerts/6774</prev>
+</AlertDetailsResponse>
