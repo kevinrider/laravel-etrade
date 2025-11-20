@@ -19,7 +19,7 @@ use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
-use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
@@ -414,12 +414,12 @@ class EtradeApiClient
     }
 
     /**
-     * @param DeleteAlertRequestDTO $deleteAlertRequestDTO
+     * @param DeleteAlertsRequestDTO $deleteAlertRequestDTO
      * @return DeleteAlertsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
      */
-    public function deleteAlerts(DeleteAlertRequestDTO $deleteAlertRequestDTO): DeleteAlertsResponseDTO
+    public function deleteAlerts(DeleteAlertsRequestDTO $deleteAlertRequestDTO): DeleteAlertsResponseDTO
     {
         $accessTokenDTO = $this->getAccessToken();
 
