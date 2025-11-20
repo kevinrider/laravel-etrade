@@ -6,21 +6,27 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Carbon;
 
 class EtradeApiClient
 {
@@ -340,6 +346,105 @@ class EtradeApiClient
     }
 
     /**
+     * @param ListAlertsRequestDTO $listAlertsRequestDTO
+     * @return ListAlertsResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getAlerts(ListAlertsRequestDTO $listAlertsRequestDTO): ListAlertsResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $queryParams = [];
+        foreach (ListAlertsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($listAlertsRequestDTO->$param)) {
+                $queryParams[$param] = $this->normalizeQueryParamValue($listAlertsRequestDTO->$param);
+            }
+        }
+
+        $response = $this->client->get(EtradeConfig::ALERTS_LIST, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to list alerts');
+        }
+
+        return ListAlertsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param ListAlertDetailsRequestDTO $listAlertDetailsRequestDTO
+     * @return ListAlertDetailsResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getAlertDetails(ListAlertDetailsRequestDTO $listAlertDetailsRequestDTO): ListAlertDetailsResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        if (!isset($listAlertDetailsRequestDTO->alertId)) {
+            throw new EtradeApiException('alertId is required!');
+        }
+
+        $uri = str_replace('{alertId}', $listAlertDetailsRequestDTO->alertId, EtradeConfig::ALERTS_DETAILS);
+
+        $queryParams = [];
+        foreach (ListAlertDetailsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($listAlertDetailsRequestDTO->$param)) {
+                $queryParams[$param] = $this->normalizeQueryParamValue($listAlertDetailsRequestDTO->$param);
+            }
+        }
+
+        $response = $this->client->get($uri, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get alert details');
+        }
+
+        return ListAlertDetailsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param DeleteAlertRequestDTO $deleteAlertRequestDTO
+     * @return DeleteAlertsResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function deleteAlerts(DeleteAlertRequestDTO $deleteAlertRequestDTO): DeleteAlertsResponseDTO
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $alertIdPathSegment = $deleteAlertRequestDTO->getAlertIdsPathSegment();
+        if (!$alertIdPathSegment) {
+            throw new EtradeApiException('At least one alertId is required!');
+        }
+
+        $uri = str_replace('{alertId}', $alertIdPathSegment, EtradeConfig::ALERTS_DELETE);
+
+        $response = $this->client->delete($uri);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to delete alerts');
+        }
+
+        return DeleteAlertsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
      * @return EtradeAccessTokenDTO
      * @throws EtradeApiException
      */
@@ -406,5 +511,18 @@ class EtradeApiClient
             Crypt::encryptString(json_encode($tokenData)),
             $expiresAt
         );
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    private function normalizeQueryParamValue(mixed $value): mixed
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return $value;
     }
 }
