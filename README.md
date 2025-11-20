@@ -16,6 +16,6 @@ This package aims to provide a robust and easy-to-use client for the ETrade API 
     -  ❌ Order (ListOrders, PreviewOrder, PlaceOrder, ChangePreviewOrder, PlaceChangeOrder, CancelOrder)
 
 ## Key Technologies
--   **Language**: PHP 8.2+
+-   **Language**: PHP 8.3+
 -   **Framework**: Laravel 10+
 
