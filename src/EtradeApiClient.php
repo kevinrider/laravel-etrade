@@ -384,16 +384,16 @@ class EtradeApiClient
      */
     public function getAlertDetails(ListAlertDetailsRequestDTO $listAlertDetailsRequestDTO): ListAlertDetailsResponseDTO
     {
+        if (!isset($listAlertDetailsRequestDTO->alertId)) {
+            throw new EtradeApiException('alertId is required!');
+        }
+
         $accessTokenDTO = $this->getAccessToken();
 
         $this->client = $this->createOauthClient([
             'token' => $accessTokenDTO->oauthToken,
             'token_secret' => $accessTokenDTO->oauthTokenSecret,
         ]);
-
-        if (!isset($listAlertDetailsRequestDTO->alertId)) {
-            throw new EtradeApiException('alertId is required!');
-        }
 
         $uri = str_replace('{alertId}', $listAlertDetailsRequestDTO->alertId, EtradeConfig::ALERTS_DETAILS);
 
@@ -421,17 +421,17 @@ class EtradeApiClient
      */
     public function deleteAlerts(DeleteAlertsRequestDTO $deleteAlertRequestDTO): DeleteAlertsResponseDTO
     {
+        $alertIdPathSegment = $deleteAlertRequestDTO->getAlertIdsPathSegment();
+        if (!$alertIdPathSegment) {
+            throw new EtradeApiException('At least one alertId is required!');
+        }
+
         $accessTokenDTO = $this->getAccessToken();
 
         $this->client = $this->createOauthClient([
             'token' => $accessTokenDTO->oauthToken,
             'token_secret' => $accessTokenDTO->oauthTokenSecret,
         ]);
-
-        $alertIdPathSegment = $deleteAlertRequestDTO->getAlertIdsPathSegment();
-        if (!$alertIdPathSegment) {
-            throw new EtradeApiException('At least one alertId is required!');
-        }
 
         $uri = str_replace('{alertId}', $alertIdPathSegment, EtradeConfig::ALERTS_DELETE);
 
