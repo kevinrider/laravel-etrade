@@ -4,7 +4,7 @@ namespace KevinRider\LaravelEtrade\Dtos\Alerts;
 
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
-class FailedAlerts extends BaseDTO
+class FailedAlertsDTO extends BaseDTO
 {
     /**
      * @var int[]

@@ -2,12 +2,12 @@
 
 namespace KevinRider\LaravelEtrade\Dtos;
 
-use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlerts;
+use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlertsDTO;
 
 class DeleteAlertsResponseDTO extends BaseDTO
 {
     public ?string $result = null;
-    public ?FailedAlerts $failedAlerts = null;
+    public ?FailedAlertsDTO $failedAlerts = null;
 
     /**
      * @param array $data
@@ -17,7 +17,7 @@ class DeleteAlertsResponseDTO extends BaseDTO
     {
         $failedAlerts = $data['failedAlerts'] ?? null;
         if ($failedAlerts) {
-            $this->failedAlerts = new FailedAlerts($failedAlerts);
+            $this->failedAlerts = new FailedAlertsDTO($failedAlerts);
             unset($data['failedAlerts']);
         }
 

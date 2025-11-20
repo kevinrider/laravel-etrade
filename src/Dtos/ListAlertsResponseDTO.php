@@ -2,13 +2,13 @@
 
 namespace KevinRider\LaravelEtrade\Dtos;
 
-use KevinRider\LaravelEtrade\Dtos\Alerts\Alert;
+use KevinRider\LaravelEtrade\Dtos\Alerts\AlertDTO;
 
 class ListAlertsResponseDTO extends BaseDTO
 {
     public ?int $totalAlerts = null;
     /**
-     * @var Alert[]
+     * @var AlertDTO[]
      */
     public array $alerts = [];
 
@@ -21,7 +21,7 @@ class ListAlertsResponseDTO extends BaseDTO
         $alerts = $data['Alert'] ?? $data['alerts'] ?? null;
         if ($alerts !== null) {
             $this->alerts = array_map(
-                fn ($alertData) => new Alert($alertData),
+                fn ($alertData) => new AlertDTO($alertData),
                 $this->normalizeAlertArray($alerts)
             );
             unset($data['Alert'], $data['alerts']);

@@ -9,8 +9,8 @@ use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\Alerts\Alert;
-use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlerts;
+use KevinRider\LaravelEtrade\Dtos\Alerts\AlertDTO;
+use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlertsDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
@@ -1011,7 +1011,7 @@ it('can list alerts successfully', function () {
         ->and($alertsDto->alerts)->toHaveCount(9);
 
     $firstAlert = $alertsDto->alerts[0];
-    expect($firstAlert)->toBeInstanceOf(Alert::class)
+    expect($firstAlert)->toBeInstanceOf(AlertDTO::class)
         ->and($firstAlert->id)->toEqual(6774)
         ->and($firstAlert->status)->toBe('UNREAD')
         ->and($firstAlert->subject)->toBe('Transfer failed-Insufficient Funds');
@@ -1147,7 +1147,7 @@ it('can delete alerts successfully', function () {
 
     expect($deleteAlertsDto)->toBeInstanceOf(DeleteAlertsResponseDTO::class)
         ->and($deleteAlertsDto->result)->toBe('SUCCESS')
-        ->and($deleteAlertsDto->failedAlerts)->toBeInstanceOf(FailedAlerts::class)
+        ->and($deleteAlertsDto->failedAlerts)->toBeInstanceOf(FailedAlertsDTO::class)
         ->and($deleteAlertsDto->failedAlerts->alertId)->toEqual([6772, 6774]);
 });
 
