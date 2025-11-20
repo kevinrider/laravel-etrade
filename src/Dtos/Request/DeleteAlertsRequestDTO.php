@@ -4,7 +4,7 @@ namespace KevinRider\LaravelEtrade\Dtos\Request;
 
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
-class DeleteAlertRequestDTO extends BaseDTO
+class DeleteAlertsRequestDTO extends BaseDTO
 {
     /**
      * @var array<int|string>
