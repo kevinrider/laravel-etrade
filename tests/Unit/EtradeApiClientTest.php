@@ -1,13 +1,26 @@
 <?php
 
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Alerts\Alert;
+use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlerts;
+use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
@@ -17,13 +30,8 @@ use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\ProductDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\QuickViewDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
-use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
-use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\EtradeConfig;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Carbon;
 
 beforeEach(function () {
     \Config::set('laravel-etrade.oauth_request_token_key', 'etrade.oauth.request_token');
@@ -970,4 +978,221 @@ it('throws exception if viewing portfolio when no token is cached', function () 
     expect(function () use ($etradeClient, $viewPortfolioRequestDto) {
         $etradeClient->getViewPortfolio($viewPortfolioRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can list alerts successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/ListAlertsResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listAlertsRequestDto = new ListAlertsRequestDTO([
+        'count' => 3,
+        'status' => 'UNREAD',
+    ]);
+
+    $alertsDto = $etradeClient->getAlerts($listAlertsRequestDto);
+
+    expect($alertsDto)->toBeInstanceOf(ListAlertsResponseDTO::class)
+        ->and($alertsDto->totalAlerts)->toEqual(148)
+        ->and($alertsDto->alerts)->toHaveCount(9);
+
+    $firstAlert = $alertsDto->alerts[0];
+    expect($firstAlert)->toBeInstanceOf(Alert::class)
+        ->and($firstAlert->id)->toEqual(6774)
+        ->and($firstAlert->status)->toBe('UNREAD')
+        ->and($firstAlert->subject)->toBe('Transfer failed-Insufficient Funds');
+});
+
+it('throws exception on non-200 response when listing alerts', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getAlerts(new ListAlertsRequestDTO());
+    })->toThrow(EtradeApiException::class, 'Failed to list alerts');
+});
+
+it('can list alert details successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/ListAlertDetailsResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listAlertDetailsRequestDto = new ListAlertDetailsRequestDTO([
+        'alertId' => 6773,
+        'htmlTags' => true,
+    ]);
+
+    $alertDetailsDto = $etradeClient->getAlertDetails($listAlertDetailsRequestDto);
+
+    expect($alertDetailsDto)->toBeInstanceOf(ListAlertDetailsResponseDTO::class)
+        ->and($alertDetailsDto->subject)->toBe('AAPL down by at least 2.00%')
+        ->and($alertDetailsDto->symbol)->toBe('AAPL')
+        ->and($alertDetailsDto->next)->toBe('https://api.etrade.com/v1/user/alerts/6772')
+        ->and($alertDetailsDto->prev)->toBe('https://api.etrade.com/v1/user/alerts/6774');
+});
+
+it('throws exception if alert id is missing when requesting alert details', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getAlertDetails(new ListAlertDetailsRequestDTO());
+    })->toThrow(EtradeApiException::class, 'alertId is required!');
+});
+
+it('throws exception on non-200 response when requesting alert details', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listAlertDetailsRequestDto = new ListAlertDetailsRequestDTO([
+        'alertId' => 6773,
+    ]);
+
+    expect(function () use ($etradeClient, $listAlertDetailsRequestDto) {
+        $etradeClient->getAlertDetails($listAlertDetailsRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to get alert details');
+});
+
+it('can delete alerts successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/DeleteAlertsResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('delete')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $deleteAlertRequestDto = new DeleteAlertsRequestDTO([
+        'alertIds' => [6772, 6774],
+    ]);
+
+    $deleteAlertsDto = $etradeClient->deleteAlerts($deleteAlertRequestDto);
+
+    expect($deleteAlertsDto)->toBeInstanceOf(DeleteAlertsResponseDTO::class)
+        ->and($deleteAlertsDto->result)->toBe('SUCCESS')
+        ->and($deleteAlertsDto->failedAlerts)->toBeInstanceOf(FailedAlerts::class)
+        ->and($deleteAlertsDto->failedAlerts->alertId)->toEqual([6772, 6774]);
+});
+
+it('throws exception if delete alerts has no alert ids', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->deleteAlerts(new DeleteAlertsRequestDTO());
+    })->toThrow(EtradeApiException::class, 'At least one alertId is required!');
+});
+
+it('throws exception on non-200 response when deleting alerts', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('delete')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $deleteAlertRequestDto = new DeleteAlertsRequestDTO([
+        'alertIds' => [6772,6774],
+    ]);
+
+    expect(function () use ($etradeClient, $deleteAlertRequestDto) {
+        $etradeClient->deleteAlerts($deleteAlertRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to delete alerts');
 });
