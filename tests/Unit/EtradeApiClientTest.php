@@ -1003,7 +1003,7 @@ it('can get quotes successfully', function () {
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
     $getQuotesRequestDto = new GetQuotesRequestDTO([
-        'symbols' => $symbol,
+        'symbols' => [$symbol],
         'detailFlag' => 'ALL',
         'requireEarningsDate' => true,
     ]);
@@ -1050,7 +1050,7 @@ it('can get multi quotes successfully', function () {
     $googSymbol = 'GOOG';
     $tslaSymbol = 'TSLA';
     $getQuotesRequestDto = new GetQuotesRequestDTO([
-        'symbols' => implode(',', [$googSymbol, $tslaSymbol]),
+        'symbols' => [$googSymbol, $tslaSymbol],
         'detailFlag' => 'ALL',
         'requireEarningsDate' => true,
     ]);
@@ -1154,7 +1154,7 @@ it('throws exception on non-200 response for get quotes', function () {
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
     $getQuotesRequestDto = new GetQuotesRequestDTO([
-        'symbols' => 'GOOG',
+        'symbols' => ['GOOG'],
     ]);
 
     expect(function () use ($etradeClient, $getQuotesRequestDto) {
@@ -1167,7 +1167,7 @@ it('throws exception if getting quotes when no token is cached', function () {
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
     $getQuotesRequestDto = new GetQuotesRequestDTO([
-        'symbols' => 'GOOG',
+        'symbols' => ['GOOG'],
     ]);
 
     expect(function () use ($etradeClient, $getQuotesRequestDto) {

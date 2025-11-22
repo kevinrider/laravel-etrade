@@ -13,9 +13,17 @@ class GetQuotesRequestDTO extends BaseDTO
         'skipMiniOptionsCheck',
     ];
 
-    public ?string $symbols = null;
+    public array $symbols = [];
     public ?string $detailFlag = null;
     public ?bool $requireEarningsDate = null;
     public ?bool $overrideSymbolCount = null;
     public ?bool $skipMiniOptionsCheck = null;
+
+    /**
+     * @return string
+     */
+    public function getSymbols(): string
+    {
+        return implode(',', $this->symbols);
+    }
 }

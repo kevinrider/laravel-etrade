@@ -454,7 +454,7 @@ class EtradeApiClient
      */
     public function getQuotes(GetQuotesRequestDTO $getQuotesRequestDTO): GetQuotesResponseDTO
     {
-        if (!isset($getQuotesRequestDTO->symbols)) {
+        if (empty($getQuotesRequestDTO->symbols)) {
             throw new EtradeApiException('symbols is required!');
         }
 
@@ -465,7 +465,7 @@ class EtradeApiClient
             'token_secret' => $accessTokenDTO->oauthTokenSecret,
         ]);
 
-        $uri = str_replace('{symbols}', $getQuotesRequestDTO->symbols, EtradeConfig::MARKET_QUOTES);
+        $uri = str_replace('{symbols}', $getQuotesRequestDTO->getSymbols(), EtradeConfig::MARKET_QUOTES);
 
         $queryParams = [];
         foreach (GetQuotesRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
