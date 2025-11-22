@@ -14,6 +14,7 @@ use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\GetQuotesResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
@@ -24,6 +25,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
@@ -442,6 +444,43 @@ class EtradeApiClient
         }
 
         return DeleteAlertsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param GetQuotesRequestDTO $getQuotesRequestDTO
+     * @return GetQuotesResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getQuotes(GetQuotesRequestDTO $getQuotesRequestDTO): GetQuotesResponseDTO
+    {
+        if (!isset($getQuotesRequestDTO->symbols)) {
+            throw new EtradeApiException('symbols is required!');
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace('{symbols}', $getQuotesRequestDTO->symbols, EtradeConfig::MARKET_QUOTES);
+
+        $queryParams = [];
+        foreach (GetQuotesRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($getQuotesRequestDTO->$param)) {
+                $queryParams[$param] = $this->normalizeQueryParamValue($getQuotesRequestDTO->$param);
+            }
+        }
+
+        $response = $this->client->get($uri, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get quotes');
+        }
+
+        return GetQuotesResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
