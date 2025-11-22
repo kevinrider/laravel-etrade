@@ -3,6 +3,7 @@
 namespace KevinRider\LaravelEtrade\Dtos;
 
 use KevinRider\LaravelEtrade\Dtos\Quotes\MessagesDTO;
+use KevinRider\LaravelEtrade\Dtos\Quotes\ProductDTO;
 use KevinRider\LaravelEtrade\Dtos\Quotes\QuoteDataDTO;
 
 class GetQuotesResponseDTO extends BaseDTO
@@ -35,6 +36,12 @@ class GetQuotesResponseDTO extends BaseDTO
         }
 
         parent::fill($data);
+        $array = [];
+        foreach ($this->quoteData as $quoteDatum) {
+            $key = $quoteDatum->product->securityType != ProductDTO::SECURITY_TYPE_OPTION ? $quoteDatum->product->symbol : ProductDTO::optionToSymbol($quoteDatum->product);
+            $array[$key] = $quoteDatum;
+        }
+        $this->quoteData = $array;
     }
 
     /**
