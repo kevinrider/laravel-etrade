@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QuoteResponse>
+    <QuoteData>
+        <dateTime>15:17:00 EDT 06-20-2018</dateTime>
+        <dateTimeUTC>1529522220</dateTimeUTC>
+        <quoteStatus>DELAYED</quoteStatus>
+        <ahFlag>false</ahFlag>
+        <hasMiniOptions>false</hasMiniOptions>
+        <All>
+            <adjustedFlag>false</adjustedFlag>
+            <ask>1175.79</ask>
+            <askSize>100</askSize>
+            <askTime>15:17:00 EDT 06-20-2018</askTime>
+            <bid>1175.29</bid>
+            <bidExchange />
+            <bidSize>100</bidSize>
+            <bidTime>15:17:00 EDT 06-20-2018</bidTime>
+            <changeClose>7.68</changeClose>
+            <changeClosePercentage>0.66</changeClosePercentage>
+            <companyName>ALPHABET INC CAP STK CL C</companyName>
+            <daysToExpiration>0</daysToExpiration>
+            <dirLast>2</dirLast>
+            <dividend>0.0</dividend>
+            <eps>23.5639</eps>
+            <estEarnings>43.981</estEarnings>
+            <exDividendDate>1430163144</exDividendDate>
+            <high>1186.2856</high>
+            <high52>1186.89</high52>
+            <lastTrade>1175.74</lastTrade>
+            <low>1171.76</low>
+            <low52>894.79</low52>
+            <open>1175.31</open>
+            <openInterest>0</openInterest>
+            <optionStyle />
+            <optionUnderlier />
+            <previousClose>1168.06</previousClose>
+            <previousDayVolume>1620909</previousDayVolume>
+            <primaryExchange>NSDQ</primaryExchange>
+            <symbolDescription>ALPHABET INC CAP STK CL C</symbolDescription>
+            <totalVolume>1167544</totalVolume>
+            <upc>0</upc>
+            <cashDeliverable>0</cashDeliverable>
+            <marketCap>410276824480.00</marketCap>
+            <sharesOutstanding>348952000</sharesOutstanding>
+            <nextEarningDate />
+            <beta>1.4</beta>
+            <yield>0.0</yield>
+            <declaredDividend>0.0</declaredDividend>
+            <dividendPayableDate>1430767944</dividendPayableDate>
+            <pe>49.57</pe>
+            <week52LowDate>1499110344</week52LowDate>
+            <week52HiDate>1517257944</week52HiDate>
+            <intrinsicValue>0.0</intrinsicValue>
+            <timePremium>0.0</timePremium>
+            <optionMultiplier>0.0</optionMultiplier>
+            <contractSize>0.0</contractSize>
+            <expirationDate>0</expirationDate>
+            <timeOfLastTrade>1529522220</timeOfLastTrade>
+            <averageVolume>1451490</averageVolume>
+        </All>
+        <Product>
+            <securityType>EQ</securityType>
+            <symbol>GOOG</symbol>
+        </Product>
+    </QuoteData>
+</QuoteResponse>
