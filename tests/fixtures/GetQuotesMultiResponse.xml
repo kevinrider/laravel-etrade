@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QuoteResponse>
+    <QuoteData>
+        <dateTime>15:17:00 EDT 06-20-2018</dateTime>
+        <dateTimeUTC>1529522220</dateTimeUTC>
+        <quoteStatus>DELAYED</quoteStatus>
+        <ahFlag>false</ahFlag>
+        <hasMiniOptions>false</hasMiniOptions>
+        <All>
+            <adjustedFlag>false</adjustedFlag>
+            <ask>1175.79</ask>
+            <askSize>100</askSize>
+            <askTime>15:17:00 EDT 06-20-2018</askTime>
+            <bid>1175.29</bid>
+            <bidExchange />
+            <bidSize>100</bidSize>
+            <bidTime>15:17:00 EDT 06-20-2018</bidTime>
+            <changeClose>7.68</changeClose>
+            <changeClosePercentage>0.66</changeClosePercentage>
+            <companyName>ALPHABET INC CAP STK CL C</companyName>
+            <daysToExpiration>0</daysToExpiration>
+            <dirLast>2</dirLast>
+            <dividend>0.0</dividend>
+            <eps>23.5639</eps>
+            <estEarnings>43.981</estEarnings>
+            <exDividendDate>1430163144</exDividendDate>
+            <high>1186.2856</high>
+            <high52>1186.89</high52>
+            <lastTrade>1175.74</lastTrade>
+            <low>1171.76</low>
+            <low52>894.79</low52>
+            <open>1175.31</open>
+            <openInterest>0</openInterest>
+            <optionStyle />
+            <optionUnderlier />
+            <previousClose>1168.06</previousClose>
+            <previousDayVolume>1620909</previousDayVolume>
+            <primaryExchange>NSDQ</primaryExchange>
+            <symbolDescription>ALPHABET INC CAP STK CL C</symbolDescription>
+            <totalVolume>1167544</totalVolume>
+            <upc>0</upc>
+            <cashDeliverable>0</cashDeliverable>
+            <marketCap>410276824480.00</marketCap>
+            <sharesOutstanding>348952000</sharesOutstanding>
+            <nextEarningDate />
+            <beta>1.4</beta>
+            <yield>0.0</yield>
+            <declaredDividend>0.0</declaredDividend>
+            <dividendPayableDate>1430767944</dividendPayableDate>
+            <pe>49.57</pe>
+            <week52LowDate>1499110344</week52LowDate>
+            <week52HiDate>1517257944</week52HiDate>
+            <intrinsicValue>0.0</intrinsicValue>
+            <timePremium>0.0</timePremium>
+            <optionMultiplier>0.0</optionMultiplier>
+            <contractSize>0.0</contractSize>
+            <expirationDate>0</expirationDate>
+            <timeOfLastTrade>1529522220</timeOfLastTrade>
+            <averageVolume>1451490</averageVolume>
+        </All>
+        <Fundamental>
+            <declaredDividend>0.0</declaredDividend>
+            <dividend>0.0</dividend>
+            <dividendPayableDate>1430767944</dividendPayableDate>
+            <eps>23.5639</eps>
+            <estEarnings>43.981</estEarnings>
+            <exDividendDate>1430163144</exDividendDate>
+            <high52>1186.89</high52>
+            <lastTrade>1175.74</lastTrade>
+            <low52>894.79</low52>
+            <marketCap>410276824480.00</marketCap>
+            <nextEarningDate />
+            <pe>49.57</pe>
+            <sharesOutstanding>348952000</sharesOutstanding>
+            <symbolDescription>ALPHABET INC CAP STK CL C</symbolDescription>
+            <totalVolume>1167544</totalVolume>
+            <week52HiDate>1517257944</week52HiDate>
+            <week52LowDate>1499110344</week52LowDate>
+            <yield>0.0</yield>
+        </Fundamental>
+        <Intraday>
+            <ask>1175.79</ask>
+            <bid>1175.29</bid>
+            <changeClose>7.68</changeClose>
+            <changeClosePercentage>0.66</changeClosePercentage>
+            <high>1186.2856</high>
+            <lastTrade>1175.74</lastTrade>
+            <low>1171.76</low>
+            <totalVolume>1167544</totalVolume>
+        </Intraday>
+        <Option>
+            <ask>10.0</ask>
+            <askSize>10</askSize>
+            <bid>9.8</bid>
+            <bidSize>5</bidSize>
+            <change>0.5</change>
+            <changePct>5.26</changePct>
+            <delta>0.45</delta>
+            <gamma>0.05</gamma>
+            <iv>0.3</iv>
+            <lastTrade>9.9</lastTrade>
+            <openInterest>1000</openInterest>
+            <rho>0.02</rho>
+            <theta>-0.01</theta>
+            <vega>0.1</vega>
+            <volume>500</volume>
+        </Option>
+        <Week52>
+            <high52>1186.89</high52>
+            <low52>894.79</low52>
+            <week52HiDate>1517257944</week52HiDate>
+            <week52LowDate>1499110344</week52LowDate>
+        </Week52>
+        <MutualFund>
+            <cusip>02079K107</cusip>
+            <symbolDescription>ALPHABET INC CAP STK CL C</symbolDescription>
+            <fundFamily>Alphabet Inc.</fundFamily>
+            <fundName>Alphabet Inc. Capital Stock Class C</fundName>
+            <netAssetValue>1175.74</netAssetValue>
+            <publicOfferPrice>1175.74</publicOfferPrice>
+            <changeClose>7.68</changeClose>
+            <previousClose>1168.06</previousClose>
+            <transactionFee>0.0</transactionFee>
+            <earlyRedemptionFee>0.0</earlyRedemptionFee>
+            <availability>Available</availability>
+            <initialInvestment>1000.0</initialInvestment>
+            <subsequentInvestment>100.0</subsequentInvestment>
+            <fundInceptionDate>1395888000</fundInceptionDate>
+            <totalNetAssets>410276824480.00</totalNetAssets>
+            <netExpenseRatio>0.0</netExpenseRatio>
+            <grossExpenseRatio>0.0</grossExpenseRatio>
+        </MutualFund>
+        <Product>
+            <securityType>EQ</securityType>
+            <symbol>GOOG</symbol>
+        </Product>
+    </QuoteData>
+    <QuoteData>
+        <dateTime>16:00:00 EDT 06-20-2018</dateTime>
+        <dateTimeUTC>1529524800</dateTimeUTC>
+        <quoteStatus>REALTIME</quoteStatus>
+        <ahFlag>true</ahFlag>
+        <hasMiniOptions>true</hasMiniOptions>
+        <All>
+            <adjustedFlag>false</adjustedFlag>
+            <ask>2150.50</ask>
+            <askSize>200</askSize>
+            <askTime>16:00:00 EDT 06-20-2018</askTime>
+            <bid>2150.00</bid>
+            <bidExchange />
+            <bidSize>200</bidSize>
+            <bidTime>16:00:00 EDT 06-20-2018</bidTime>
+            <changeClose>25.00</changeClose>
+            <changeClosePercentage>1.18</changeClosePercentage>
+            <companyName>TESLA INC</companyName>
+            <daysToExpiration>0</daysToExpiration>
+            <dirLast>1</dirLast>
+            <dividend>0.0</dividend>
+            <eps>5.00</eps>
+            <estEarnings>7.50</estEarnings>
+            <exDividendDate>1583020800</exDividendDate>
+            <high>2160.00</high>
+            <high52>2200.00</high52>
+            <lastTrade>2150.25</lastTrade>
+            <low>2140.00</low>
+            <low52>350.00</low52>
+            <open>2145.00</open>
+            <openInterest>0</openInterest>
+            <optionStyle />
+            <optionUnderlier />
+            <previousClose>2125.25</previousClose>
+            <previousDayVolume>10000000</previousDayVolume>
+            <primaryExchange>NSDQ</primaryExchange>
+            <symbolDescription>TESLA INC</symbolDescription>
+            <totalVolume>15000000</totalVolume>
+            <upc>0</upc>
+            <cashDeliverable>0</cashDeliverable>
+            <marketCap>2000000000000.00</marketCap>
+            <sharesOutstanding>1000000000</sharesOutstanding>
+            <nextEarningDate />
+            <beta>1.2</beta>
+            <yield>0.0</yield>
+            <declaredDividend>0.0</declaredDividend>
+            <dividendPayableDate>1583020800</dividendPayableDate>
+            <pe>430.05</pe>
+            <week52LowDate>1560988800</week52LowDate>
+            <week52HiDate>1592611200</week52HiDate>
+            <intrinsicValue>0.0</intrinsicValue>
+            <timePremium>0.0</timePremium>
+            <optionMultiplier>0.0</optionMultiplier>
+            <contractSize>0.0</contractSize>
+            <expirationDate>0</expirationDate>
+            <timeOfLastTrade>1529524800</timeOfLastTrade>
+            <averageVolume>12000000</averageVolume>
+        </All>
+        <Fundamental>
+            <declaredDividend>0.0</declaredDividend>
+            <dividend>0.0</dividend>
+            <dividendPayableDate>1583020800</dividendPayableDate>
+            <eps>5.00</eps>
+            <estEarnings>7.50</estEarnings>
+            <exDividendDate>1583020800</exDividendDate>
+            <high52>2200.00</high52>
+            <lastTrade>2150.25</lastTrade>
+            <low52>350.00</low52>
+            <marketCap>2000000000000.00</marketCap>
+            <nextEarningDate />
+            <pe>430.05</pe>
+            <sharesOutstanding>1000000000</sharesOutstanding>
+            <symbolDescription>TESLA INC</symbolDescription>
+            <totalVolume>15000000</totalVolume>
+            <week52HiDate>1592611200</week52HiDate>
+            <week52LowDate>1560988800</week52LowDate>
+            <yield>0.0</yield>
+        </Fundamental>
+        <Intraday>
+            <ask>2150.50</ask>
+            <bid>2150.00</bid>
+            <changeClose>25.00</changeClose>
+            <changeClosePercentage>1.18</changeClosePercentage>
+            <high>2160.00</high>
+            <lastTrade>2150.25</lastTrade>
+            <low>2140.00</low>
+            <totalVolume>15000000</totalVolume>
+        </Intraday>
+        <Option>
+            <ask>50.0</ask>
+            <askSize>20</askSize>
+            <bid>49.8</bid>
+            <bidSize>15</bidSize>
+            <change>2.5</change>
+            <changePct>5.26</changePct>
+            <delta>0.6</delta>
+            <gamma>0.02</gamma>
+            <iv>0.5</iv>
+            <lastTrade>49.9</lastTrade>
+            <openInterest>2000</openInterest>
+            <rho>0.04</rho>
+            <theta>-0.02</theta>
+            <vega>0.2</vega>
+            <volume>1000</volume>
+        </Option>
+        <Week52>
+            <high52>2200.00</high52>
+            <low52>350.00</low52>
+            <week52HiDate>1592611200</week52HiDate>
+            <week52LowDate>1560988800</week52LowDate>
+        </Week52>
+        <MutualFund>
+            <cusip>88160R101</cusip>
+            <symbolDescription>TESLA INC</symbolDescription>
+            <fundFamily>Tesla, Inc.</fundFamily>
+            <fundName>Tesla, Inc.</fundName>
+            <netAssetValue>2150.25</netAssetValue>
+            <publicOfferPrice>2150.25</publicOfferPrice>
+            <changeClose>25.00</changeClose>
+            <previousClose>2125.25</previousClose>
+            <transactionFee>0.0</transactionFee>
+            <earlyRedemptionFee>0.0</earlyRedemptionFee>
+            <availability>Available</availability>
+            <initialInvestment>1000.0</initialInvestment>
+            <subsequentInvestment>100.0</subsequentInvestment>
+            <fundInceptionDate>1277779200</fundInceptionDate>
+            <totalNetAssets>2000000000000.00</totalNetAssets>
+            <netExpenseRatio>0.0</netExpenseRatio>
+            <grossExpenseRatio>0.0</grossExpenseRatio>
+        </MutualFund>
+        <Product>
+            <securityType>EQ</securityType>
+            <symbol>TSLA</symbol>
+        </Product>
+    </QuoteData>
+</QuoteResponse>

@@ -1027,6 +1027,103 @@ it('can get quotes successfully', function () {
         ->and($quote->all->primaryExchange)->toBe('NSDQ');
 });
 
+it('can get multi quotes successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/GetQuotesMultiResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getQuotesRequestDto = new GetQuotesRequestDTO([
+        'symbols' => 'GOOG,TSLA',
+        'detailFlag' => 'ALL',
+        'requireEarningsDate' => true,
+    ]);
+
+    $quotesResponse = $etradeClient->getQuotes($getQuotesRequestDto);
+
+    expect($quotesResponse)->toBeInstanceOf(GetQuotesResponseDTO::class)
+        ->and($quotesResponse->quoteData)->toHaveCount(2);
+
+    $googQuote = $quotesResponse->quoteData[0];
+    expect($googQuote->dateTime)->toBe('15:17:00 EDT 06-20-2018')
+        ->and($googQuote->dateTimeUTC)->toBe(1529522220)
+        ->and($googQuote->quoteStatus)->toBe('DELAYED')
+        ->and($googQuote->ahFlag)->toBeFalse()
+        ->and($googQuote->hasMiniOptions)->toBeFalse()
+        ->and($googQuote->product->symbol)->toBe('GOOG')
+        ->and($googQuote->product->securityType)->toBe('EQ')
+        ->and($googQuote->all)->not->toBeNull()
+        ->and($googQuote->all->ask)->toBe(1175.79)
+        ->and($googQuote->all->bid)->toBe(1175.29)
+        ->and($googQuote->all->companyName)->toBe('ALPHABET INC CAP STK CL C')
+        ->and($googQuote->all->primaryExchange)->toBe('NSDQ')
+        ->and($googQuote->fundamental)->not->toBeNull()
+        ->and($googQuote->fundamental->symbolDescription)->toBe('ALPHABET INC CAP STK CL C')
+        ->and($googQuote->fundamental->eps)->toBe(23.5639)
+        ->and($googQuote->fundamental->estEarnings)->toBe(43.981)
+        ->and($googQuote->intraday)->not->toBeNull()
+        ->and($googQuote->intraday->ask)->toBe(1175.79)
+        ->and($googQuote->intraday->bid)->toBe(1175.29)
+        ->and($googQuote->intraday->lastTrade)->toBe(1175.74)
+        ->and($googQuote->option)->not->toBeNull()
+        ->and($googQuote->option->ask)->toBe(10.0)
+        ->and($googQuote->option->bid)->toBe(9.8)
+        ->and($googQuote->option->lastTrade)->toBe(9.9)
+        ->and($googQuote->week52)->not->toBeNull()
+        ->and($googQuote->week52->high52)->toBe(1186.89)
+        ->and($googQuote->week52->low52)->toBe(894.79)
+        ->and($googQuote->mutualFund)->not->toBeNull()
+        ->and($googQuote->mutualFund->cusip)->toBe('02079K107')
+        ->and($googQuote->mutualFund->fundFamily)->toBe('Alphabet Inc.')
+        ->and($googQuote->mutualFund->netAssetValue)->toBe(1175.74);
+
+    $tslaQuote = $quotesResponse->quoteData[1];
+    expect($tslaQuote->dateTime)->toBe('16:00:00 EDT 06-20-2018')
+        ->and($tslaQuote->dateTimeUTC)->toBe(1529524800)
+        ->and($tslaQuote->quoteStatus)->toBe('REALTIME')
+        ->and($tslaQuote->ahFlag)->toBeTrue()
+        ->and($tslaQuote->hasMiniOptions)->toBeTrue()
+        ->and($tslaQuote->product->symbol)->toBe('TSLA')
+        ->and($tslaQuote->product->securityType)->toBe('EQ')
+        ->and($tslaQuote->all)->not->toBeNull()
+        ->and($tslaQuote->all->ask)->toBe(2150.50)
+        ->and($tslaQuote->all->bid)->toBe(2150.00)
+        ->and($tslaQuote->all->companyName)->toBe('TESLA INC')
+        ->and($tslaQuote->all->primaryExchange)->toBe('NSDQ')
+        ->and($tslaQuote->fundamental)->not->toBeNull()
+        ->and($tslaQuote->fundamental->symbolDescription)->toBe('TESLA INC')
+        ->and($tslaQuote->fundamental->eps)->toBe(5.00)
+        ->and($tslaQuote->fundamental->estEarnings)->toBe(7.50)
+        ->and($tslaQuote->intraday)->not->toBeNull()
+        ->and($tslaQuote->intraday->ask)->toBe(2150.50)
+        ->and($tslaQuote->intraday->bid)->toBe(2150.00)
+        ->and($tslaQuote->intraday->lastTrade)->toBe(2150.25)
+        ->and($tslaQuote->option)->not->toBeNull()
+        ->and($tslaQuote->option->ask)->toBe(50.0)
+        ->and($tslaQuote->option->bid)->toBe(49.8)
+        ->and($tslaQuote->option->lastTrade)->toBe(49.9)
+        ->and($tslaQuote->week52)->not->toBeNull()
+        ->and($tslaQuote->week52->high52)->toBe(2200.00)
+        ->and($tslaQuote->week52->low52)->toBe(350.00)
+        ->and($tslaQuote->mutualFund)->not->toBeNull()
+        ->and($tslaQuote->mutualFund->cusip)->toBe('88160R101')
+        ->and($tslaQuote->mutualFund->fundFamily)->toBe('Tesla, Inc.')
+        ->and($tslaQuote->mutualFund->netAssetValue)->toBe(2150.25);
+});
+
 it('throws exception if symbols are missing when getting quotes', function () {
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
 
