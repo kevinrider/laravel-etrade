@@ -999,10 +999,11 @@ it('can get quotes successfully', function () {
     $mockGuzzleClient->shouldReceive('get')
         ->once()
         ->andReturn(new Response(200, [], $xmlResponse));
+    $symbol = 'GOOG';
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
     $getQuotesRequestDto = new GetQuotesRequestDTO([
-        'symbols' => 'GOOG',
+        'symbols' => $symbol,
         'detailFlag' => 'ALL',
         'requireEarningsDate' => true,
     ]);
@@ -1012,7 +1013,7 @@ it('can get quotes successfully', function () {
     expect($quotesResponse)->toBeInstanceOf(GetQuotesResponseDTO::class)
         ->and($quotesResponse->quoteData)->toHaveCount(1);
 
-    $quote = $quotesResponse->quoteData[0];
+    $quote = $quotesResponse->quoteData[$symbol];
     expect($quote->dateTime)->toBe('15:17:00 EDT 06-20-2018')
         ->and($quote->dateTimeUTC)->toBe(1529522220)
         ->and($quote->quoteStatus)->toBe('DELAYED')
@@ -1046,8 +1047,10 @@ it('can get multi quotes successfully', function () {
         ->andReturn(new Response(200, [], $xmlResponse));
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $googSymbol = 'GOOG';
+    $tslaSymbol = 'TSLA';
     $getQuotesRequestDto = new GetQuotesRequestDTO([
-        'symbols' => 'GOOG,TSLA',
+        'symbols' => implode(',', [$googSymbol, $tslaSymbol]),
         'detailFlag' => 'ALL',
         'requireEarningsDate' => true,
     ]);
@@ -1057,7 +1060,7 @@ it('can get multi quotes successfully', function () {
     expect($quotesResponse)->toBeInstanceOf(GetQuotesResponseDTO::class)
         ->and($quotesResponse->quoteData)->toHaveCount(2);
 
-    $googQuote = $quotesResponse->quoteData[0];
+    $googQuote = $quotesResponse->quoteData[$googSymbol];
     expect($googQuote->dateTime)->toBe('15:17:00 EDT 06-20-2018')
         ->and($googQuote->dateTimeUTC)->toBe(1529522220)
         ->and($googQuote->quoteStatus)->toBe('DELAYED')
@@ -1090,7 +1093,7 @@ it('can get multi quotes successfully', function () {
         ->and($googQuote->mutualFund->fundFamily)->toBe('Alphabet Inc.')
         ->and($googQuote->mutualFund->netAssetValue)->toBe(1175.74);
 
-    $tslaQuote = $quotesResponse->quoteData[1];
+    $tslaQuote = $quotesResponse->quoteData[$tslaSymbol];
     expect($tslaQuote->dateTime)->toBe('16:00:00 EDT 06-20-2018')
         ->and($tslaQuote->dateTimeUTC)->toBe(1529524800)
         ->and($tslaQuote->quoteStatus)->toBe('REALTIME')
