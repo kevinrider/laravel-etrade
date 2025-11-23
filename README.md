@@ -12,7 +12,7 @@ This package aims to provide a robust and easy-to-use client for the ETrade API 
     - ✅ Accounts (GetAccountList, GetAccountBalance, GetAccountTransactions, GetAccountTransactionDetails, GetAccountPorfolio)
     - ✅ Alerts (AlertsList, AlertsListDetails, AlertsDelete)
 
-    -  ❌ Market (MarketGetQuotes, MarketLookUp, MarketGetOptionChain, MarketGetOptionExp)
+    - ✅ Market (MarketGetQuotes, MarketLookUp, MarketGetOptionChain, MarketGetOptionExp)
     -  ❌ Order (ListOrders, PreviewOrder, PlaceOrder, ChangePreviewOrder, PlaceChangeOrder, CancelOrder)
 
 ## Key Technologies
