@@ -19,13 +19,19 @@ use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\LookupResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OptionChainResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OptionExpireDateResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetOptionChainsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
@@ -444,6 +450,106 @@ class EtradeApiClient
         }
 
         return DeleteAlertsResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param LookupRequestDTO $lookupRequestDTO
+     * @return LookupResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function lookupProduct(LookupRequestDTO $lookupRequestDTO): LookupResponseDTO
+    {
+        if (empty($lookupRequestDTO->search)) {
+            throw new EtradeApiException('search is required!');
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace('{search}', $lookupRequestDTO->search, EtradeConfig::MARKET_LOOKUP);
+
+        $response = $this->client->get($uri);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to lookup product');
+        }
+
+        return LookupResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param GetOptionChainsRequestDTO $getOptionChainsRequestDTO
+     * @return OptionChainResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getOptionChains(GetOptionChainsRequestDTO $getOptionChainsRequestDTO): OptionChainResponseDTO
+    {
+        if (empty($getOptionChainsRequestDTO->symbol)) {
+            throw new EtradeApiException('symbol is required!');
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $queryParams = [];
+        foreach (GetOptionChainsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($getOptionChainsRequestDTO->$param)) {
+                $queryParams[$param] = $this->normalizeQueryParamValue($getOptionChainsRequestDTO->$param);
+            }
+        }
+
+        $response = $this->client->get(EtradeConfig::MARKET_OPTION_CHAINS, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get option chains');
+        }
+
+        return OptionChainResponseDTO::fromXml($response->getBody()->getContents());
+    }
+
+    /**
+     * @param GetOptionExpireDatesRequestDTO $getOptionExpireDatesRequestDTO
+     * @return OptionExpireDateResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function getOptionExpireDates(GetOptionExpireDatesRequestDTO $getOptionExpireDatesRequestDTO): OptionExpireDateResponseDTO
+    {
+        if (empty($getOptionExpireDatesRequestDTO->symbol)) {
+            throw new EtradeApiException('symbol is required!');
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $queryParams = [];
+        foreach (GetOptionExpireDatesRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
+            if (isset($getOptionExpireDatesRequestDTO->$param)) {
+                $queryParams[$param] = $this->normalizeQueryParamValue($getOptionExpireDatesRequestDTO->$param);
+            }
+        }
+
+        $response = $this->client->get(EtradeConfig::MARKET_OPTION_EXPIRY, ['query' => $queryParams]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to get option expiration dates');
+        }
+
+        return OptionExpireDateResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
