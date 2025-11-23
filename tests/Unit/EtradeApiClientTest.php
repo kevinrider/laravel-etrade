@@ -8,23 +8,35 @@ use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Alerts\AlertDTO;
 use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlertsDTO;
-use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
 use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\GetQuotesResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\LookupProduct\DataDTO;
+use KevinRider\LaravelEtrade\Dtos\LookupResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OptionChainResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OptionExpireDateResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Options\ExpirationDateDTO;
+use KevinRider\LaravelEtrade\Dtos\Options\OptionChainPairDTO;
+use KevinRider\LaravelEtrade\Dtos\Options\OptionDetailsDTO;
+use KevinRider\LaravelEtrade\Dtos\Options\OptionGreeksDTO;
+use KevinRider\LaravelEtrade\Dtos\Options\SelectedEDDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetOptionChainsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\BrokerageDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\CategoryDTO;
@@ -1172,6 +1184,270 @@ it('throws exception if getting quotes when no token is cached', function () {
 
     expect(function () use ($etradeClient, $getQuotesRequestDto) {
         $etradeClient->getQuotes($getQuotesRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can lookup products successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/LookupResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $lookupRequestDto = new LookupRequestDTO([
+        'search' => 'a',
+    ]);
+
+    $lookupResponseDto = $etradeClient->lookupProduct($lookupRequestDto);
+
+    expect($lookupResponseDto)->toBeInstanceOf(LookupResponseDTO::class)
+        ->and($lookupResponseDto->data)->toHaveCount(3);
+
+    $first = $lookupResponseDto->data[0];
+    expect($first)->toBeInstanceOf(DataDTO::class)
+        ->and($first->symbol)->toBe('A')
+        ->and($first->description)->toBe('AGILENT TECHNOLOGIES INC COM')
+        ->and($first->type)->toBe('EQUITY');
+});
+
+it('throws exception if search is missing when looking up products', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->lookupProduct(new LookupRequestDTO());
+    })->toThrow(EtradeApiException::class, 'search is required!');
+});
+
+it('throws exception on non-200 response for lookup product', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $lookupRequestDto = new LookupRequestDTO([
+        'search' => 'a',
+    ]);
+
+    expect(function () use ($etradeClient, $lookupRequestDto) {
+        $etradeClient->lookupProduct($lookupRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to lookup product');
+});
+
+it('throws exception if looking up product when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $lookupRequestDto = new LookupRequestDTO([
+        'search' => 'a',
+    ]);
+
+    expect(function () use ($etradeClient, $lookupRequestDto) {
+        $etradeClient->lookupProduct($lookupRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can get option chains successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/OptionChainResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getOptionChainsRequestDto = new GetOptionChainsRequestDTO([
+        'symbol' => 'IBM',
+        'expiryYear' => 2018,
+        'expiryMonth' => 8,
+        'strikePriceNear' => 200,
+        'noOfStrikes' => 2,
+    ]);
+
+    $optionChainsResponse = $etradeClient->getOptionChains($getOptionChainsRequestDto);
+
+    expect($optionChainsResponse)->toBeInstanceOf(OptionChainResponseDTO::class)
+        ->and($optionChainsResponse->optionPairs)->toHaveCount(2)
+        ->and($optionChainsResponse->nearPrice)->toBe(200.0)
+        ->and($optionChainsResponse->timeStamp)->toBe(1529430420)
+        ->and($optionChainsResponse->quoteType)->toBe('DELAYED')
+        ->and($optionChainsResponse->selected)->toBeInstanceOf(SelectedEDDTO::class)
+        ->and($optionChainsResponse->selected->day)->toBe(17)
+        ->and($optionChainsResponse->selected->month)->toBe(8)
+        ->and($optionChainsResponse->selected->year)->toBe(2018);
+
+    $firstPair = $optionChainsResponse->optionPairs[0];
+    expect($firstPair)->toBeInstanceOf(OptionChainPairDTO::class)
+        ->and($firstPair->call)->toBeInstanceOf(OptionDetailsDTO::class)
+        ->and($firstPair->put)->toBeInstanceOf(OptionDetailsDTO::class)
+        ->and($firstPair->call->optionGreek)->toBeInstanceOf(OptionGreeksDTO::class)
+        ->and($firstPair->call->optionGreek->delta)->toBe(0.0049)
+        ->and($firstPair->put->optionGreek->rho)->toBe(-0.2782);
+});
+
+it('throws exception if symbol is missing when getting option chains', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getOptionChains(new GetOptionChainsRequestDTO());
+    })->toThrow(EtradeApiException::class, 'symbol is required!');
+});
+
+it('throws exception on non-200 response for get option chains', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getOptionChainsRequestDto = new GetOptionChainsRequestDTO([
+        'symbol' => 'IBM',
+    ]);
+
+    expect(function () use ($etradeClient, $getOptionChainsRequestDto) {
+        $etradeClient->getOptionChains($getOptionChainsRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to get option chains');
+});
+
+it('throws exception if getting option chains when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getOptionChainsRequestDto = new GetOptionChainsRequestDTO([
+        'symbol' => 'IBM',
+    ]);
+
+    expect(function () use ($etradeClient, $getOptionChainsRequestDto) {
+        $etradeClient->getOptionChains($getOptionChainsRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can get option expire dates successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/OptionExpireDateResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getOptionExpireDatesRequestDto = new GetOptionExpireDatesRequestDTO([
+        'symbol' => 'GOOG',
+        'expiryType' => 'ALL',
+    ]);
+
+    $optionExpireResponse = $etradeClient->getOptionExpireDates($getOptionExpireDatesRequestDto);
+
+    expect($optionExpireResponse)->toBeInstanceOf(OptionExpireDateResponseDTO::class)
+        ->and($optionExpireResponse->expirationDates)->toHaveCount(3);
+
+    $firstExpiration = $optionExpireResponse->expirationDates[0];
+    expect($firstExpiration)->toBeInstanceOf(ExpirationDateDTO::class)
+        ->and($firstExpiration->year)->toBe(2018)
+        ->and($firstExpiration->month)->toBe(6)
+        ->and($firstExpiration->day)->toBe(22)
+        ->and($firstExpiration->expiryType)->toBe('WEEKLY');
+});
+
+it('throws exception if symbol is missing when getting option expire dates', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->getOptionExpireDates(new GetOptionExpireDatesRequestDTO());
+    })->toThrow(EtradeApiException::class, 'symbol is required!');
+});
+
+it('throws exception on non-200 response for get option expire dates', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getOptionExpireDatesRequestDto = new GetOptionExpireDatesRequestDTO([
+        'symbol' => 'GOOG',
+    ]);
+
+    expect(function () use ($etradeClient, $getOptionExpireDatesRequestDto) {
+        $etradeClient->getOptionExpireDates($getOptionExpireDatesRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to get option expiration dates');
+});
+
+it('throws exception if getting option expire dates when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $getOptionExpireDatesRequestDto = new GetOptionExpireDatesRequestDTO([
+        'symbol' => 'GOOG',
+    ]);
+
+    expect(function () use ($etradeClient, $getOptionExpireDatesRequestDto) {
+        $etradeClient->getOptionExpireDates($getOptionExpireDatesRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
 
