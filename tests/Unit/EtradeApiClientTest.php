@@ -18,15 +18,21 @@ use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\LookupProduct\DataDTO;
 use KevinRider\LaravelEtrade\Dtos\LookupResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\OptionChainResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\OptionExpireDateResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\LookupProduct\DataDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\ExpirationDateDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionChainPairDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionDetailsDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionGreeksDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\SelectedEDDTO;
+use KevinRider\LaravelEtrade\Dtos\OrdersResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListOrders\InstrumentDTO;
+use KevinRider\LaravelEtrade\Dtos\ListOrders\LotDTO;
+use KevinRider\LaravelEtrade\Dtos\ListOrders\OrderDTO;
+use KevinRider\LaravelEtrade\Dtos\ListOrders\OrderDetailDTO;
+use KevinRider\LaravelEtrade\Dtos\ListOrders\ProductDTO as ListOrdersProductDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetOptionChainsRequestDTO;
@@ -34,6 +40,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
@@ -1448,6 +1455,118 @@ it('throws exception if getting option expire dates when no token is cached', fu
 
     expect(function () use ($etradeClient, $getOptionExpireDatesRequestDto) {
         $etradeClient->getOptionExpireDates($getOptionExpireDatesRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can list orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/ListOrdersResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listOrdersRequestDto = new ListOrdersRequestDTO([
+        'accountIdKey' => 'account-key',
+        'count' => 5,
+    ]);
+
+    $ordersResponse = $etradeClient->listOrders($listOrdersRequestDto);
+
+    expect($ordersResponse)->toBeInstanceOf(OrdersResponseDTO::class)
+        ->and($ordersResponse->order)->toHaveCount(2)
+        ->and($ordersResponse->marker)->toBe('abc')
+        ->and($ordersResponse->next)->toBe('def')
+        ->and($ordersResponse->messages->message)->toHaveCount(1);
+
+    $firstOrder = $ordersResponse->order[0];
+    expect($firstOrder)->toBeInstanceOf(OrderDTO::class)
+        ->and($firstOrder->orderId)->toBe(96)
+        ->and($firstOrder->orderDetail)->toHaveCount(1)
+        ->and($firstOrder->events)->toHaveCount(1);
+
+    $firstDetail = $firstOrder->orderDetail[0];
+    expect($firstDetail)->toBeInstanceOf(OrderDetailDTO::class)
+        ->and($firstDetail->orderNumber)->toBe(123)
+        ->and($firstDetail->orderValue)->toBe(1000.0)
+        ->and($firstDetail->status)->toBe('EXECUTED')
+        ->and($firstDetail->instrument)->toHaveCount(1);
+
+    $instrument = $firstDetail->instrument[0];
+    expect($instrument)->toBeInstanceOf(InstrumentDTO::class)
+        ->and($instrument->product)->toBeInstanceOf(ListOrdersProductDTO::class)
+        ->and($instrument->product->symbol)->toBe('ABC')
+        ->and($instrument->quantity)->toBe(100.0)
+        ->and($instrument->filledQuantity)->toBe(100.0)
+        ->and($instrument->averageExecutionPrice)->toBe(10.0)
+        ->and($instrument->estimatedCommission)->toBe(1.5)
+        ->and($instrument->estimatedFees)->toBe(0.0);
+
+    $secondOrder = $ordersResponse->order[1];
+    $secondDetail = $secondOrder->orderDetail[0];
+    $secondInstrument = $secondDetail->instrument[0];
+    expect($secondOrder->orderId)->toBe(95)
+        ->and($secondInstrument->lots)->toHaveCount(2)
+        ->and($secondInstrument->lots[0])->toBeInstanceOf(LotDTO::class)
+        ->and($secondInstrument->lots[0]->size)->toBe(25.0);
+});
+
+it('throws exception if accountIdKey is missing when listing orders', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+
+    expect(function () use ($etradeClient) {
+        $etradeClient->listOrders(new ListOrdersRequestDTO());
+    })->toThrow(EtradeApiException::class, 'accountIdKey is required!');
+});
+
+it('throws exception on non-200 response for list orders', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('get')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listOrdersRequestDto = new ListOrdersRequestDTO([
+        'accountIdKey' => 'account-key',
+    ]);
+
+    expect(function () use ($etradeClient, $listOrdersRequestDto) {
+        $etradeClient->listOrders($listOrdersRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to list orders');
+});
+
+it('throws exception if listing orders when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $listOrdersRequestDto = new ListOrdersRequestDTO([
+        'accountIdKey' => 'account-key',
+    ]);
+
+    expect(function () use ($etradeClient, $listOrdersRequestDto) {
+        $etradeClient->listOrders($listOrdersRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
 
