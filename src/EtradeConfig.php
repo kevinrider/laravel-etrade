@@ -37,7 +37,7 @@ class EtradeConfig
     public const string MARKET_QUOTES = 'v1/market/quote/{symbols}';
     public const string MARKET_LOOKUP = 'v1/market/lookup/{search}';
     public const string MARKET_OPTION_CHAINS = 'v1/market/optionchains';
-    public const string MARKET_OPTION_EXPIRY = 'v1/market/optionexpire';
+    public const string MARKET_OPTION_EXPIRY = 'v1/market/optionexpiredate';
     /*
      * ORDER
      */
