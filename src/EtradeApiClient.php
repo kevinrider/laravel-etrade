@@ -502,19 +502,13 @@ class EtradeApiClient
         $callDepth = $listOrdersRequestDTO->callDepth ?? 10;
         $calls = 0;
         $orders = [];
-        $marker = $listOrdersRequestDTO->marker ?? null;
-
         do {
             $calls++;
-            $pageRequest = new ListOrdersRequestDTO(array_merge(
-                $listOrdersRequestDTO->toArray(),
-                ['marker' => $marker]
-            ));
-
-            $lastResponse = $this->listOrders($pageRequest);
+            $lastResponse = $this->listOrders($listOrdersRequestDTO);
             $orders = array_merge($orders, $lastResponse->order);
             $marker = $lastResponse->marker ?? null;
-        } while (!empty($marker) && $calls < $callDepth);
+            $listOrdersRequestDTO->marker = $marker;
+        } while ($marker && $calls < $callDepth);
 
         $response = new OrdersResponseDTO();
         $response->order = $orders;
