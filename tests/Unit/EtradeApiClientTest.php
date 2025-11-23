@@ -1522,6 +1522,53 @@ it('can list orders successfully', function () {
         ->and($secondInstrument->lots[0]->size)->toBe(25.0);
 });
 
+it('can list all orders across pages', function () {
+    $firstPage = OrdersResponseDTO::fromXml(file_get_contents(__DIR__ . '/../fixtures/ListOrdersResponse.xml'));
+    $secondPage = OrdersResponseDTO::fromXml(file_get_contents(__DIR__ . '/../fixtures/ListOrdersResponsePage2.xml'));
+
+    $receivedMarkers = [];
+    $etradeClient = \Mockery::mock(EtradeApiClient::class, ['test_key', 'test_secret'])->makePartial();
+    $etradeClient->shouldReceive('listOrders')
+        ->twice()
+        ->withArgs(function (ListOrdersRequestDTO $dto) use (&$receivedMarkers) {
+            $receivedMarkers[] = $dto->marker ?? null;
+            return true;
+        })
+        ->andReturn($firstPage, $secondPage);
+
+    $request = new ListOrdersRequestDTO([
+        'accountIdKey' => 'account-key',
+        'count' => 2,
+    ]);
+
+    $response = $etradeClient->listAllOrders($request);
+
+    expect($receivedMarkers)->toEqual([null, 'abc'])
+        ->and($response->order)->toHaveCount(3)
+        ->and($response->marker)->toBeNull()
+        ->and($response->messages->message)->toHaveCount(1);
+});
+
+it('stops paginating when callDepth is reached', function () {
+    $firstPage = OrdersResponseDTO::fromXml(file_get_contents(__DIR__ . '/../fixtures/ListOrdersResponse.xml'));
+
+    $etradeClient = \Mockery::mock(EtradeApiClient::class, ['test_key', 'test_secret'])->makePartial();
+    $etradeClient->shouldReceive('listOrders')
+        ->once()
+        ->andReturn($firstPage);
+
+    $request = new ListOrdersRequestDTO([
+        'accountIdKey' => 'account-key',
+        'count' => 2,
+        'callDepth' => 1,
+    ]);
+
+    $response = $etradeClient->listAllOrders($request);
+
+    expect($response->order)->toHaveCount(2)
+        ->and($response->marker)->toBe('abc');
+});
+
 it('throws exception if accountIdKey is missing when listing orders', function () {
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
 

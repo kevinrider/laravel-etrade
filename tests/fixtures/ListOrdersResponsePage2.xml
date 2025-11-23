@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OrdersResponse>
+   <Order>
+      <orderId>94</orderId>
+      <details>https://api.etrade.com/v1/accounts/ZrnXF-hPu853sBzwHfWGBQ/orders/94</details>
+      <orderType>EQ</orderType>
+      <OrderDetail>
+         <orderNumber>789</orderNumber>
+         <accountId>00012345</accountId>
+         <placedTime>1620007200</placedTime>
+         <orderValue>250.0</orderValue>
+         <status>EXECUTED</status>
+         <orderTerm>GOOD_FOR_DAY</orderTerm>
+         <priceType>MARKET</priceType>
+         <instrument>
+            <Instrument>
+               <Product>
+                  <symbol>ZZZ</symbol>
+                  <securityType>EQ</securityType>
+               </Product>
+               <symbolDescription>ZZZ Corp</symbolDescription>
+               <orderAction>BUY</orderAction>
+               <quantityType>QUANTITY</quantityType>
+               <quantity>10</quantity>
+               <filledQuantity>10</filledQuantity>
+               <currency>USD</currency>
+            </Instrument>
+         </instrument>
+      </OrderDetail>
+   </Order>
+   <messages>
+      <message>
+         <description>Success</description>
+         <code>0</code>
+         <type>INFO</type>
+      </message>
+   </messages>
+</OrdersResponse>
