@@ -26,6 +26,15 @@ class OrderDetailDTO extends BaseDTO
     public ?string $routingDestination = null;
     public ?float $bracketedLimitPrice = null;
     public ?float $initialStopPrice = null;
+    public ?float $trailPrice = null;
+    public ?float $triggerPrice = null;
+    public ?float $conditionPrice = null;
+    public ?string $conditionSymbol = null;
+    public ?string $conditionType = null;
+    public ?string $conditionFollowPrice = null;
+    public ?string $conditionSecurityType = null;
+    public ?int $replacedByOrderId = null;
+    public ?int $replacesOrderId = null;
     public ?bool $allOrNone = null;
     public ?int $previewId = null;
     /**
@@ -35,6 +44,18 @@ class OrderDetailDTO extends BaseDTO
     public ?MessagesDTO $messages = null;
     public ?float $investmentAmount = null;
     public ?string $positionQuantity = null;
+    public ?bool $aipFlag = null;
+    public ?string $egQual = null;
+    public ?string $reInvestOption = null;
+    public ?float $estimatedCommission = null;
+    public ?float $estimatedFees = null;
+    public ?float $estimatedTotalAmount = null;
+    public ?float $netPrice = null;
+    public ?float $netBid = null;
+    public ?float $netAsk = null;
+    public ?int $gcd = null;
+    public ?string $ratio = null;
+    public ?string $mfpriceType = null;
 
     /**
      * @param array $data
