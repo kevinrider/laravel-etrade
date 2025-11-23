@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LookupResponse>
+   <Data>
+      <symbol>A</symbol>
+      <description>AGILENT TECHNOLOGIES INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>AA</symbol>
+      <description>ALCOA CORP COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>AABA</symbol>
+      <description>ALTABA INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+</LookupResponse>
