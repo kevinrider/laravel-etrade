@@ -26,6 +26,10 @@ class EventDTO extends BaseDTO
         parent::fill($data);
 
         if ($instruments !== null) {
+            if (isset($instruments['Instrument'])) {
+                $instruments = $instruments['Instrument'];
+            }
+
             $instruments = $this->normalizeInstrumentArray($instruments);
             $this->instrument = array_map(
                 fn ($instrument) => new InstrumentDTO($instrument),
