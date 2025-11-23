@@ -492,6 +492,40 @@ class EtradeApiClient
     }
 
     /**
+     * @param ListOrdersRequestDTO $listOrdersRequestDTO
+     * @return OrdersResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function listAllOrders(ListOrdersRequestDTO $listOrdersRequestDTO): OrdersResponseDTO
+    {
+        $callDepth = $listOrdersRequestDTO->callDepth ?? 10;
+        $calls = 0;
+        $orders = [];
+        $marker = $listOrdersRequestDTO->marker ?? null;
+
+        do {
+            $calls++;
+            $pageRequest = new ListOrdersRequestDTO(array_merge(
+                $listOrdersRequestDTO->toArray(),
+                ['marker' => $marker]
+            ));
+
+            $lastResponse = $this->listOrders($pageRequest);
+            $orders = array_merge($orders, $lastResponse->order);
+            $marker = $lastResponse->marker ?? null;
+        } while (!empty($marker) && $calls < $callDepth);
+
+        $response = new OrdersResponseDTO();
+        $response->order = $orders;
+        $response->marker = $lastResponse->marker;
+        $response->next = $lastResponse->next;
+        $response->messages = $lastResponse->messages;
+
+        return $response;
+    }
+
+    /**
      * @param LookupRequestDTO $lookupRequestDTO
      * @return LookupResponseDTO
      * @throws EtradeApiException

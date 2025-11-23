@@ -28,4 +28,5 @@ class ListOrdersRequestDTO extends BaseDTO
     public ?string $securityType = null;
     public ?string $transactionType = null;
     public ?string $marketSession = null;
+    public int $callDepth = 10;
 }
