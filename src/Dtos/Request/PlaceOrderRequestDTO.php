@@ -52,7 +52,23 @@ class PlaceOrderRequestDTO extends BaseDTO
     private function normalizeOrders(array $orders): array
     {
         return array_map(
-            fn ($order) => $this->dtoToArray($order),
+            function ($order) {
+                $orderArray = $this->dtoToArray($order);
+
+                if (!array_key_exists('stopPrice', $orderArray)) {
+                    $orderArray['stopPrice'] = '';
+                }
+
+                if (isset($orderArray['instrument'])) {
+                    $orderArray['Instrument'] = array_map(
+                        fn ($instrument) => $this->normalizeInstrument($instrument),
+                        $orderArray['instrument']
+                    );
+                    unset($orderArray['instrument']);
+                }
+
+                return $orderArray;
+            },
             $orders
         );
     }
@@ -74,6 +90,22 @@ class PlaceOrderRequestDTO extends BaseDTO
 
             return ['previewId' => $previewId];
         }, $previewIds);
+    }
+
+    /**
+     * @param mixed $instrument
+     * @return array
+     */
+    private function normalizeInstrument(mixed $instrument): array
+    {
+        $instrumentArray = $this->dtoToArray($instrument);
+
+        if (isset($instrumentArray['product'])) {
+            $instrumentArray['Product'] = $this->dtoToArray($instrumentArray['product']);
+            unset($instrumentArray['product']);
+        }
+
+        return $instrumentArray;
     }
 
     /**
