@@ -1,0 +1,59 @@
+{
+  "PlaceOrderResponse": {
+    "orderType": "OPTN",
+    "Order": {
+      "orderTerm": "GOOD_FOR_DAY",
+      "priceType": "MARKET",
+      "limitPrice": "0",
+      "stopPrice": "0",
+      "marketSession": "REGULAR",
+      "allOrNone": "false",
+      "Instrument": {
+        "Product": {
+          "symbol": "FB",
+          "securityType": "OPTN",
+          "callPut": "CALL",
+          "expiryYear": "2018",
+          "expiryMonth": "12",
+          "expiryDay": "21",
+          "strikePrice": "140.00",
+          "productId": {
+            "symbol": "FB----210409P00297500",
+            "typeCode": "OPTION"
+          }
+        },
+        "symbolDescription": "FB Dec 21 '18 $140 Call",
+        "orderAction": "BUY_OPEN",
+        "quantityType": "QUANTITY",
+        "quantity": "1",
+        "cancelQuantity": "0.0",
+        "osiKey": "FB----181221C00140000",
+        "reserveOrder": "true",
+        "reserveQuantity": "0.0"
+      },
+      "messages": {
+        "Message": {
+          "code": "1026",
+          "description": "200|Your order was successfully entered during market hours.",
+          "type": "WARNING"
+        }
+      },
+      "egQual": "EG_QUAL_NOT_AN_ELIGIBLE_SECURITY",
+      "estimatedCommission": "5.45",
+      "estimatedTotalAmount": "330.4644",
+      "netPrice": "0",
+      "netBid": "0",
+      "netAsk": "0",
+      "gcd": "0",
+      "ratio": []
+    },
+    "dstFlag": "false",
+    "optionLevelCd": "4",
+    "marginLevelCd": "MARGIN_TRADING_ALLOWED",
+    "OrderIds": {
+      "orderId": "169"
+    },
+    "placedTime": "1544038195663",
+    "accountId": "314497960"
+  }
+}

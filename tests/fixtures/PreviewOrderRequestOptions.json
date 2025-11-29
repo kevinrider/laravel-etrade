@@ -1,0 +1,32 @@
+{
+  "PreviewOrderRequest":{
+    "orderType":"OPTN",
+    "clientOrderId":"8e4153f1",
+    "Order":[
+      {
+        "allOrNone":"false",
+        "priceType":"MARKET",
+        "limitPrice":"5",
+        "stopPrice":"0",
+        "orderTerm":"GOOD_FOR_DAY",
+        "marketSession":"REGULAR",
+        "Instrument":[
+          {
+            "Product":{
+              "symbol":"FB",
+              "securityType":"OPTN",
+              "callPut":"CALL",
+              "expiryYear":"2018",
+              "expiryMonth":"12",
+              "expiryDay":"21",
+              "strikePrice":"140"
+            },
+            "orderAction":"BUY_OPEN",
+            "orderedQuantity":"1",
+            "quantity":"1"
+          }
+        ]
+      }
+    ]
+  }
+}

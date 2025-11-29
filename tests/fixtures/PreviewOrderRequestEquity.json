@@ -1,0 +1,27 @@
+{
+  "PreviewOrderRequest":{
+    "orderType":"EQ",
+    "clientOrderId":"1fds311",
+    "Order":[
+      {
+        "allOrNone":"false",
+        "priceType":"LIMIT",
+        "orderTerm":"GOOD_FOR_DAY",
+        "marketSession":"REGULAR",
+        "stopPrice":"",
+        "limitPrice":"169",
+        "Instrument":[
+          {
+            "Product":{
+              "securityType":"EQ",
+              "symbol":"FB"
+            },
+            "orderAction":"BUY",
+            "quantityType":"QUANTITY",
+            "quantity":"1"
+          }
+        ]
+      }
+    ]
+  }
+}
