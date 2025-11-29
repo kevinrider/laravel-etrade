@@ -45,9 +45,7 @@ class PreviewOrderRequestDTO extends BaseDTO
     private function normalizeOrders(array $orders): array
     {
         return array_map(
-            fn ($order) => $order instanceof OrderDetailDTO
-                ? $this->dtoToArray($order)
-                : $this->dtoToArray($order),
+            fn ($order) => $this->dtoToArray($order),
             $orders
         );
     }
