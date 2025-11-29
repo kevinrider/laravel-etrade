@@ -23,17 +23,21 @@ use KevinRider\LaravelEtrade\Dtos\LookupResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\OrdersResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\OptionChainResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\OptionExpireDateResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\PlaceOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\PreviewOrderResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\PlaceOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetOptionChainsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\PreviewOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
@@ -517,6 +521,70 @@ class EtradeApiClient
         $response->messages = $lastResponse->messages;
 
         return $response;
+    }
+
+    /**
+     * @param PreviewOrderRequestDTO $previewOrderRequestDTO
+     * @return PreviewOrderResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function previewOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
+    {
+        foreach (PreviewOrderRequestDTO::REQUIRED_PROPERTIES as $requiredProperty) {
+            if (empty($previewOrderRequestDTO->$requiredProperty)) {
+                throw new EtradeApiException($requiredProperty . ' is required!');
+            }
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace('{accountIdKey}', $previewOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_PREVIEW);
+
+        $response = $this->client->post($uri, ['json' => $previewOrderRequestDTO->toRequestBody()]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to preview order');
+        }
+
+        return PreviewOrderResponseDTO::fromJson($response->getBody()->getContents());
+    }
+
+    /**
+     * @param PlaceOrderRequestDTO $placeOrderRequestDTO
+     * @return PlaceOrderResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function placeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
+    {
+        foreach (PlaceOrderRequestDTO::REQUIRED_PROPERTIES as $requiredProperty) {
+            if (empty($placeOrderRequestDTO->$requiredProperty)) {
+                throw new EtradeApiException($requiredProperty . ' is required!');
+            }
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace('{accountIdKey}', $placeOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_PLACE);
+
+        $response = $this->client->post($uri, ['json' => $placeOrderRequestDTO->toRequestBody()]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to place order');
+        }
+
+        return PlaceOrderResponseDTO::fromJson($response->getBody()->getContents());
     }
 
     /**
