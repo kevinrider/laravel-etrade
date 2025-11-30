@@ -11,6 +11,7 @@ use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Alerts\AlertDTO;
 use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlertsDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\CancelOrderResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
 use KevinRider\LaravelEtrade\Dtos\GetQuotesResponseDTO;
@@ -42,6 +43,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\CancelOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
@@ -2671,6 +2673,102 @@ it('throws exception if placing change order when no token is cached', function 
 
     expect(function () use ($etradeClient, $placeOrderRequestDto) {
         $etradeClient->placeChangeOrder($placeOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can cancel orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/CancelOrderResponse.xml');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('put')
+        ->once()
+        ->andReturn(new Response(200, [], $xmlResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $cancelOrderRequestDto = new CancelOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 11,
+    ]);
+
+    $cancelResponse = $etradeClient->cancelOrder($cancelOrderRequestDto);
+
+    expect($cancelResponse)->toBeInstanceOf(CancelOrderResponseDTO::class)
+        ->and($cancelResponse->accountId)->toBe('634386170')
+        ->and($cancelResponse->orderId)->toBe(11)
+        ->and($cancelResponse->cancelTime)->toBe(1529563499081)
+        ->and($cancelResponse->messages->message[0]->code)->toBe(5011)
+        ->and($cancelResponse->messages->message[0]->description)->toContain('request to cancel your order is being processed.')
+        ->and($cancelResponse->messages->message[0]->type)->toBe('WARNING');
+});
+
+it('throws exception if cancel order payload is missing required values', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $cancelOrderRequestDto = new CancelOrderRequestDTO([
+        'orderId' => 11,
+    ]);
+
+    expect(function () use ($etradeClient, $cancelOrderRequestDto) {
+        $etradeClient->cancelOrder($cancelOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'accountIdKey is required!');
+
+    $cancelOrderRequestDto = new CancelOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+    ]);
+
+    expect(function () use ($etradeClient, $cancelOrderRequestDto) {
+        $etradeClient->cancelOrder($cancelOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'orderId is required!');
+});
+
+it('throws exception on non-200 response for cancel order', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('put')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $cancelOrderRequestDto = new CancelOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 11,
+    ]);
+
+    expect(function () use ($etradeClient, $cancelOrderRequestDto) {
+        $etradeClient->cancelOrder($cancelOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to cancel order');
+});
+
+it('throws exception if canceling order when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $cancelOrderRequestDto = new CancelOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 11,
+    ]);
+
+    expect(function () use ($etradeClient, $cancelOrderRequestDto) {
+        $etradeClient->cancelOrder($cancelOrderRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
 
