@@ -556,6 +556,44 @@ class EtradeApiClient
     }
 
     /**
+     * @param PreviewOrderRequestDTO $previewOrderRequestDTO
+     * @return PreviewOrderResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function previewChangeOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
+    {
+        $requiredProperties = PreviewOrderRequestDTO::REQUIRED_PROPERTIES;
+        $requiredProperties[] = 'orderId';
+        foreach ($requiredProperties as $requiredProperty) {
+            if (empty($previewOrderRequestDTO->$requiredProperty)) {
+                throw new EtradeApiException($requiredProperty . ' is required!');
+            }
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace(
+            ['{accountIdKey}', '{orderId}'],
+            [$previewOrderRequestDTO->accountIdKey, $previewOrderRequestDTO->orderId],
+            EtradeConfig::ORDER_CHANGE_PREVIEW
+        );
+
+        $response = $this->client->put($uri, ['json' => $previewOrderRequestDTO->toRequestBody()]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to preview change order');
+        }
+
+        return PreviewOrderResponseDTO::fromJson($response->getBody()->getContents());
+    }
+
+    /**
      * @param PlaceOrderRequestDTO $placeOrderRequestDTO
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
@@ -582,6 +620,44 @@ class EtradeApiClient
 
         if ($response->getStatusCode() !== 200) {
             throw new EtradeApiException('Failed to place order');
+        }
+
+        return PlaceOrderResponseDTO::fromJson($response->getBody()->getContents());
+    }
+
+    /**
+     * @param PlaceOrderRequestDTO $placeOrderRequestDTO
+     * @return PlaceOrderResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function placeChangeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
+    {
+        $requiredProperties = PlaceOrderRequestDTO::REQUIRED_PROPERTIES;
+        $requiredProperties[] = 'orderId';
+        foreach ($requiredProperties as $requiredProperty) {
+            if (empty($placeOrderRequestDTO->$requiredProperty)) {
+                throw new EtradeApiException($requiredProperty . ' is required!');
+            }
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace(
+            ['{accountIdKey}', '{orderId}'],
+            [$placeOrderRequestDTO->accountIdKey, $placeOrderRequestDTO->orderId],
+            EtradeConfig::ORDER_PLACE_CHANGE
+        );
+
+        $response = $this->client->put($uri, ['json' => $placeOrderRequestDTO->toRequestBody()]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to place change order');
         }
 
         return PlaceOrderResponseDTO::fromJson($response->getBody()->getContents());
