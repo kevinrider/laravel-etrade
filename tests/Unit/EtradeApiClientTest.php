@@ -1742,11 +1742,25 @@ it('can preview option orders successfully', function () {
         ->and($previewResponse->accountId)->toBe('314497960')
         ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
         ->and($previewResponse->optionLevelCd)->toBe(4)
+        ->and($previewResponse->dstFlag)->toBeFalse()
         ->and($previewResponse->previewIds)->toHaveCount(1)
         ->and($previewResponse->previewIds[0]->previewId)->toBe(2785277279);
 
     $order = $previewResponse->order[0];
     expect($order->priceType)->toBe('MARKET')
+        ->and($order->orderTerm)->toBe('GOOD_FOR_DAY')
+        ->and($order->limitPrice)->toBe(0.0)
+        ->and($order->stopPrice)->toBe(0.0)
+        ->and($order->marketSession)->toBe('REGULAR')
+        ->and($order->allOrNone)->toBeFalse()
+        ->and($order->egQual)->toBe('EG_QUAL_NOT_AN_ELIGIBLE_SECURITY')
+        ->and($order->estimatedCommission)->toBe(5.45)
+        ->and($order->estimatedTotalAmount)->toBe(330.4644)
+        ->and($order->netPrice)->toBe(0.0)
+        ->and($order->netBid)->toBe(0.0)
+        ->and($order->netAsk)->toBe(0.0)
+        ->and($order->gcd)->toBe(0)
+        ->and($order->ratio)->toBe('')
         ->and($order->messages)->toBeNull();
 
     $instrument = $order->instrument[0];
@@ -1756,8 +1770,20 @@ it('can preview option orders successfully', function () {
         ->and($instrument->product->productId->symbol)->toBe('FB----210409P00297500')
         ->and($instrument->product->productId->typeCode)->toBe('OPTION')
         ->and($instrument->quantity)->toBe(1.0)
+        ->and($instrument->orderAction)->toBe('BUY_OPEN')
+        ->and($instrument->quantityType)->toBe('QUANTITY')
+        ->and($instrument->cancelQuantity)->toBe(0.0)
+        ->and($instrument->osiKey)->toBe('FB----181221C00140000')
         ->and($instrument->reserveOrder)->toBeTrue()
-        ->and($previewResponse->disclosure->aoDisclosureFlag)->toBeTrue();
+        ->and($instrument->reserveQuantity)->toBe(0.0)
+        ->and($instrument->symbolDescription)->toBe("FB Dec 21 '18 \$140 Call")
+        ->and($instrument->product->symbol)->toBe('FB')
+        ->and($instrument->product->securityType)->toBe('OPTN')
+        ->and($instrument->product->expiryYear)->toBe(2018)
+        ->and($instrument->product->expiryMonth)->toBe(12)
+        ->and($instrument->product->expiryDay)->toBe(21)
+        ->and($previewResponse->disclosure->aoDisclosureFlag)->toBeTrue()
+        ->and($previewResponse->disclosure->conditionalDisclosureFlag)->toBeTrue();
 
 });
 
@@ -1828,20 +1854,67 @@ it('can preview spread orders successfully', function () {
         ->and($previewResponse->order)->toHaveCount(1)
         ->and($previewResponse->accountId)->toBe('838796270')
         ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
+        ->and($previewResponse->previewTime)->toBe(1549316444960)
+        ->and($previewResponse->dstFlag)->toBeFalse()
         ->and($previewResponse->previewIds[0]->previewId)->toBe(3429218279);
 
     $order = $previewResponse->order[0];
     expect($order->priceType)->toBe('NET_DEBIT')
-        ->and($order->instrument)->toHaveCount(2)
-        ->and($order->estimatedTotalAmount)->toBe(508.4762);
+        ->and($order->orderTerm)->toBe('GOOD_FOR_DAY')
+        ->and($order->limitPrice)->toBe(5.0)
+        ->and($order->stopPrice)->toBe(0.0)
+        ->and($order->marketSession)->toBe('REGULAR')
+        ->and($order->allOrNone)->toBeFalse()
+        ->and($order->messages->message)->toHaveCount(1)
+        ->and($order->messages->message[0]->code)->toBe(3041)
+        ->and($order->messages->message[0]->description)->toBe('DTBP is negative but RegTBP is positive')
+        ->and($order->messages->message[0]->type)->toBe('WARNING')
+        ->and($order->egQual)->toBe('EG_QUAL_NOT_AN_ELIGIBLE_SECURITY')
+        ->and($order->estimatedCommission)->toBe(8.44)
+        ->and($order->estimatedTotalAmount)->toBe(508.4762)
+        ->and($order->netPrice)->toBe(0.0)
+        ->and($order->netBid)->toBe(0.0)
+        ->and($order->netAsk)->toBe(0.0)
+        ->and($order->gcd)->toBe(0)
+        ->and($order->ratio)->toBe('')
+        ->and($order->instrument)->toHaveCount(2);
 
     $firstLeg = $order->instrument[0];
     $secondLeg = $order->instrument[1];
 
     expect($firstLeg->orderAction)->toBe('BUY_OPEN')
+        ->and($firstLeg->symbolDescription)->toBe("IBM Feb 15 '19 \$130 Call")
+        ->and($firstLeg->quantityType)->toBe('QUANTITY')
+        ->and($firstLeg->quantity)->toBe(1.0)
+        ->and($firstLeg->cancelQuantity)->toBe(0.0)
+        ->and($firstLeg->osiKey)->toBe('IBM---190215C00130000')
+        ->and($firstLeg->reserveOrder)->toBeTrue()
+        ->and($firstLeg->reserveQuantity)->toBe(0.0)
         ->and($firstLeg->product->strikePrice)->toBe(130.0)
+        ->and($firstLeg->product->symbol)->toBe('IBM')
+        ->and($firstLeg->product->securityType)->toBe('OPTN')
+        ->and($firstLeg->product->callPut)->toBe('CALL')
+        ->and($firstLeg->product->expiryYear)->toBe(2019)
+        ->and($firstLeg->product->expiryMonth)->toBe(2)
+        ->and($firstLeg->product->expiryDay)->toBe(15)
         ->and($secondLeg->orderAction)->toBe('SELL_OPEN')
-        ->and($secondLeg->product->strikePrice)->toBe(131.0);
+        ->and($secondLeg->symbolDescription)->toBe("IBM Feb 15 '19 \$131 Call")
+        ->and($secondLeg->quantityType)->toBe('QUANTITY')
+        ->and($secondLeg->quantity)->toBe(1.0)
+        ->and($secondLeg->cancelQuantity)->toBe(0.0)
+        ->and($secondLeg->osiKey)->toBe('IBM---190215C00131000')
+        ->and($secondLeg->reserveOrder)->toBeTrue()
+        ->and($secondLeg->reserveQuantity)->toBe(0.0)
+        ->and($secondLeg->product->strikePrice)->toBe(131.0)
+        ->and($secondLeg->product->symbol)->toBe('IBM')
+        ->and($secondLeg->product->securityType)->toBe('OPTN')
+        ->and($secondLeg->product->callPut)->toBe('CALL')
+        ->and($secondLeg->product->expiryYear)->toBe(2019)
+        ->and($secondLeg->product->expiryMonth)->toBe(2)
+        ->and($secondLeg->product->expiryDay)->toBe(15);
+
+    expect($previewResponse->disclosure->conditionalDisclosureFlag)->toBeTrue()
+        ->and($previewResponse->disclosure->aoDisclosureFlag)->toBeFalse();
 });
 
 it('throws exception if preview order payload is missing required values', function () {
@@ -2014,6 +2087,9 @@ it('can place option orders successfully', function () {
         ->and($placeResponse->orderType)->toBe('OPTN')
         ->and($placeResponse->placedTime)->toBe(1544038195663)
         ->and($placeResponse->accountId)->toBe('314497960')
+        ->and($placeResponse->dstFlag)->toBeFalse()
+        ->and($placeResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
+        ->and($placeResponse->optionLevelCd)->toBe(4)
         ->and($placeResponse->orderIds[0]->orderId)->toBe(169);
 
     $order = $placeResponse->order[0];
@@ -2022,9 +2098,39 @@ it('can place option orders successfully', function () {
     expect($instrument->product->callPut)->toBe('CALL')
         ->and($instrument->product->productId->symbol)->toBe('FB----210409P00297500')
         ->and($instrument->product->productId->typeCode)->toBe('OPTION')
+        ->and($instrument->product->symbol)->toBe('FB')
+        ->and($instrument->product->securityType)->toBe('OPTN')
+        ->and($instrument->product->expiryYear)->toBe(2018)
+        ->and($instrument->product->expiryMonth)->toBe(12)
+        ->and($instrument->product->expiryDay)->toBe(21)
+        ->and($instrument->product->strikePrice)->toBe(140.0)
+        ->and($instrument->symbolDescription)->toBe("FB Dec 21 '18 \$140 Call")
+        ->and($instrument->orderAction)->toBe('BUY_OPEN')
+        ->and($instrument->quantityType)->toBe('QUANTITY')
+        ->and($instrument->quantity)->toBe(1.0)
+        ->and($instrument->cancelQuantity)->toBe(0.0)
+        ->and($instrument->osiKey)->toBe('FB----181221C00140000')
+        ->and($instrument->reserveOrder)->toBeTrue()
+        ->and($instrument->reserveQuantity)->toBe(0.0)
+        ->and($order->orderTerm)->toBe('GOOD_FOR_DAY')
+        ->and($order->priceType)->toBe('MARKET')
+        ->and($order->limitPrice)->toBe(0.0)
+        ->and($order->stopPrice)->toBe(0.0)
+        ->and($order->marketSession)->toBe('REGULAR')
+        ->and($order->allOrNone)->toBeFalse()
+        ->and($order->egQual)->toBe('EG_QUAL_NOT_AN_ELIGIBLE_SECURITY')
+        ->and($order->estimatedCommission)->toBe(5.45)
         ->and($order->estimatedTotalAmount)->toBe(330.4644)
+        ->and($order->netPrice)->toBe(0.0)
+        ->and($order->netBid)->toBe(0.0)
+        ->and($order->netAsk)->toBe(0.0)
+        ->and($order->gcd)->toBe(0)
+        ->and($order->ratio)->toBe('')
         ->and($order->messages->message)->toHaveCount(1)
-        ->and($order->messages->message[0]->code)->toBe(1026);
+        ->and($order->messages->message[0]->code)->toBe(1026)
+        ->and($order->messages->message[0]->type)->toBe('WARNING')
+        ->and($order->messages->message[0]->description)->toContain('successfully entered during market hours.');
+
 });
 
 it('can place spread orders successfully', function () {
@@ -2093,15 +2199,65 @@ it('can place spread orders successfully', function () {
         ->and($placeResponse->orderType)->toBe('SPREADS')
         ->and($placeResponse->accountId)->toBe('838796270')
         ->and($placeResponse->optionLevelCd)->toBe(4)
+        ->and($placeResponse->dstFlag)->toBeFalse()
+        ->and($placeResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
+        ->and($placeResponse->placedTime)->toBe(1549316465349)
         ->and($placeResponse->orderIds[0]->orderId)->toBe(484);
 
     $order = $placeResponse->order[0];
     expect($order->instrument)->toHaveCount(2)
         ->and($order->instrument[0]->product->strikePrice)->toBe(130.0)
         ->and($order->instrument[1]->product->strikePrice)->toBe(131.0)
-        ->and($order->messages->message)->toHaveCount(1)
+        ->and($order->orderTerm)->toBe('GOOD_FOR_DAY')
+        ->and($order->priceType)->toBe('NET_DEBIT')
+        ->and($order->limitPrice)->toBe(5.0)
+        ->and($order->stopPrice)->toBe(0.0)
+        ->and($order->marketSession)->toBe('REGULAR')
+        ->and($order->allOrNone)->toBeFalse()
+        ->and($order->egQual)->toBe('EG_QUAL_NOT_AN_ELIGIBLE_SECURITY')
+        ->and($order->estimatedCommission)->toBe(8.44)
         ->and($order->estimatedTotalAmount)->toBe(508.4762)
-        ->and($placeResponse->totalCommission)->toBeNull();
+        ->and($order->netPrice)->toBe(0.0)
+        ->and($order->netBid)->toBe(0.0)
+        ->and($order->netAsk)->toBe(0.0)
+        ->and($order->gcd)->toBe(0)
+        ->and($order->ratio)->toBe('')
+        ->and($order->messages->message)->toHaveCount(1)
+        ->and($order->messages->message[0]->code)->toBe(1027)
+        ->and($order->messages->message[0]->type)->toBe('WARNING')
+        ->and($order->messages->message[0]->description)->toContain('market was closed when we received your order');
+
+    $firstLeg = $order->instrument[0];
+    $secondLeg = $order->instrument[1];
+
+    expect($firstLeg->symbolDescription)->toBe("IBM Feb 15 '19 \$130 Call")
+        ->and($firstLeg->orderAction)->toBe('BUY_OPEN')
+        ->and($firstLeg->quantityType)->toBe('QUANTITY')
+        ->and($firstLeg->quantity)->toBe(1.0)
+        ->and($firstLeg->cancelQuantity)->toBe(0.0)
+        ->and($firstLeg->osiKey)->toBe('IBM---190215C00130000')
+        ->and($firstLeg->reserveOrder)->toBeTrue()
+        ->and($firstLeg->reserveQuantity)->toBe(0.0)
+        ->and($firstLeg->product->symbol)->toBe('IBM')
+        ->and($firstLeg->product->securityType)->toBe('OPTN')
+        ->and($firstLeg->product->callPut)->toBe('CALL')
+        ->and($firstLeg->product->expiryYear)->toBe(2019)
+        ->and($firstLeg->product->expiryMonth)->toBe(2)
+        ->and($firstLeg->product->expiryDay)->toBe(15)
+        ->and($secondLeg->symbolDescription)->toBe("IBM Feb 15 '19 \$131 Call")
+        ->and($secondLeg->orderAction)->toBe('SELL_OPEN')
+        ->and($secondLeg->quantityType)->toBe('QUANTITY')
+        ->and($secondLeg->quantity)->toBe(1.0)
+        ->and($secondLeg->cancelQuantity)->toBe(0.0)
+        ->and($secondLeg->osiKey)->toBe('IBM---190215C00131000')
+        ->and($secondLeg->reserveOrder)->toBeTrue()
+        ->and($secondLeg->reserveQuantity)->toBe(0.0)
+        ->and($secondLeg->product->symbol)->toBe('IBM')
+        ->and($secondLeg->product->securityType)->toBe('OPTN')
+        ->and($secondLeg->product->callPut)->toBe('CALL')
+        ->and($secondLeg->product->expiryYear)->toBe(2019)
+        ->and($secondLeg->product->expiryMonth)->toBe(2)
+        ->and($secondLeg->product->expiryDay)->toBe(15);
 
 });
 
