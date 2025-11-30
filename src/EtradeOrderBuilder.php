@@ -10,7 +10,7 @@ use KevinRider\LaravelEtrade\Dtos\Orders\PreviewIdDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\PlaceOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\PreviewOrderRequestDTO;
 
-class OrderBuilder
+class EtradeOrderBuilder
 {
     private const array VALID_QUANTITY_TYPES = ['QUANTITY', 'DOLLAR', 'ALL_I_OWN'];
 

@@ -2,7 +2,7 @@
 
 use KevinRider\LaravelEtrade\Dtos\Orders\DisclosureDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\PreviewIdDTO;
-use KevinRider\LaravelEtrade\OrderBuilder;
+use KevinRider\LaravelEtrade\EtradeOrderBuilder;
 
 function orderFixture(string $filename): array
 {
@@ -51,7 +51,7 @@ function normalizeForFixture(array $payload): array
 }
 
 it('builds preview equity order payload', function () {
-    $builder = OrderBuilder::forAccount('ACC123')
+    $builder = EtradeOrderBuilder::forAccount('ACC123')
         ->orderType('EQ')
         ->clientOrderId('1fds311')
         ->withSymbol('FB')
@@ -69,7 +69,7 @@ it('builds preview equity order payload', function () {
 });
 
 it('builds place equity order payload with normalized preview ids', function () {
-    $builder = OrderBuilder::forAccount('ACC123')
+    $builder = EtradeOrderBuilder::forAccount('ACC123')
         ->orderType('EQ')
         ->clientOrderId('1fds311')
         ->withSymbol('FB')
@@ -87,7 +87,7 @@ it('builds place equity order payload with normalized preview ids', function () 
 });
 
 it('builds preview options order payload using option helpers', function () {
-    $builder = OrderBuilder::forAccount('ACCT')
+    $builder = EtradeOrderBuilder::forAccount('ACCT')
         ->orderType('OPTN')
         ->clientOrderId('8e4153f1')
         ->withSymbol('FB')
@@ -106,7 +106,7 @@ it('builds preview options order payload using option helpers', function () {
 });
 
 it('builds place options order payload and accepts array preview ids', function () {
-    $builder = OrderBuilder::forAccount('ACCT')
+    $builder = EtradeOrderBuilder::forAccount('ACCT')
         ->orderType('OPTN')
         ->clientOrderId('8e4153f1')
         ->withSymbol('FB')
@@ -125,7 +125,7 @@ it('builds place options order payload and accepts array preview ids', function 
 });
 
 it('builds preview spread order payload', function () {
-    $builder = OrderBuilder::forAccount('ACC')
+    $builder = EtradeOrderBuilder::forAccount('ACC')
         ->orderType('SPREADS')
         ->clientOrderId('3453f1')
         ->withSymbol('IBM')
@@ -144,7 +144,7 @@ it('builds preview spread order payload', function () {
 });
 
 it('builds place spread order payload', function () {
-    $builder = OrderBuilder::forAccount('ACC')
+    $builder = EtradeOrderBuilder::forAccount('ACC')
         ->orderType('SPREADS')
         ->clientOrderId('3453f1')
         ->withSymbol('IBM')
@@ -163,7 +163,7 @@ it('builds place spread order payload', function () {
 });
 
 it('applies overrides, disclosures, and stop limits to option orders', function () {
-    $builder = OrderBuilder::forAccount('ANY')
+    $builder = EtradeOrderBuilder::forAccount('ANY')
         ->orderType('OPTN')
         ->clientOrderId('abc123')
         ->withSymbol('TSLA')
@@ -201,10 +201,10 @@ it('applies overrides, disclosures, and stop limits to option orders', function 
 });
 
 it('validates preview and place requirements', function () {
-    expect(fn () => (new OrderBuilder())->buildPreviewRequest())
+    expect(fn () => (new EtradeOrderBuilder())->buildPreviewRequest())
         ->toThrow(InvalidArgumentException::class, 'accountIdKey is required.');
 
-    $builder = OrderBuilder::forAccount('ID')
+    $builder = EtradeOrderBuilder::forAccount('ID')
         ->orderType('EQ')
         ->clientOrderId('CID')
         ->addInstrument([
@@ -219,14 +219,14 @@ it('validates preview and place requirements', function () {
 });
 
 it('requires symbol and expiry when adding option legs', function () {
-    $builderWithoutSymbol = OrderBuilder::forAccount('ID')
+    $builderWithoutSymbol = EtradeOrderBuilder::forAccount('ID')
         ->orderType('OPTN')
         ->clientOrderId('CID');
 
     expect(fn () => $builderWithoutSymbol->addLongCall(100))
         ->toThrow(InvalidArgumentException::class, 'Symbol is required for option legs. Use withSymbol() or pass symbol override.');
 
-    $builderWithoutExpiry = OrderBuilder::forAccount('ID')
+    $builderWithoutExpiry = EtradeOrderBuilder::forAccount('ID')
         ->orderType('OPTN')
         ->clientOrderId('CID')
         ->withSymbol('AAPL');
@@ -236,7 +236,7 @@ it('requires symbol and expiry when adding option legs', function () {
 });
 
 it('normalizes empty stop prices to blank strings', function () {
-    $builder = OrderBuilder::forAccount('ID')
+    $builder = EtradeOrderBuilder::forAccount('ID')
         ->orderType('EQ')
         ->clientOrderId('CID')
         ->withDetail(['stopPrice' => ''])
@@ -250,10 +250,10 @@ it('normalizes empty stop prices to blank strings', function () {
 });
 
 it('validates quantity types for defaults and overrides', function () {
-    expect(fn () => (new OrderBuilder())->quantityType('INVALID'))
+    expect(fn () => (new EtradeOrderBuilder())->quantityType('INVALID'))
         ->toThrow(InvalidArgumentException::class, 'quantityType must be one of: QUANTITY, DOLLAR, ALL_I_OWN');
 
-    $builder = OrderBuilder::forAccount('ACCT')
+    $builder = EtradeOrderBuilder::forAccount('ACCT')
         ->orderType('OPTN')
         ->clientOrderId('CID')
         ->withSymbol('AAPL')
@@ -264,7 +264,7 @@ it('validates quantity types for defaults and overrides', function () {
 
     $builder->quantityType('QUANTITY');
 
-    $equity = OrderBuilder::forAccount('EQ')
+    $equity = EtradeOrderBuilder::forAccount('EQ')
         ->orderType('EQ')
         ->clientOrderId('CID')
         ->withSymbol('AAPL')
