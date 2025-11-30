@@ -28,6 +28,8 @@ use KevinRider\LaravelEtrade\Dtos\Options\OptionDetailsDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionGreeksDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\SelectedEDDTO;
 use KevinRider\LaravelEtrade\Dtos\OrdersResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\PlaceOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\PreviewOrderResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListOrders\InstrumentDTO;
 use KevinRider\LaravelEtrade\Dtos\ListOrders\LotDTO;
 use KevinRider\LaravelEtrade\Dtos\ListOrders\OrderDTO;
@@ -44,6 +46,8 @@ use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\PlaceOrderRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\PreviewOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\BrokerageDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\CategoryDTO;
@@ -1615,6 +1619,553 @@ it('throws exception if listing orders when no token is cached', function () {
     expect(function () use ($etradeClient, $listOrdersRequestDto) {
         $etradeClient->listOrders($listOrdersRequestDto);
     })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
+it('can preview equity orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PreviewOrderResponseEquity.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'LIMIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantityType' => 'QUANTITY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'FB',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $previewResponse = $etradeClient->previewOrder($previewOrderRequestDto);
+
+    expect($previewResponse)->toBeInstanceOf(PreviewOrderResponseDTO::class)
+        ->and($previewResponse->orderType)->toBe('EQ')
+        ->and($previewResponse->totalOrderValue)->toBe(175.95)
+        ->and($previewResponse->previewIds)->toHaveCount(1)
+        ->and($previewResponse->previewIds[0]->previewId)->toBe(3429395279);
+
+    $order = $previewResponse->order[0];
+    expect($order)->toBeInstanceOf(\KevinRider\LaravelEtrade\Dtos\Orders\OrderDetailDTO::class)
+        ->and($order->priceType)->toBe('LIMIT')
+        ->and($order->estimatedTotalAmount)->toBe(175.95)
+        ->and($order->messages->message)->toHaveCount(2);
+
+    $instrument = $order->instrument[0];
+    expect($instrument)->toBeInstanceOf(\KevinRider\LaravelEtrade\Dtos\Orders\InstrumentDTO::class)
+        ->and($instrument->product->symbol)->toBe('FB')
+        ->and($instrument->product->securityType)->toBe('EQ')
+        ->and($instrument->quantity)->toBe(1.0)
+        ->and($instrument->reserveOrder)->toBeTrue()
+        ->and($previewResponse->disclosure->ehDisclosureFlag)->toBeTrue();
+
+});
+
+it('can preview option orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PreviewOrderResponseOptions.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'OPTN',
+        'clientOrderId' => 'client-order-id',
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'MARKET',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY_OPEN',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'FB',
+                            'securityType' => 'OPTN',
+                            'callPut' => 'CALL',
+                            'expiryYear' => 2018,
+                            'expiryMonth' => 12,
+                            'expiryDay' => 21,
+                            'strikePrice' => 140,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $previewResponse = $etradeClient->previewOrder($previewOrderRequestDto);
+
+    expect($previewResponse)->toBeInstanceOf(PreviewOrderResponseDTO::class)
+        ->and($previewResponse->orderType)->toBe('OPTN')
+        ->and($previewResponse->totalOrderValue)->toBe(330.4644)
+        ->and($previewResponse->previewTime)->toBe(1544038038415)
+        ->and($previewResponse->accountId)->toBe('314497960')
+        ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
+        ->and($previewResponse->optionLevelCd)->toBe(4)
+        ->and($previewResponse->previewIds)->toHaveCount(1)
+        ->and($previewResponse->previewIds[0]->previewId)->toBe(2785277279);
+
+    $order = $previewResponse->order[0];
+    expect($order->priceType)->toBe('MARKET')
+        ->and($order->messages)->toBeNull();
+
+    $instrument = $order->instrument[0];
+    expect($instrument->product)->toBeInstanceOf(\KevinRider\LaravelEtrade\Dtos\Orders\ProductDTO::class)
+        ->and($instrument->product->callPut)->toBe('CALL')
+        ->and($instrument->product->strikePrice)->toBe(140.0)
+        ->and($instrument->product->productId->symbol)->toBe('FB----210409P00297500')
+        ->and($instrument->product->productId->typeCode)->toBe('OPTION')
+        ->and($instrument->quantity)->toBe(1.0)
+        ->and($instrument->reserveOrder)->toBeTrue()
+        ->and($previewResponse->disclosure->aoDisclosureFlag)->toBeTrue();
+
+});
+
+it('can preview spread orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PreviewOrderResponseSpread.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'SPREADS',
+        'clientOrderId' => 'client-order-id',
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'NET_DEBIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY_OPEN',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'IBM',
+                            'securityType' => 'OPTN',
+                            'callPut' => 'CALL',
+                            'expiryYear' => 2019,
+                            'expiryMonth' => 2,
+                            'expiryDay' => 15,
+                            'strikePrice' => 130,
+                        ],
+                    ],
+                    [
+                        'orderAction' => 'SELL_OPEN',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'IBM',
+                            'securityType' => 'OPTN',
+                            'callPut' => 'CALL',
+                            'expiryYear' => 2019,
+                            'expiryMonth' => 2,
+                            'expiryDay' => 15,
+                            'strikePrice' => 131,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $previewResponse = $etradeClient->previewOrder($previewOrderRequestDto);
+
+    expect($previewResponse)->toBeInstanceOf(PreviewOrderResponseDTO::class)
+        ->and($previewResponse->orderType)->toBe('SPREADS')
+        ->and($previewResponse->totalOrderValue)->toBe(508.4762)
+        ->and($previewResponse->order)->toHaveCount(1)
+        ->and($previewResponse->accountId)->toBe('838796270')
+        ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
+        ->and($previewResponse->previewIds[0]->previewId)->toBe(3429218279);
+
+    $order = $previewResponse->order[0];
+    expect($order->priceType)->toBe('NET_DEBIT')
+        ->and($order->instrument)->toHaveCount(2)
+        ->and($order->estimatedTotalAmount)->toBe(508.4762);
+
+    $firstLeg = $order->instrument[0];
+    $secondLeg = $order->instrument[1];
+
+    expect($firstLeg->orderAction)->toBe('BUY_OPEN')
+        ->and($firstLeg->product->strikePrice)->toBe(130.0)
+        ->and($secondLeg->orderAction)->toBe('SELL_OPEN')
+        ->and($secondLeg->product->strikePrice)->toBe(131.0);
+});
+
+it('throws exception if preview order payload is missing required values', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+    ]);
+
+    expect(function () use ($etradeClient, $previewOrderRequestDto) {
+        $etradeClient->previewOrder($previewOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'order is required!');
+});
+
+it('throws exception on non-200 response for preview order', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'order' => [
+            [
+                'priceType' => 'LIMIT',
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'FB',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $previewOrderRequestDto) {
+        $etradeClient->previewOrder($previewOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to preview order');
+});
+
+it('can place equity orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PlaceOrderResponseEquity.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [3429395279],
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'LIMIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantityType' => 'QUANTITY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'FB',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $placeResponse = $etradeClient->placeOrder($placeOrderRequestDto);
+
+    expect($placeResponse)->toBeInstanceOf(PlaceOrderResponseDTO::class)
+        ->and($placeResponse->orderType)->toBe('EQ')
+        ->and($placeResponse->orderIds)->toHaveCount(1)
+        ->and($placeResponse->orderIds[0]->orderId)->toBe(485);
+
+    $order = $placeResponse->order[0];
+    expect($order->priceType)->toBe('LIMIT')
+        ->and($order->messages->message)->toHaveCount(1);
+
+    $instrument = $order->instrument[0];
+    expect($instrument->product->symbol)->toBe('FB')
+        ->and($instrument->product->securityType)->toBe('EQ');
+});
+
+it('can place option orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PlaceOrderResponseOptions.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'OPTN',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [2785277279],
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'MARKET',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY_OPEN',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'FB',
+                            'securityType' => 'OPTN',
+                            'callPut' => 'CALL',
+                            'expiryYear' => 2018,
+                            'expiryMonth' => 12,
+                            'expiryDay' => 21,
+                            'strikePrice' => 140,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $placeResponse = $etradeClient->placeOrder($placeOrderRequestDto);
+
+    expect($placeResponse)->toBeInstanceOf(PlaceOrderResponseDTO::class)
+        ->and($placeResponse->orderType)->toBe('OPTN')
+        ->and($placeResponse->placedTime)->toBe(1544038195663)
+        ->and($placeResponse->accountId)->toBe('314497960')
+        ->and($placeResponse->orderIds[0]->orderId)->toBe(169);
+
+    $order = $placeResponse->order[0];
+    $instrument = $order->instrument[0];
+
+    expect($instrument->product->callPut)->toBe('CALL')
+        ->and($instrument->product->productId->symbol)->toBe('FB----210409P00297500')
+        ->and($instrument->product->productId->typeCode)->toBe('OPTION')
+        ->and($order->estimatedTotalAmount)->toBe(330.4644)
+        ->and($order->messages->message)->toHaveCount(1)
+        ->and($order->messages->message[0]->code)->toBe(1026);
+});
+
+it('can place spread orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PlaceOrderResponseSpread.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'SPREADS',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [3429218279],
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'NET_DEBIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY_OPEN',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'IBM',
+                            'securityType' => 'OPTN',
+                            'callPut' => 'CALL',
+                            'expiryYear' => 2019,
+                            'expiryMonth' => 2,
+                            'expiryDay' => 15,
+                            'strikePrice' => 130,
+                        ],
+                    ],
+                    [
+                        'orderAction' => 'SELL_OPEN',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'IBM',
+                            'securityType' => 'OPTN',
+                            'callPut' => 'CALL',
+                            'expiryYear' => 2019,
+                            'expiryMonth' => 2,
+                            'expiryDay' => 15,
+                            'strikePrice' => 131,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $placeResponse = $etradeClient->placeOrder($placeOrderRequestDto);
+
+    expect($placeResponse)->toBeInstanceOf(PlaceOrderResponseDTO::class)
+        ->and($placeResponse->orderType)->toBe('SPREADS')
+        ->and($placeResponse->accountId)->toBe('838796270')
+        ->and($placeResponse->optionLevelCd)->toBe(4)
+        ->and($placeResponse->orderIds[0]->orderId)->toBe(484);
+
+    $order = $placeResponse->order[0];
+    expect($order->instrument)->toHaveCount(2)
+        ->and($order->instrument[0]->product->strikePrice)->toBe(130.0)
+        ->and($order->instrument[1]->product->strikePrice)->toBe(131.0)
+        ->and($order->messages->message)->toHaveCount(1)
+        ->and($order->estimatedTotalAmount)->toBe(508.4762)
+        ->and($placeResponse->totalCommission)->toBeNull();
+
+});
+
+it('throws exception if place order payload is missing required values', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $placeOrderRequestDto) {
+        $etradeClient->placeOrder($placeOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'previewIds is required!');
+});
+
+it('throws exception on non-200 response for place order', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('post')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [123],
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'FB',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $placeOrderRequestDto) {
+        $etradeClient->placeOrder($placeOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to place order');
 });
 
 it('can list alerts successfully', function () {
