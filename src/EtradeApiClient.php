@@ -14,6 +14,7 @@ use KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
+use KevinRider\LaravelEtrade\Dtos\CancelOrderResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\GetQuotesResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
@@ -29,6 +30,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\CancelOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\PlaceOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
@@ -661,6 +663,43 @@ class EtradeApiClient
         }
 
         return PlaceOrderResponseDTO::fromJson($response->getBody()->getContents());
+    }
+
+    /**
+     * @param CancelOrderRequestDTO $cancelOrderRequestDTO
+     * @return CancelOrderResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function cancelOrder(CancelOrderRequestDTO $cancelOrderRequestDTO): CancelOrderResponseDTO
+    {
+        if (empty($cancelOrderRequestDTO->accountIdKey)) {
+            throw new EtradeApiException('accountIdKey is required!');
+        }
+
+        if (empty($cancelOrderRequestDTO->orderId)) {
+            throw new EtradeApiException('orderId is required!');
+        }
+
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace('{accountIdKey}', $cancelOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_CANCEL);
+
+        $response = $this->client->put($uri, [
+            'body' => $cancelOrderRequestDTO->toXml(),
+            'headers' => ['Content-Type' => 'application/xml'],
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException('Failed to cancel order');
+        }
+
+        return CancelOrderResponseDTO::fromXml($response->getBody()->getContents());
     }
 
     /**
