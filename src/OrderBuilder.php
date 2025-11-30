@@ -185,6 +185,28 @@ class OrderBuilder
         return $this->addOptionLeg('PUT', 'SELL_OPEN', $strikePrice, $quantity, $overrides);
     }
 
+    public function addEquity(string $orderAction, float $quantity = 1, array $overrides = []): self
+    {
+        $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
+
+        if (!$symbol) {
+            throw new InvalidArgumentException('Symbol is required for equity legs. Use withSymbol() or pass symbol override.');
+        }
+
+        $instrument = [
+            'orderAction' => $orderAction,
+            'quantityType' => $overrides['quantityType'] ?? null,
+            'quantity' => $quantity,
+            'orderedQuantity' => $overrides['orderedQuantity'] ?? null,
+            'product' => [
+                'symbol' => $symbol,
+                'securityType' => $overrides['securityType'] ?? 'EQ',
+            ],
+        ];
+
+        return $this->addInstrument($instrument);
+    }
+
     /**
      * Add or override any order detail field (for fields without explicit helpers).
      *

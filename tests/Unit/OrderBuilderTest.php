@@ -1,7 +1,6 @@
 <?php
 
 use KevinRider\LaravelEtrade\Dtos\Orders\DisclosureDTO;
-use KevinRider\LaravelEtrade\Dtos\Orders\InstrumentDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\PreviewIdDTO;
 use KevinRider\LaravelEtrade\OrderBuilder;
 
@@ -55,20 +54,14 @@ it('builds preview equity order payload', function () {
     $builder = OrderBuilder::forAccount('ACC123')
         ->orderType('EQ')
         ->clientOrderId('1fds311')
+        ->withSymbol('FB')
+        ->quantityType('QUANTITY')
         ->gfd()
         ->priceType('LIMIT')
         ->limitPrice(169)
         ->marketSession('REGULAR')
         ->allOrNone(false)
-        ->addInstrument([
-            'orderAction' => 'BUY',
-            'quantityType' => 'QUANTITY',
-            'quantity' => 1,
-            'product' => [
-                'securityType' => 'EQ',
-                'symbol' => 'FB',
-            ],
-        ]);
+        ->addEquity('BUY');
 
     $payload = $builder->buildPreviewRequest()->toRequestBody();
 
@@ -79,21 +72,14 @@ it('builds place equity order payload with normalized preview ids', function () 
     $builder = OrderBuilder::forAccount('ACC123')
         ->orderType('EQ')
         ->clientOrderId('1fds311')
+        ->withSymbol('FB')
+        ->quantityType('QUANTITY')
         ->gfd()
         ->priceType('LIMIT')
         ->limitPrice(169)
         ->marketSession('REGULAR')
-        ->allOrNone(false);
-
-    $builder->addInstrument(new InstrumentDTO([
-        'orderAction' => 'BUY',
-        'quantityType' => 'QUANTITY',
-        'quantity' => 1,
-        'product' => [
-            'securityType' => 'EQ',
-            'symbol' => 'FB',
-        ],
-    ]));
+        ->allOrNone(false)
+        ->addEquity('BUY');
 
     $request = $builder->buildPlaceRequest([new PreviewIdDTO(['previewId' => 3429395279])]);
 
@@ -254,12 +240,9 @@ it('normalizes empty stop prices to blank strings', function () {
         ->orderType('EQ')
         ->clientOrderId('CID')
         ->withDetail(['stopPrice' => ''])
-        ->addInstrument([
-            'orderAction' => 'BUY',
-            'quantityType' => 'QUANTITY',
-            'quantity' => 1,
-            'product' => ['securityType' => 'EQ', 'symbol' => 'AAPL'],
-        ]);
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY')
+        ->addEquity('BUY');
 
     $order = $builder->buildPreviewRequest()->toRequestBody()['PreviewOrderRequest']['Order'][0];
 
@@ -278,4 +261,17 @@ it('validates quantity types for defaults and overrides', function () {
 
     expect(fn () => $builder->addLongCall(100, 1, ['quantityType' => 'NOT_ALLOWED']))
         ->toThrow(InvalidArgumentException::class, 'quantityType must be one of: QUANTITY, DOLLAR, ALL_I_OWN');
+
+    $builder->quantityType('QUANTITY');
+
+    $equity = OrderBuilder::forAccount('EQ')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('ALL_I_OWN')
+        ->addEquity('SELL');
+
+    $instrument = $equity->buildPreviewRequest()->toRequestBody()['PreviewOrderRequest']['Order'][0]['Instrument'][0];
+
+    expect($instrument['quantityType'])->toBe('ALL_I_OWN');
 });
