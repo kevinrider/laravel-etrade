@@ -558,44 +558,6 @@ class EtradeApiClient
     }
 
     /**
-     * @param PreviewOrderRequestDTO $previewOrderRequestDTO
-     * @return PreviewOrderResponseDTO
-     * @throws EtradeApiException
-     * @throws GuzzleException
-     */
-    public function previewChangeOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
-    {
-        $requiredProperties = PreviewOrderRequestDTO::REQUIRED_PROPERTIES;
-        $requiredProperties[] = 'orderId';
-        foreach ($requiredProperties as $requiredProperty) {
-            if (empty($previewOrderRequestDTO->$requiredProperty)) {
-                throw new EtradeApiException($requiredProperty . ' is required!');
-            }
-        }
-
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
-
-        $uri = str_replace(
-            ['{accountIdKey}', '{orderId}'],
-            [$previewOrderRequestDTO->accountIdKey, $previewOrderRequestDTO->orderId],
-            EtradeConfig::ORDER_CHANGE_PREVIEW
-        );
-
-        $response = $this->client->put($uri, ['json' => $previewOrderRequestDTO->toRequestBody()]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to preview change order');
-        }
-
-        return PreviewOrderResponseDTO::fromJson($response->getBody()->getContents());
-    }
-
-    /**
      * @param PlaceOrderRequestDTO $placeOrderRequestDTO
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
@@ -628,6 +590,25 @@ class EtradeApiClient
     }
 
     /**
+     * @param PreviewOrderRequestDTO $previewOrderRequestDTO
+     * @return PreviewOrderResponseDTO
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    public function previewChangeOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
+    {
+        $this->validateRequiredProperties($previewOrderRequestDTO, [...PreviewOrderRequestDTO::REQUIRED_PROPERTIES, 'orderId']);
+
+        return $this->sendChangeOrderRequest(
+            $previewOrderRequestDTO,
+            EtradeConfig::ORDER_CHANGE_PREVIEW,
+            $previewOrderRequestDTO->toRequestBody(),
+            fn (string $body) => PreviewOrderResponseDTO::fromJson($body),
+            'Failed to preview change order'
+        );
+    }
+
+    /**
      * @param PlaceOrderRequestDTO $placeOrderRequestDTO
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
@@ -635,34 +616,15 @@ class EtradeApiClient
      */
     public function placeChangeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
     {
-        $requiredProperties = PlaceOrderRequestDTO::REQUIRED_PROPERTIES;
-        $requiredProperties[] = 'orderId';
-        foreach ($requiredProperties as $requiredProperty) {
-            if (empty($placeOrderRequestDTO->$requiredProperty)) {
-                throw new EtradeApiException($requiredProperty . ' is required!');
-            }
-        }
+        $this->validateRequiredProperties($placeOrderRequestDTO, [...PlaceOrderRequestDTO::REQUIRED_PROPERTIES, 'orderId']);
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
-
-        $uri = str_replace(
-            ['{accountIdKey}', '{orderId}'],
-            [$placeOrderRequestDTO->accountIdKey, $placeOrderRequestDTO->orderId],
-            EtradeConfig::ORDER_PLACE_CHANGE
+        return $this->sendChangeOrderRequest(
+            $placeOrderRequestDTO,
+            EtradeConfig::ORDER_PLACE_CHANGE,
+            $placeOrderRequestDTO->toRequestBody(),
+            fn (string $body) => PlaceOrderResponseDTO::fromJson($body),
+            'Failed to place change order'
         );
-
-        $response = $this->client->put($uri, ['json' => $placeOrderRequestDTO->toRequestBody()]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to place change order');
-        }
-
-        return PlaceOrderResponseDTO::fromJson($response->getBody()->getContents());
     }
 
     /**
@@ -888,6 +850,60 @@ class EtradeApiClient
             'handler' => $stack,
             'auth' => 'oauth'
         ]);
+    }
+
+    /**
+     * @param object $dto
+     * @param array $requiredProperties
+     * @return void
+     * @throws EtradeApiException
+     */
+    private function validateRequiredProperties(object $dto, array $requiredProperties): void
+    {
+        foreach ($requiredProperties as $requiredProperty) {
+            if (empty($dto->$requiredProperty)) {
+                throw new EtradeApiException($requiredProperty . ' is required!');
+            }
+        }
+    }
+
+    /**
+     * @param object $dto
+     * @param string $uriTemplate
+     * @param array $payload
+     * @param callable $responseParser
+     * @param string $errorMessage
+     * @return mixed
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    private function sendChangeOrderRequest(
+        object $dto,
+        string $uriTemplate,
+        array $payload,
+        callable $responseParser,
+        string $errorMessage
+    ): mixed {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+
+        $uri = str_replace(
+            ['{accountIdKey}', '{orderId}'],
+            [$dto->accountIdKey, $dto->orderId],
+            $uriTemplate
+        );
+
+        $response = $this->client->put($uri, ['json' => $payload]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException($errorMessage);
+        }
+
+        return $responseParser($response->getBody()->getContents());
     }
 
     /**
