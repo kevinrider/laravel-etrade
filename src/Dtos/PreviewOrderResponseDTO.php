@@ -94,7 +94,7 @@ class PreviewOrderResponseDTO extends BaseDTO
             $previewIdArray = $previewIds['previewId'] ?? $previewIds['PreviewId'] ?? $previewIds;
             $previewIdArray = $this->normalizeArray($previewIdArray);
             $this->previewIds = array_map(
-                fn ($previewId) => new PreviewIdDTO($previewId),
+                fn ($previewId) => new PreviewIdDTO(is_array($previewId) ? $previewId : ['previewId' => $previewId]),
                 $previewIdArray
             );
         }
@@ -126,7 +126,15 @@ class PreviewOrderResponseDTO extends BaseDTO
      */
     private function normalizeArray(mixed $items): array
     {
-        if (!is_array($items) || empty($items)) {
+        if ($items === null) {
+            return [];
+        }
+
+        if (!is_array($items)) {
+            return [$items];
+        }
+
+        if (empty($items)) {
             return [];
         }
 

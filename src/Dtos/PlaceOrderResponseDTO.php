@@ -80,7 +80,7 @@ class PlaceOrderResponseDTO extends BaseDTO
             $idsArray = $orderIds['orderId'] ?? $orderIds['OrderId'] ?? $orderIds;
             $idsArray = $this->normalizeArray($idsArray);
             $this->orderIds = array_map(
-                fn ($orderId) => new OrderIdDTO($orderId),
+                fn ($orderId) => new OrderIdDTO(is_array($orderId) ? $orderId : ['orderId' => $orderId]),
                 $idsArray
             );
         }
@@ -100,7 +100,15 @@ class PlaceOrderResponseDTO extends BaseDTO
      */
     private function normalizeArray(mixed $items): array
     {
-        if (!is_array($items) || empty($items)) {
+        if ($items === null) {
+            return [];
+        }
+
+        if (!is_array($items)) {
+            return [$items];
+        }
+
+        if (empty($items)) {
             return [];
         }
 
