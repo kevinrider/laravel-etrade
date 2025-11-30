@@ -45,8 +45,8 @@ class EtradeConfig
     public const string ORDER_PREVIEW = 'v1/accounts/{accountIdKey}/orders/preview.json';
     public const string ORDER_PLACE = 'v1/accounts/{accountIdKey}/orders/place.json';
     public const string ORDER_CANCEL = 'v1/accounts/{accountIdKey}/orders/cancel';
-    public const string ORDER_CHANGE_PREVIEW = 'v1/accounts/{accountIdKey}/orders/{orderId}/change/preview';
-    public const string ORDER_PLACE_CHANGE = 'v1/accounts/{accountIdKey}/orders/{orderId}/change/place';
+    public const string ORDER_CHANGE_PREVIEW = 'v1/accounts/{accountIdKey}/orders/{orderId}/change/preview.json';
+    public const string ORDER_PLACE_CHANGE = 'v1/accounts/{accountIdKey}/orders/{orderId}/change/place.json';
 
     /*
      * API response constants
