@@ -68,6 +68,27 @@ it('builds preview equity order payload', function () {
     expect(normalizeForFixture($payload))->toEqual(orderFixture('PreviewOrderRequestEquity.json'));
 });
 
+it('carries orderId onto preview and place requests for change orders', function () {
+    $builder = EtradeOrderBuilder::forAccount('ACC123')
+        ->orderType('EQ')
+        ->clientOrderId('1fds311')
+        ->orderId(825)
+        ->withSymbol('FB')
+        ->quantityType('QUANTITY')
+        ->gfd()
+        ->priceType('LIMIT')
+        ->limitPrice(169)
+        ->marketSession('REGULAR')
+        ->allOrNone(false)
+        ->addEquity('BUY');
+
+    $preview = $builder->buildPreviewRequest();
+    $place = $builder->buildPlaceRequest([new PreviewIdDTO(['previewId' => 3429395279])]);
+
+    expect($preview->orderId)->toBe(825)
+        ->and($place->orderId)->toBe(825);
+});
+
 it('builds place equity order payload with normalized preview ids', function () {
     $builder = EtradeOrderBuilder::forAccount('ACC123')
         ->orderType('EQ')

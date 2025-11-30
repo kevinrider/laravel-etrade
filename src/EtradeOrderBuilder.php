@@ -21,6 +21,7 @@ class EtradeOrderBuilder
     private ?int $defaultExpiryYear = null;
     private ?int $defaultExpiryMonth = null;
     private ?int $defaultExpiryDay = null;
+    private ?int $orderId = null;
     private string $defaultSecurityType = 'OPTN';
     private ?string $defaultQuantityType = null;
 
@@ -51,6 +52,12 @@ class EtradeOrderBuilder
     public function clientOrderId(string $clientOrderId): self
     {
         $this->clientOrderId = $clientOrderId;
+        return $this;
+    }
+
+    public function orderId(int $orderId): self
+    {
+        $this->orderId = $orderId;
         return $this;
     }
 
@@ -234,6 +241,7 @@ class EtradeOrderBuilder
             'accountIdKey' => $this->accountIdKey,
             'orderType' => $this->orderType,
             'clientOrderId' => $this->clientOrderId,
+            'orderId' => $this->orderId,
             'order' => [new OrderDetailDTO($detailPayload)],
         ]);
     }
@@ -266,6 +274,7 @@ class EtradeOrderBuilder
             'accountIdKey' => $this->accountIdKey,
             'orderType' => $this->orderType,
             'clientOrderId' => $this->clientOrderId,
+            'orderId' => $this->orderId,
             'order' => [new OrderDetailDTO($detailPayload)],
             'previewIds' => $normalizedPreviewIds,
         ]);
