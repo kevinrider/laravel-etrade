@@ -1975,6 +1975,180 @@ it('throws exception on non-200 response for preview order', function () {
     })->toThrow(EtradeApiException::class, 'Failed to preview order');
 });
 
+it('can preview changed orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/ChangePreviewOrderResponse.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('put')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 825,
+        'orderType' => 'EQ',
+        'clientOrderId' => 's453345er333',
+        'order' => [
+            [
+                'allOrNone' => false,
+                'priceType' => 'LIMIT',
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'marketSession' => 'REGULAR',
+                'stopPrice' => '',
+                'limitPrice' => 65.31,
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantityType' => 'QUANTITY',
+                        'quantity' => 6,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $previewResponse = $etradeClient->previewChangeOrder($previewOrderRequestDto);
+
+    expect($previewResponse)->toBeInstanceOf(PreviewOrderResponseDTO::class)
+        ->and($previewResponse->orderType)->toBe('EQ')
+        ->and($previewResponse->totalOrderValue)->toBe(396.81)
+        ->and($previewResponse->previewIds[0]->previewId)->toBe(926244279)
+        ->and($previewResponse->accountId)->toBe('835652930')
+        ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED');
+
+    $order = $previewResponse->order[0];
+    $instrument = $order->instrument[0];
+
+    expect($order->priceType)->toBe('LIMIT')
+        ->and($order->limitPrice)->toBe(65.31)
+        ->and($order->estimatedTotalAmount)->toBe(396.81)
+        ->and($instrument->product->symbol)->toBe('F')
+        ->and($instrument->orderAction)->toBe('BUY')
+        ->and($instrument->quantity)->toBe(6.0);
+});
+
+it('throws exception if preview change order payload is missing orderId', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 's453345er333',
+        'order' => [
+            [
+                'priceType' => 'LIMIT',
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $previewOrderRequestDto) {
+        $etradeClient->previewChangeOrder($previewOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'orderId is required!');
+});
+
+it('throws exception on non-200 response for preview change order', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('put')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 825,
+        'orderType' => 'EQ',
+        'clientOrderId' => 's453345er333',
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'LIMIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $previewOrderRequestDto) {
+        $etradeClient->previewChangeOrder($previewOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to preview change order');
+});
+
+it('throws exception if previewing change order when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $previewOrderRequestDto = new PreviewOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 825,
+        'orderType' => 'EQ',
+        'clientOrderId' => 's453345er333',
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'LIMIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $previewOrderRequestDto) {
+        $etradeClient->previewChangeOrder($previewOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+});
+
 it('can place equity orders successfully', function () {
     $accessToken = [
         'oauth_token' => 'test_access_token',
@@ -2322,6 +2496,182 @@ it('throws exception on non-200 response for place order', function () {
     expect(function () use ($etradeClient, $placeOrderRequestDto) {
         $etradeClient->placeOrder($placeOrderRequestDto);
     })->toThrow(EtradeApiException::class, 'Failed to place order');
+});
+
+it('can place changed orders successfully', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/PlaceChangeOrderResponse.json');
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('put')
+        ->once()
+        ->andReturn(new Response(200, [], $jsonResponse));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 825,
+        'orderType' => 'EQ',
+        'clientOrderId' => 's453dddff5er333',
+        'previewIds' => [926244279],
+        'order' => [
+            [
+                'allOrNone' => false,
+                'priceType' => 'LIMIT',
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'marketSession' => 'REGULAR',
+                'stopPrice' => '',
+                'limitPrice' => 65.31,
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantityType' => 'QUANTITY',
+                        'quantity' => 6,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $placeResponse = $etradeClient->placeChangeOrder($placeOrderRequestDto);
+
+    expect($placeResponse)->toBeInstanceOf(PlaceOrderResponseDTO::class)
+        ->and($placeResponse->orderType)->toBe('EQ')
+        ->and($placeResponse->orderIds[0]->orderId)->toBe(826)
+        ->and($placeResponse->accountId)->toBe('835652930')
+        ->and($placeResponse->dstFlag)->toBeTrue();
+
+    $order = $placeResponse->order[0];
+    $instrument = $order->instrument[0];
+
+    expect($order->limitPrice)->toBe(65.31)
+        ->and($order->estimatedTotalAmount)->toBe(396.81)
+        ->and($instrument->product->symbol)->toBe('F')
+        ->and($instrument->orderAction)->toBe('BUY')
+        ->and($instrument->quantity)->toBe(6.0);
+});
+
+it('throws exception if place change order payload is missing orderId', function () {
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [123],
+        'order' => [
+            [
+                'priceType' => 'LIMIT',
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $placeOrderRequestDto) {
+        $etradeClient->placeChangeOrder($placeOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'orderId is required!');
+});
+
+it('throws exception on non-200 response for place change order', function () {
+    $accessToken = [
+        'oauth_token' => 'test_access_token',
+        'oauth_token_secret' => 'test_access_token_secret',
+        'inactive_at' => now()->addHour()->getTimestamp(),
+    ];
+    Cache::put(
+        config('laravel-etrade.oauth_access_token_key'),
+        Crypt::encryptString(json_encode($accessToken)),
+        Carbon::createFromTime(23, 59, 59, 'America/New_York')
+    );
+
+    $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
+    $mockGuzzleClient->shouldReceive('put')
+        ->once()
+        ->andReturn(new Response(500, [], 'Internal Server Error'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 825,
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [123],
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'LIMIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $placeOrderRequestDto) {
+        $etradeClient->placeChangeOrder($placeOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Failed to place change order');
+});
+
+it('throws exception if placing change order when no token is cached', function () {
+    Cache::forget(config('laravel-etrade.oauth_access_token_key'));
+
+    $etradeClient = new EtradeApiClient('test_key', 'test_secret');
+    $placeOrderRequestDto = new PlaceOrderRequestDTO([
+        'accountIdKey' => 'account-key',
+        'orderId' => 825,
+        'orderType' => 'EQ',
+        'clientOrderId' => 'client-order-id',
+        'previewIds' => [123],
+        'order' => [
+            [
+                'orderTerm' => 'GOOD_FOR_DAY',
+                'priceType' => 'LIMIT',
+                'instrument' => [
+                    [
+                        'orderAction' => 'BUY',
+                        'quantity' => 1,
+                        'product' => [
+                            'symbol' => 'F',
+                            'securityType' => 'EQ',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    expect(function () use ($etradeClient, $placeOrderRequestDto) {
+        $etradeClient->placeChangeOrder($placeOrderRequestDto);
+    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can list alerts successfully', function () {
