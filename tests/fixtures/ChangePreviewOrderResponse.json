@@ -1,0 +1,63 @@
+{
+  "PreviewOrderResponse": {
+    "orderType": "EQ",
+    "totalOrderValue": 396.81,
+    "Order": [
+      {
+        "orderTerm": "GOOD_FOR_DAY",
+        "priceType": "LIMIT",
+        "limitPrice": 65.31,
+        "stopPrice": 0,
+        "marketSession": "REGULAR",
+        "allOrNone": false,
+        "Instrument": [
+          {
+            "Product": {
+              "symbol": "F",
+              "securityType": "EQ"
+            },
+            "symbolDescription": "FORD MTR CO DEL COM PAR $0.01",
+            "orderAction": "BUY",
+            "quantityType": "QUANTITY",
+            "quantity": 6,
+            "cancelQuantity": 0,
+            "reserveOrder": true,
+            "reserveQuantity": 0
+          }
+        ],
+        "messages": {
+          "Message": [
+            {
+              "code": 9011,
+              "description": "200|You are about to place a marketable limit order that is atleast 20% greater than the current ask price for the security and could be executed if placed.",
+              "type": "WARNING"
+            },
+            {
+              "code": 3041,
+              "description": "DTBP is negative but RegTBP is positive",
+              "type": "WARNING"
+            }
+          ]
+        },
+        "egQual": "EG_QUAL_UNSPECIFIED",
+        "estimatedCommission": 4.95,
+        "estimatedTotalAmount": 396.81,
+        "netPrice": 0,
+        "netBid": 0,
+        "netAsk": 0,
+        "gcd": 0,
+        "ratio": ""
+      }
+    ],
+    "PreviewIds": [
+      {
+        "previewId": 926244279
+      }
+    ],
+    "previewTime": 1528486102038,
+    "dstFlag": true,
+    "accountId": "835652930",
+    "optionLevelCd": 4,
+    "marginLevelCd": "MARGIN_TRADING_ALLOWED"
+  }
+}

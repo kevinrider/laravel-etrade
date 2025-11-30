@@ -1,0 +1,57 @@
+{
+  "PlaceOrderResponse": {
+    "orderType": "EQ",
+    "Order": [
+      {
+        "orderTerm": "GOOD_FOR_DAY",
+        "priceType": "LIMIT",
+        "limitPrice": 65.31,
+        "stopPrice": 0,
+        "marketSession": "REGULAR",
+        "allOrNone": false,
+        "Instrument": [
+          {
+            "Product": {
+              "symbol": "F",
+              "securityType": "EQ"
+            },
+            "symbolDescription": "FORD MTR CO DEL COM PAR $0.01",
+            "orderAction": "BUY",
+            "quantityType": "QUANTITY",
+            "quantity": 6,
+            "cancelQuantity": 0,
+            "reserveOrder": true,
+            "reserveQuantity": 0
+          }
+        ],
+        "messages": {
+          "Message": [
+            {
+              "code": 1026,
+              "description": "200|Your order was successfully entered during market hours.",
+              "type": "WARNING"
+            }
+          ]
+        },
+        "egQual": "EG_QUAL_UNSPECIFIED",
+        "estimatedCommission": 4.95,
+        "estimatedTotalAmount": 396.81,
+        "netPrice": 0,
+        "netBid": 0,
+        "netAsk": 0,
+        "gcd": 0,
+        "ratio": ""
+      }
+    ],
+    "dstFlag": true,
+    "optionLevelCd": 4,
+    "marginLevelCd": "MARGIN_TRADING_ALLOWED",
+    "OrderIds": [
+      {
+        "orderId": 826
+      }
+    ],
+    "placedTime": 1528486168172,
+    "accountId": "835652930"
+  }
+}

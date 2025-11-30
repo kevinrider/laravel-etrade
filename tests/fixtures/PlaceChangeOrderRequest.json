@@ -1,0 +1,32 @@
+{
+  "PlaceOrderRequest": {
+    "orderType": "EQ",
+    "clientOrderId": "s453dddff5er333",
+    "PreviewIds": [
+      {
+        "previewId": 926244279
+      }
+    ],
+    "Order": [
+      {
+        "allOrNone": false,
+        "priceType": "LIMIT",
+        "orderTerm": "GOOD_FOR_DAY",
+        "marketSession": "REGULAR",
+        "stopPrice": "",
+        "limitPrice": 65.31,
+        "Instrument": [
+          {
+            "Product": {
+              "securityType": "EQ",
+              "symbol": "F"
+            },
+            "orderAction": "BUY",
+            "quantityType": "QUANTITY",
+            "quantity": 6
+          }
+        ]
+      }
+    ]
+  }
+}
