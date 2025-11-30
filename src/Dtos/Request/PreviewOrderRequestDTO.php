@@ -17,6 +17,7 @@ class PreviewOrderRequestDTO extends BaseDTO
     public ?string $accountIdKey = null;
     public ?string $orderType = null;
     public ?string $clientOrderId = null;
+    public ?int $orderId = null;
     /**
      * @var array<int, OrderDetailDTO|array>
      */
