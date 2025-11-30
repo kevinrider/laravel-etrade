@@ -32,6 +32,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\CancelOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\OrderRequestBaseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\PlaceOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
@@ -868,7 +869,7 @@ class EtradeApiClient
     }
 
     /**
-     * @param object $dto
+     * @param OrderRequestBaseDTO $dto
      * @param string $uriTemplate
      * @param array $payload
      * @param callable $responseParser
@@ -878,7 +879,7 @@ class EtradeApiClient
      * @throws GuzzleException
      */
     private function sendChangeOrderRequest(
-        object $dto,
+        OrderRequestBaseDTO $dto,
         string $uriTemplate,
         array $payload,
         callable $responseParser,
