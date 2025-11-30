@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade;
 
+use KevinRider\LaravelEtrade\Commands\LaravelEtradeDemo;
 use Illuminate\Support\ServiceProvider;
 
 class LaravelEtradeServiceProvider extends ServiceProvider
@@ -32,5 +33,11 @@ class LaravelEtradeServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/laravel-etrade.php' => config_path('laravel-etrade.php'),
         ]);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                LaravelEtradeDemo::class,
+            ]);
+        }
     }
 }
