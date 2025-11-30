@@ -690,16 +690,13 @@ class EtradeApiClient
 
         $uri = str_replace('{accountIdKey}', $cancelOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_CANCEL);
 
-        $response = $this->client->put($uri, [
-            'body' => $cancelOrderRequestDTO->toXml(),
-            'headers' => ['Content-Type' => 'application/xml'],
-        ]);
+        $response = $this->client->put($uri, ['json' => $cancelOrderRequestDTO->toRequestBody()]);
 
         if ($response->getStatusCode() !== 200) {
             throw new EtradeApiException('Failed to cancel order');
         }
 
-        return CancelOrderResponseDTO::fromXml($response->getBody()->getContents());
+        return CancelOrderResponseDTO::fromJson($response->getBody()->getContents());
     }
 
     /**

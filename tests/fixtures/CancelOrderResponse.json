@@ -1,0 +1,16 @@
+{
+  "CancelOrderResponse": {
+    "accountId": "634386170",
+    "orderId": 11,
+    "cancelTime": 1529563499081,
+    "Messages": {
+      "Message": [
+        {
+          "code": 5011,
+          "description": "200|Your request to cancel your order is being processed.",
+          "type": "WARNING"
+        }
+      ]
+    }
+  }
+}

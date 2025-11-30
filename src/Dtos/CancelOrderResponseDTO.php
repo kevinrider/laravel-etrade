@@ -12,6 +12,17 @@ class CancelOrderResponseDTO extends BaseDTO
     public ?MessagesDTO $messages = null;
 
     /**
+     * @param string $json
+     * @return static
+     */
+    public static function fromJson(string $json): static
+    {
+        $data = json_decode($json, true);
+
+        return new static($data['CancelOrderResponse'] ?? $data);
+    }
+
+    /**
      * @param array $data
      * @return void
      */

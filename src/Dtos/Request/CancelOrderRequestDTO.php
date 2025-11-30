@@ -10,13 +10,16 @@ class CancelOrderRequestDTO extends BaseDTO
     public ?int $orderId = null;
 
     /**
-     * @return string
+     * Build the API request payload.
+     *
+     * @return array<string, mixed>
      */
-    public function toXml(): string
+    public function toRequestBody(): array
     {
-        $xml = new \SimpleXMLElement('<CancelOrderRequest/>');
-        $xml->addChild('orderId', (string) $this->orderId);
-
-        return $xml->asXML() ?: '';
+        return [
+            'CancelOrderRequest' => [
+                'orderId' => $this->orderId,
+            ],
+        ];
     }
 }

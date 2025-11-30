@@ -2688,11 +2688,11 @@ it('can cancel orders successfully', function () {
         Carbon::createFromTime(23, 59, 59, 'America/New_York')
     );
 
-    $xmlResponse = file_get_contents(__DIR__ . '/../fixtures/CancelOrderResponse.xml');
+    $jsonResponse = file_get_contents(__DIR__ . '/../fixtures/CancelOrderResponse.json');
     $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
     $mockGuzzleClient->shouldReceive('put')
         ->once()
-        ->andReturn(new Response(200, [], $xmlResponse));
+        ->andReturn(new Response(200, [], $jsonResponse));
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
     $cancelOrderRequestDto = new CancelOrderRequestDTO([
