@@ -12,6 +12,8 @@ use KevinRider\LaravelEtrade\Dtos\Request\PreviewOrderRequestDTO;
 
 class OrderBuilder
 {
+    private const array VALID_QUANTITY_TYPES = ['QUANTITY', 'DOLLAR', 'ALL_I_OWN'];
+
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
     private ?string $clientOrderId = null;
@@ -20,6 +22,7 @@ class OrderBuilder
     private ?int $defaultExpiryMonth = null;
     private ?int $defaultExpiryDay = null;
     private string $defaultSecurityType = 'OPTN';
+    private ?string $defaultQuantityType = null;
 
     /**
      * @var InstrumentDTO[]
@@ -67,6 +70,7 @@ class OrderBuilder
 
     public function quantityType(string $quantityType): self
     {
+        $this->assertValidQuantityType($quantityType);
         $this->defaultQuantityType = $quantityType;
         return $this;
     }
@@ -156,6 +160,7 @@ class OrderBuilder
             $instrument = new InstrumentDTO($instrument);
         }
 
+        $instrument->quantityType = $this->resolveQuantityType($instrument->quantityType);
         $this->instruments[] = $instrument;
         return $this;
     }
@@ -281,7 +286,7 @@ class OrderBuilder
 
         $instrument = [
             'orderAction' => $orderAction,
-            'quantityType' => $overrides['quantityType'] ?? null,
+            'quantityType' => $overrides['quantityType'] ?? $this->defaultQuantityType,
             'quantity' => $quantity,
             'orderedQuantity' => $overrides['orderedQuantity'] ?? $quantity,
             'product' => [
@@ -298,6 +303,29 @@ class OrderBuilder
         $this->addInstrument($instrument);
 
         return $this;
+    }
+
+    private function resolveQuantityType(?string $quantityType): ?string
+    {
+        if ($quantityType === null) {
+            return $this->defaultQuantityType;
+        }
+
+        $this->assertValidQuantityType($quantityType);
+
+        return $quantityType;
+    }
+
+    private function assertValidQuantityType(string $quantityType): void
+    {
+        if (!in_array($quantityType, self::VALID_QUANTITY_TYPES, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'quantityType must be one of: %s',
+                    implode(', ', self::VALID_QUANTITY_TYPES)
+                )
+            );
+        }
     }
 
     private function assertRequiredForPreview(): void

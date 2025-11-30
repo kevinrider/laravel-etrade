@@ -106,7 +106,6 @@ it('builds preview options order payload using option helpers', function () {
         ->clientOrderId('8e4153f1')
         ->withSymbol('FB')
         ->withExpiry(2018, 12, 21)
-        ->quantityType('QUANTITY')
         ->market()
         ->limitPrice(5)
         ->stopPrice(0)
@@ -126,7 +125,6 @@ it('builds place options order payload and accepts array preview ids', function 
         ->clientOrderId('8e4153f1')
         ->withSymbol('FB')
         ->withExpiry(2018, 12, 21)
-        ->quantityType('QUANTITY')
         ->market()
         ->limitPrice(5)
         ->stopPrice(0)
@@ -191,8 +189,8 @@ it('applies overrides, disclosures, and stop limits to option orders', function 
         ->allOrNone(true)
         ->disclosure(new DisclosureDTO(['ehDisclosureFlag' => true, 'aoDisclosureFlag' => true]))
         ->withDetail(['routingDestination' => 'AUTO'])
-        ->addLongPut(100, 2, ['quantityType' => 'ODD_LOT'])
-        ->addShortPut(90, 1.5, ['quantityType' => 'CUSTOM', 'orderedQuantity' => 1.5]);
+        ->addLongPut(100, 2, ['quantityType' => 'DOLLAR'])
+        ->addShortPut(90, 1.5, ['quantityType' => 'ALL_I_OWN', 'orderedQuantity' => 1.5]);
 
     $order = $builder->buildPreviewRequest()->toRequestBody()['PreviewOrderRequest']['Order'][0];
 
@@ -206,11 +204,11 @@ it('applies overrides, disclosures, and stop limits to option orders', function 
         ->and($order['stopPrice'])->toBe('')
         ->and($order['Instrument'])->toHaveCount(2)
         ->and($order['Instrument'][0]['Product']['callPut'])->toBe('PUT')
-        ->and($order['Instrument'][0]['quantityType'])->toBe('ODD_LOT')
+        ->and($order['Instrument'][0]['quantityType'])->toBe('DOLLAR')
         ->and($order['Instrument'][0]['quantity'])->toBe(2.0)
         ->and($order['Instrument'][0]['orderAction'])->toBe('BUY_OPEN')
         ->and($order['Instrument'][1]['Product']['callPut'])->toBe('PUT')
-        ->and($order['Instrument'][1]['quantityType'])->toBe('CUSTOM')
+        ->and($order['Instrument'][1]['quantityType'])->toBe('ALL_I_OWN')
         ->and($order['Instrument'][1]['orderedQuantity'])->toBe(1.5)
         ->and($order['Instrument'][1]['orderAction'])->toBe('SELL_OPEN');
 
@@ -266,4 +264,18 @@ it('normalizes empty stop prices to blank strings', function () {
     $order = $builder->buildPreviewRequest()->toRequestBody()['PreviewOrderRequest']['Order'][0];
 
     expect($order['stopPrice'])->toBe('');
+});
+
+it('validates quantity types for defaults and overrides', function () {
+    expect(fn () => (new OrderBuilder())->quantityType('INVALID'))
+        ->toThrow(InvalidArgumentException::class, 'quantityType must be one of: QUANTITY, DOLLAR, ALL_I_OWN');
+
+    $builder = OrderBuilder::forAccount('ACCT')
+        ->orderType('OPTN')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->withExpiry(2024, 1, 19);
+
+    expect(fn () => $builder->addLongCall(100, 1, ['quantityType' => 'NOT_ALLOWED']))
+        ->toThrow(InvalidArgumentException::class, 'quantityType must be one of: QUANTITY, DOLLAR, ALL_I_OWN');
 });
