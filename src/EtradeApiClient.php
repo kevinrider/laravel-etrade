@@ -251,7 +251,7 @@ class EtradeApiClient
         $queryParams = [];
         foreach (AccountBalanceRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
             if (isset($accountBalanceRequestDTO->$param)) {
-                $queryParams[$param] = $accountBalanceRequestDTO->$param;
+                $queryParams[$param] = $this->normalizeQueryParamValue($accountBalanceRequestDTO->$param);
             }
         }
         $response = $this->client->get($uri, ['query' => $queryParams]);
@@ -282,7 +282,7 @@ class EtradeApiClient
         $queryParams = [];
         foreach (ListTransactionsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
             if (isset($listTransactionsRequestDTO->$param)) {
-                $queryParams[$param] = $listTransactionsRequestDTO->$param;
+                $queryParams[$param] = $this->normalizeQueryParamValue($listTransactionsRequestDTO->$param);
             }
         }
         $response = $this->client->get($uri, ['query' => $queryParams]);
@@ -314,7 +314,7 @@ class EtradeApiClient
         $queryParams = [];
         foreach (ListTransactionDetailsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
             if (isset($listTransactionDetailsRequestDTO->$param)) {
-                $queryParams[$param] = $listTransactionDetailsRequestDTO->$param;
+                $queryParams[$param] = $this->normalizeQueryParamValue($listTransactionDetailsRequestDTO->$param);
             }
         }
         $response = $this->client->get($uri, ['query' => $queryParams]);
@@ -350,7 +350,7 @@ class EtradeApiClient
         $queryParams = [];
         foreach (ViewPortfolioRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
             if (isset($viewPortfolioRequestDTO->$param)) {
-                $queryParams[$param] = $viewPortfolioRequestDTO->$param;
+                $queryParams[$param] = $this->normalizeQueryParamValue($viewPortfolioRequestDTO->$param);
             }
         }
 
