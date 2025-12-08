@@ -5,6 +5,7 @@ namespace KevinRider\LaravelEtrade\Dtos;
 use Illuminate\Contracts\Support\Arrayable;
 use ReflectionClass;
 use ReflectionProperty;
+use stdClass;
 
 abstract class BaseDTO implements Arrayable
 {
@@ -26,10 +27,21 @@ abstract class BaseDTO implements Arrayable
 
         $data = [];
         foreach ($properties as $property) {
-            $data[$property->getName()] = $this->{$property->getName()};
+            $data[$property->getName()] = $this->{$property->getName()} ?? $this->getSafeDefault($property);
         }
 
         return $data;
+    }
+
+    /**
+     * @param string $xml
+     * @return static
+     */
+    public static function fromXml(string $xml): static
+    {
+        $data = json_decode(json_encode(simplexml_load_string($xml)), true);
+
+        return new static($data);
     }
 
     /**
@@ -60,13 +72,24 @@ abstract class BaseDTO implements Arrayable
     }
 
     /**
-     * @param string $xml
-     * @return static
+     * @param ReflectionProperty|null $property
+     * @return mixed
      */
-    public static function fromXml(string $xml): static
+    private function getSafeDefault(?ReflectionProperty $property): mixed
     {
-        $data = json_decode(json_encode(simplexml_load_string($xml)), true);
-
-        return new static($data);
+        $type = $property->getType();
+        if ($type === null || $type->allowsNull()) {
+            return null;
+        }
+        $typeName = $type->getName();
+        return match (strtolower($typeName)) {
+            'string' => '',
+            'int' => 0,
+            'float' => 0.0,
+            'bool' => false,
+            'array' => [],
+            'object' => new stdClass(),
+            default => null,
+        };
     }
 }
