@@ -2,8 +2,10 @@
 
 namespace KevinRider\LaravelEtrade\Commands;
 
+use Carbon\CarbonInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\CancelOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
@@ -241,13 +243,13 @@ class LaravelEtradeDemo extends Command
     {
         $this->subSection('Market data');
 
-        $search = $this->ask('Symbol search term for lookup', 'AAPL');
+        $search = $this->ask('Symbol search term for lookup', 'SPY');
         $lookup = $this->withApiCall('Product lookup', function () use ($search) {
             return app(EtradeApiClient::class)->lookupProduct(new LookupRequestDTO(['search' => $search]));
         });
         $this->renderJson($lookup?->toArray());
 
-        $symbolsRaw = $this->ask('Comma-separated symbols for quotes', 'AAPL,MSFT,SPY');
+        $symbolsRaw = $this->ask('Comma-separated symbols for quotes', 'SPY,MSFT,QQQ');
         $symbols = array_values(array_filter(array_map('trim', explode(',', (string) $symbolsRaw))));
 
         if (!empty($symbols)) {
@@ -261,8 +263,9 @@ class LaravelEtradeDemo extends Command
             $this->renderJson($quotes?->toArray());
         }
 
-        $optionSymbol = $this->ask('Symbol for option expirations & chains', 'AAPL');
+        $optionSymbol = $this->ask('Symbol for option expirations & chains', 'SPY');
         $expiryType = $this->choice('Expiry type', ['ALL', 'WEEKLY', 'MONTHLY'], 'ALL');
+        $defaultExpiry = $this->defaultOptionExpiryDate();
 
         $expirations = $this->withApiCall('Option expiration dates', function () use ($optionSymbol, $expiryType) {
             return app(EtradeApiClient::class)->getOptionExpireDates(new GetOptionExpireDatesRequestDTO([
@@ -272,9 +275,9 @@ class LaravelEtradeDemo extends Command
         });
         $this->renderJson($expirations?->toArray());
 
-        $year = (int) $this->ask('Expiry year for option chain', (string) now()->addMonths(2)->year);
-        $month = (int) $this->ask('Expiry month for option chain (1-12)', (string) now()->addMonths(2)->month);
-        $day = (int) $this->ask('Expiry day for option chain', '15');
+        $year = (int) $this->ask('Expiry year for option chain', (string) $defaultExpiry->year);
+        $month = (int) $this->ask('Expiry month for option chain (1-12)', (string) $defaultExpiry->month);
+        $day = (int) $this->ask('Expiry day for option chain', (string) $defaultExpiry->day);
         $strikes = (int) $this->ask('How many strikes around the money?', '5');
 
         $chains = $this->withApiCall('Option chain', function () use ($optionSymbol, $year, $month, $day, $strikes) {
@@ -638,14 +641,14 @@ class LaravelEtradeDemo extends Command
      */
     private function buildOrderByScenario(string $scenario, string $accountIdKey): ?EtradeOrderBuilder
     {
-        $symbol = strtoupper($this->ask('Symbol', 'AAPL'));
+        $symbol = strtoupper($this->ask('Symbol', 'SPY'));
         $quantity = (float) $this->ask('Quantity', '1');
         $limit = (float) $this->ask('Limit price (kept unrealistically low/high to avoid fills)', '2.00');
         $needsOptions = $scenario !== 'equity';
-        $expiry = now()->addMonths(2);
-        $expiryYear = $needsOptions ? (int) $this->ask('Option expiry year', (string) $expiry->year) : null;
-        $expiryMonth = $needsOptions ? (int) $this->ask('Option expiry month (1-12)', (string) $expiry->month) : null;
-        $expiryDay = $needsOptions ? (int) $this->ask('Option expiry day', '15') : null;
+        $defaultExpiry = $this->defaultOptionExpiryDate();
+        $expiryYear = $needsOptions ? (int) $this->ask('Option expiry year', (string) $defaultExpiry->year) : null;
+        $expiryMonth = $needsOptions ? (int) $this->ask('Option expiry month (1-12)', (string) $defaultExpiry->month) : null;
+        $expiryDay = $needsOptions ? (int) $this->ask('Option expiry day', (string) $defaultExpiry->day) : null;
 
         $baseBuilder = EtradeOrderBuilder::forAccount($accountIdKey)
             ->clientOrderId($this->randomOrderId())
@@ -765,6 +768,40 @@ class LaravelEtradeDemo extends Command
         $clone->limitPrice($newLimit);
 
         return $clone;
+    }
+
+    /**
+     * @return Carbon
+     */
+    private function defaultOptionExpiryDate(): Carbon
+    {
+        $threshold = now()->addMonths(2);
+        $candidateMonth = $threshold->copy();
+
+        do {
+            $candidate = $this->thirdFridayOfMonth($candidateMonth->year, $candidateMonth->month);
+            if ($candidate->greaterThanOrEqualTo($threshold)) {
+                return $candidate;
+            }
+
+            $candidateMonth->addMonth();
+        } while (true);
+    }
+
+    /**
+     * @param int $year
+     * @param int $month
+     * @return Carbon
+     */
+    private function thirdFridayOfMonth(int $year, int $month): Carbon
+    {
+        $date = Carbon::create($year, $month);
+
+        while ($date->dayOfWeek !== CarbonInterface::FRIDAY) {
+            $date->addDay();
+        }
+
+        return $date->addWeeks(2);
     }
 
     /**
