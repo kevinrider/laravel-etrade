@@ -20,6 +20,8 @@ use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\EtradeOrderBuilder;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
+use Random\RandomException;
+use ReflectionException;
 use Throwable;
 
 class LaravelEtradeDemo extends Command
@@ -39,7 +41,9 @@ class LaravelEtradeDemo extends Command
     protected $description = 'Run a basic demo showcasing Laravel E*TRADE integration.';
 
     /**
-     * Execute the console command.
+     * @return int
+     * @throws RandomException
+     * @throws ReflectionException
      */
     public function handle(): int
     {
@@ -74,6 +78,9 @@ class LaravelEtradeDemo extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * @return void
+     */
     private function intro(): void
     {
         if ($this->option('skip-intro')) {
@@ -85,6 +92,9 @@ class LaravelEtradeDemo extends Command
         $this->line('');
     }
 
+    /**
+     * @return void
+     */
     private function authenticateFlow(): void
     {
         $this->section('OAuth: request token -> verifier -> access token');
@@ -119,6 +129,9 @@ class LaravelEtradeDemo extends Command
         }
     }
 
+    /**
+     * @return void
+     */
     private function runReadOnlyMenu(): void
     {
         $this->section('Read-only demos');
@@ -148,6 +161,9 @@ class LaravelEtradeDemo extends Command
         };
     }
 
+    /**
+     * @return void
+     */
     private function runReadOnlyTour(): void
     {
         $accountIdKey = $this->resolveAccountIdKey();
@@ -161,6 +177,10 @@ class LaravelEtradeDemo extends Command
         $this->runOrderListDemo($accountIdKey);
     }
 
+    /**
+     * @param string|null $accountIdKey
+     * @return void
+     */
     private function runAccountDemos(?string $accountIdKey = null): void
     {
         $this->subSection('Accounts');
@@ -214,6 +234,9 @@ class LaravelEtradeDemo extends Command
         }
     }
 
+    /**
+     * @return void
+     */
     private function runMarketDemos(): void
     {
         $this->subSection('Market data');
@@ -268,6 +291,9 @@ class LaravelEtradeDemo extends Command
         $this->renderJson($chains?->toArray());
     }
 
+    /**
+     * @return void
+     */
     private function runAlertDemos(): void
     {
         $this->subSection('Alerts');
@@ -295,6 +321,10 @@ class LaravelEtradeDemo extends Command
         }
     }
 
+    /**
+     * @param string|null $accountIdKey
+     * @return void
+     */
     private function runOrderListDemo(?string $accountIdKey = null): void
     {
         $this->subSection('Orders list');
@@ -317,6 +347,11 @@ class LaravelEtradeDemo extends Command
         $this->renderJson($orders?->toArray());
     }
 
+    /**
+     * @return void
+     * @throws RandomException
+     * @throws ReflectionException
+     */
     private function runOrderMenu(): void
     {
         $this->section('Order lifecycle demos. 🚨🚨🚨 Orders will be placed against your live E*Trade account! 🚨🚨🚨');
@@ -353,6 +388,12 @@ class LaravelEtradeDemo extends Command
         $this->runOrderLifecycle($builder);
     }
 
+    /**
+     * @param EtradeOrderBuilder $builder
+     * @return void
+     * @throws RandomException
+     * @throws ReflectionException
+     */
     private function runOrderLifecycle(EtradeOrderBuilder $builder): void
     {
         $previewResponse = $this->withApiCall('Previewing order (dry-run)', fn () => app(EtradeApiClient::class)->previewOrder($builder->buildPreviewRequest()));
@@ -414,6 +455,9 @@ class LaravelEtradeDemo extends Command
         }
     }
 
+    /**
+     * @return void
+     */
     private function runDestructiveMenu(): void
     {
         $this->section('Destructive operations (extra prompts)');
@@ -441,6 +485,9 @@ class LaravelEtradeDemo extends Command
         };
     }
 
+    /**
+     * @return void
+     */
     private function deleteAlertsFlow(): void
     {
         $alerts = $this->withApiCall('List alerts first', fn () => app(EtradeApiClient::class)->getAlerts(new ListAlertsRequestDTO(['count' => 10])));
@@ -463,6 +510,9 @@ class LaravelEtradeDemo extends Command
         $this->renderJson($deleted?->toArray());
     }
 
+    /**
+     * @return void
+     */
     private function cancelOrderFlow(): void
     {
         $accountIdKey = $this->resolveAccountIdKey();
@@ -488,6 +538,9 @@ class LaravelEtradeDemo extends Command
         $this->renderJson($cancelled?->toArray());
     }
 
+    /**
+     * @return void
+     */
     private function revokeTokenFlow(): void
     {
         if (!$this->confirmDanger('Revoke the cached access token? This will require re-authentication.')) {
@@ -503,6 +556,10 @@ class LaravelEtradeDemo extends Command
         }
     }
 
+    /**
+     * @param mixed $accounts
+     * @return void
+     */
     private function renderAccounts(mixed $accounts): void
     {
         if (!$accounts || empty($accounts->accounts ?? [])) {
@@ -523,6 +580,10 @@ class LaravelEtradeDemo extends Command
         $this->table(['Account ID', 'Account Key', 'Name', 'Type'], $rows);
     }
 
+    /**
+     * @param mixed $payload
+     * @return void
+     */
     private function renderJson(mixed $payload): void
     {
         if ($payload === null) {
@@ -532,6 +593,10 @@ class LaravelEtradeDemo extends Command
         $this->line(json_encode($payload, JSON_PRETTY_PRINT));
     }
 
+    /**
+     * @param mixed $accounts
+     * @return string|null
+     */
     private function pickAccountFromList(mixed $accounts): ?string
     {
         if (!$accounts || empty($accounts->accounts ?? [])) {
@@ -550,6 +615,9 @@ class LaravelEtradeDemo extends Command
         return $matches[1] ?? null;
     }
 
+    /**
+     * @return string|null
+     */
     private function resolveAccountIdKey(): ?string
     {
         try {
@@ -562,6 +630,12 @@ class LaravelEtradeDemo extends Command
         return $this->pickAccountFromList($accounts);
     }
 
+    /**
+     * @param string $scenario
+     * @param string $accountIdKey
+     * @return EtradeOrderBuilder|null
+     * @throws RandomException
+     */
     private function buildOrderByScenario(string $scenario, string $accountIdKey): ?EtradeOrderBuilder
     {
         $symbol = strtoupper($this->ask('Symbol', 'AAPL'));
@@ -648,6 +722,10 @@ class LaravelEtradeDemo extends Command
         };
     }
 
+    /**
+     * @param EtradeOrderBuilder $builder
+     * @return float
+     */
     private function extractLimitPrice(EtradeOrderBuilder $builder): float
     {
         $reflection = new \ReflectionClass($builder);
@@ -657,6 +735,10 @@ class LaravelEtradeDemo extends Command
         return (float) ($fields['limitPrice'] ?? $fields['stopLimitPrice'] ?? $fields['stopPrice'] ?? 0);
     }
 
+    /**
+     * @param EtradeOrderBuilder $builder
+     * @return string
+     */
     private function extractAccountId(EtradeOrderBuilder $builder): string
     {
         $reflection = new \ReflectionClass($builder);
@@ -665,6 +747,12 @@ class LaravelEtradeDemo extends Command
         return (string) $prop->getValue($builder);
     }
 
+    /**
+     * @param EtradeOrderBuilder $builder
+     * @param float $newLimit
+     * @return EtradeOrderBuilder
+     * @throws ReflectionException
+     */
     private function cloneBuilderWithNewLimit(EtradeOrderBuilder $builder, float $newLimit): EtradeOrderBuilder
     {
         $reflection = new \ReflectionClass($builder);
@@ -679,6 +767,10 @@ class LaravelEtradeDemo extends Command
         return $clone;
     }
 
+    /**
+     * @param string $question
+     * @return bool
+     */
     private function confirmDanger(string $question): bool
     {
         if (!$this->confirm($question)) {
@@ -688,6 +780,11 @@ class LaravelEtradeDemo extends Command
         return $this->confirm('🚨🚨🚨 Really proceed? This will hit your live E*TRADE account! 🚨🚨🚨');
     }
 
+    /**
+     * @param string $label
+     * @param callable $callback
+     * @return mixed
+     */
     private function withApiCall(string $label, callable $callback): mixed
     {
         $this->line(PHP_EOL . "-> {$label}");
@@ -700,6 +797,11 @@ class LaravelEtradeDemo extends Command
         }
     }
 
+    /**
+     * @param string $context
+     * @param Throwable $e
+     * @return void
+     */
     private function reportError(string $context, Throwable $e): void
     {
         $message = $e instanceof EtradeApiException || $e instanceof GuzzleException
@@ -709,18 +811,30 @@ class LaravelEtradeDemo extends Command
         $this->error("{$context} failed: {$message}");
     }
 
+    /**
+     * @param string $title
+     * @return void
+     */
     private function section(string $title): void
     {
         $this->line('');
         $this->info($title);
     }
 
+    /**
+     * @param string $title
+     * @return void
+     */
     private function subSection(string $title): void
     {
         $this->line('');
         $this->comment("{$title} ----------------");
     }
 
+    /**
+     * @return string
+     * @throws RandomException
+     */
     private function randomOrderId(): string
     {
         return 'test'. bin2hex(random_bytes(8));
