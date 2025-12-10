@@ -795,13 +795,7 @@ class LaravelEtradeDemo extends Command
      */
     private function thirdFridayOfMonth(int $year, int $month): Carbon
     {
-        $date = Carbon::create($year, $month);
-
-        while ($date->dayOfWeek !== CarbonInterface::FRIDAY) {
-            $date->addDay();
-        }
-
-        return $date->addWeeks(2);
+        return Carbon::create($year, $month)->nthOfMonth(3, CarbonInterface::FRIDAY);
     }
 
     /**
