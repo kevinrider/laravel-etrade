@@ -2,7 +2,25 @@
 
 namespace KevinRider\LaravelEtrade\Commands;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Console\Command;
+use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\CancelOrderRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetOptionChainsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\GetQuotesRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListAlertDetailsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListAlertsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListOrdersRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
+use KevinRider\LaravelEtrade\EtradeApiClient;
+use KevinRider\LaravelEtrade\EtradeOrderBuilder;
+use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
+use Throwable;
 
 class LaravelEtradeDemo extends Command
 {
@@ -11,7 +29,7 @@ class LaravelEtradeDemo extends Command
      *
      * @var string
      */
-    protected $signature = 'laravel-etrade:demo';
+    protected $signature = 'laravel-etrade:demo {--skip-intro : Hide the long intro text if you already know the flow}';
 
     /**
      * The console command description.
@@ -25,8 +43,686 @@ class LaravelEtradeDemo extends Command
      */
     public function handle(): int
     {
-        $this->info('Laravel E*TRADE demo command is ready.');
+        $this->intro();
+
+        while (true) {
+            $choice = $this->choice(
+                'What would you like to explore?',
+                [
+                    'auth' => 'Authenticate (full OAuth walk-through)',
+                    'reads' => 'Read-only demos (accounts, market, alerts, orders list)',
+                    'orders' => 'Order lifecycle demos (preview/place/change with double-confirm)',
+                    'destructive' => 'Destructive ops (delete alert, cancel order, revoke token)',
+                    'exit' => 'Exit',
+                ],
+                'reads'
+            );
+
+            if ($choice === 'exit') {
+                break;
+            }
+
+            match ($choice) {
+                'auth' => $this->authenticateFlow(),
+                'reads' => $this->runReadOnlyMenu(),
+                'orders' => $this->runOrderMenu(),
+                'destructive' => $this->runDestructiveMenu(),
+                default => null,
+            };
+        }
 
         return self::SUCCESS;
+    }
+
+    private function intro(): void
+    {
+        if ($this->option('skip-intro')) {
+            return;
+        }
+
+        $this->line('');
+        $this->line('👋 Welcome to the Laravel E*TRADE interactive demo. 👋');
+        $this->line('');
+    }
+
+    private function authenticateFlow(): void
+    {
+        $this->section('OAuth: request token -> verifier -> access token');
+
+        if (!$this->confirm('Ready to start the OAuth flow now?')) {
+            $this->comment('Skipping authentication. You can come back later via the menu.');
+            return;
+        }
+
+        try {
+            $authUrl = app(EtradeApiClient::class)->getAuthorizationUrl();
+        } catch (Throwable $e) {
+            $this->reportError('Unable to get request token', $e);
+            return;
+        }
+
+        $this->line('1) Open this URL in your browser and log in:');
+        $this->line($authUrl->authorizationUrl);
+        $this->line('2) Approve the app and copy the verifier code displayed by E*TRADE.');
+
+        $verifier = $this->ask('Paste the verifier code here');
+        if (empty($verifier)) {
+            $this->warn('No verifier provided. Aborting authentication.');
+            return;
+        }
+
+        try {
+            app(EtradeApiClient::class)->requestAccessTokenAndStore(trim($verifier));
+            $this->info('Access token stored in the configured Laravel cache store. You are authenticated.');
+        } catch (Throwable $e) {
+            $this->reportError('Failed to exchange verifier for access token', $e);
+        }
+    }
+
+    private function runReadOnlyMenu(): void
+    {
+        $this->section('Read-only demos');
+
+        $choices = [
+            'full' => 'Run the full read-only tour (recommended)',
+            'accounts' => 'Account endpoints (list, balance, portfolio, transactions)',
+            'market' => 'Market data (lookup, quotes, option expirations + chains)',
+            'alerts' => 'Alerts (list + details)',
+            'orders-list' => 'Orders list (paged or all)',
+            'back' => 'Back',
+        ];
+
+        $selection = $this->choice('Pick a read-only demo', $choices, 'full');
+
+        if ($selection === 'back') {
+            return;
+        }
+
+        match ($selection) {
+            'full' => $this->runReadOnlyTour(),
+            'accounts' => $this->runAccountDemos(),
+            'market' => $this->runMarketDemos(),
+            'alerts' => $this->runAlertDemos(),
+            'orders-list' => $this->runOrderListDemo(),
+            default => null,
+        };
+    }
+
+    private function runReadOnlyTour(): void
+    {
+        $accountIdKey = $this->resolveAccountIdKey();
+        if (!$accountIdKey) {
+            return;
+        }
+
+        $this->runAccountDemos($accountIdKey);
+        $this->runMarketDemos();
+        $this->runAlertDemos();
+        $this->runOrderListDemo($accountIdKey);
+    }
+
+    private function runAccountDemos(?string $accountIdKey = null): void
+    {
+        $this->subSection('Accounts');
+
+        $accounts = $this->withApiCall('Account list', fn () => app(EtradeApiClient::class)->getAccountList());
+        $this->renderAccounts($accounts);
+
+        $accountIdKey ??= $this->pickAccountFromList($accounts);
+        if (!$accountIdKey) {
+            $this->warn('No account selected; skipping account-specific calls.');
+            return;
+        }
+
+        $balanceDto = $this->withApiCall('Account balance', function () use ($accountIdKey) {
+            return app(EtradeApiClient::class)->getAccountBalance(new AccountBalanceRequestDTO([
+                'accountIdKey' => $accountIdKey,
+                'realTimeNAV' => 'true',
+            ]));
+        });
+        $this->renderJson($balanceDto?->toArray());
+
+        $portfolio = $this->withApiCall('Portfolio (holdings)', function () use ($accountIdKey) {
+            return app(EtradeApiClient::class)->getViewPortfolio(new ViewPortfolioRequestDTO([
+                'accountIdKey' => $accountIdKey,
+                'view' => 'PERFORMANCE',
+                'totalsRequired' => true,
+            ]));
+        });
+        $this->renderJson($portfolio?->toArray());
+
+        $transactions = $this->withApiCall('Recent transactions', function () use ($accountIdKey) {
+            return app(EtradeApiClient::class)->getAccountTransactions(new ListTransactionsRequestDTO([
+                'accountIdKey' => $accountIdKey,
+                'count' => 10,
+                'sortOrder' => 'DESC',
+            ]));
+        });
+        $this->renderJson($transactions?->toArray());
+
+        if ($transactions && !empty($transactions->transactions)) {
+            $firstId = $transactions->transactions[0]->transactionId ?? null;
+            if ($firstId && $this->confirm("Fetch details for transaction {$firstId}?")) {
+                $details = $this->withApiCall('Transaction details', function () use ($accountIdKey, $firstId) {
+                    return app(EtradeApiClient::class)->getAccountTransactionDetails(new ListTransactionDetailsRequestDTO([
+                        'accountIdKey' => $accountIdKey,
+                        'transactionId' => $firstId,
+                    ]));
+                });
+                $this->renderJson($details?->toArray());
+            }
+        }
+    }
+
+    private function runMarketDemos(): void
+    {
+        $this->subSection('Market data');
+
+        $search = $this->ask('Symbol search term for lookup', 'AAPL');
+        $lookup = $this->withApiCall('Product lookup', function () use ($search) {
+            return app(EtradeApiClient::class)->lookupProduct(new LookupRequestDTO(['search' => $search]));
+        });
+        $this->renderJson($lookup?->toArray());
+
+        $symbolsRaw = $this->ask('Comma-separated symbols for quotes', 'AAPL,MSFT,SPY');
+        $symbols = array_values(array_filter(array_map('trim', explode(',', (string) $symbolsRaw))));
+
+        if (!empty($symbols)) {
+            $quotes = $this->withApiCall('Get quotes', function () use ($symbols) {
+                return app(EtradeApiClient::class)->getQuotes(new GetQuotesRequestDTO([
+                    'symbols' => $symbols,
+                    'detailFlag' => 'ALL',
+                    'requireEarningsDate' => false,
+                ]));
+            });
+            $this->renderJson($quotes?->toArray());
+        }
+
+        $optionSymbol = $this->ask('Symbol for option expirations & chains', 'AAPL');
+        $expiryType = $this->choice('Expiry type', ['ALL', 'WEEKLY', 'MONTHLY'], 'ALL');
+
+        $expirations = $this->withApiCall('Option expiration dates', function () use ($optionSymbol, $expiryType) {
+            return app(EtradeApiClient::class)->getOptionExpireDates(new GetOptionExpireDatesRequestDTO([
+                'symbol' => $optionSymbol,
+                'expiryType' => $expiryType,
+            ]));
+        });
+        $this->renderJson($expirations?->toArray());
+
+        $year = (int) $this->ask('Expiry year for option chain', (string) now()->addMonths(2)->year);
+        $month = (int) $this->ask('Expiry month for option chain (1-12)', (string) now()->addMonths(2)->month);
+        $day = (int) $this->ask('Expiry day for option chain', '15');
+        $strikes = (int) $this->ask('How many strikes around the money?', '5');
+
+        $chains = $this->withApiCall('Option chain', function () use ($optionSymbol, $year, $month, $day, $strikes) {
+            return app(EtradeApiClient::class)->getOptionChains(new GetOptionChainsRequestDTO([
+                'symbol' => $optionSymbol,
+                'expiryYear' => $year,
+                'expiryMonth' => $month,
+                'expiryDay' => $day,
+                'noOfStrikes' => $strikes,
+                'includeWeekly' => true,
+                'priceType' => 'ATNM',
+            ]));
+        });
+        $this->renderJson($chains?->toArray());
+    }
+
+    private function runAlertDemos(): void
+    {
+        $this->subSection('Alerts');
+
+        $alerts = $this->withApiCall('List alerts', function () {
+            return app(EtradeApiClient::class)->getAlerts(new ListAlertsRequestDTO([
+                'count' => 10,
+                'direction' => 'DESC',
+            ]));
+        });
+        $this->renderJson($alerts?->toArray());
+
+        if ($alerts && !empty($alerts->alerts)) {
+            $firstAlertId = $alerts->alerts[0]->alertId ?? null;
+            $selected = $this->ask('Alert ID to view details (blank to skip)', $firstAlertId);
+            if (!empty($selected)) {
+                $details = $this->withApiCall('Alert details', function () use ($selected) {
+                    return app(EtradeApiClient::class)->getAlertDetails(new ListAlertDetailsRequestDTO([
+                        'alertId' => (int) $selected,
+                        'htmlTags' => false,
+                    ]));
+                });
+                $this->renderJson($details?->toArray());
+            }
+        }
+    }
+
+    private function runOrderListDemo(?string $accountIdKey = null): void
+    {
+        $this->subSection('Orders list');
+        $accountIdKey ??= $this->resolveAccountIdKey();
+        if (!$accountIdKey) {
+            return;
+        }
+
+        $status = $this->choice('Status filter', ['OPEN', 'CANCELLED', 'EXECUTED', 'ALL'], 'ALL');
+        $count = (int) $this->ask('How many orders to fetch (per page)', '10');
+
+        $listRequest = new ListOrdersRequestDTO([
+            'accountIdKey' => $accountIdKey,
+            'status' => $status === 'ALL' ? null : $status,
+            'count' => $count,
+            'callDepth' => 3,
+        ]);
+
+        $orders = $this->withApiCall('Orders', fn () => app(EtradeApiClient::class)->listAllOrders($listRequest));
+        $this->renderJson($orders?->toArray());
+    }
+
+    private function runOrderMenu(): void
+    {
+        $this->section('Order lifecycle demos. 🚨🚨🚨 Orders will be placed against your live E*Trade account! 🚨🚨🚨');
+
+        $accountIdKey = $this->resolveAccountIdKey();
+        if (!$accountIdKey) {
+            return;
+        }
+
+        $scenario = $this->choice(
+            'Pick an order scenario to preview (all limit-only 🚨🚨🚨 BE CAREFUL! 🚨🚨🚨)',
+            [
+                'equity' => 'Equity limit buy',
+                'single-option' => 'Single-leg option (long call)',
+                'vertical' => 'Two-leg option vertical',
+                'three-leg' => 'Three-leg (call spread + short put)',
+                'iron-condor' => 'Four-leg iron condor',
+                'buy-write' => 'Buy-write (stock + covered call)',
+                'collar' => 'Collar (stock + long put + short call)',
+                'back' => 'Back',
+            ],
+            'equity'
+        );
+
+        if ($scenario === 'back') {
+            return;
+        }
+
+        $builder = $this->buildOrderByScenario($scenario, $accountIdKey);
+        if (!$builder) {
+            return;
+        }
+
+        $this->runOrderLifecycle($builder);
+    }
+
+    private function runOrderLifecycle(EtradeOrderBuilder $builder): void
+    {
+        $previewResponse = $this->withApiCall('Previewing order (dry-run)', fn () => app(EtradeApiClient::class)->previewOrder($builder->buildPreviewRequest()));
+        if (!$previewResponse) {
+            return;
+        }
+
+        $this->renderJson($previewResponse->toArray());
+
+        $previewIds = collect($previewResponse->previewIds ?? [])->map(fn ($dto) => $dto->previewId ?? null)->filter()->all();
+        if (empty($previewIds)) {
+            $this->warn('Preview returned no previewIds; cannot place this order.');
+            return;
+        }
+
+        if (!$this->confirmDanger('Place this order live? (double confirmation enforced)')) {
+            $this->comment('Skipping live placement. Preview complete.');
+            return;
+        }
+
+        $placeResponse = $this->withApiCall('Placing live order', fn () => app(EtradeApiClient::class)->placeOrder($builder->buildPlaceRequest($previewIds)));
+        if (!$placeResponse) {
+            return;
+        }
+
+        $this->renderJson($placeResponse->toArray());
+
+        $placedOrderId = $placeResponse->orderId ?? ($placeResponse->orderIds[0]->orderId ?? null);
+        if (!$placedOrderId) {
+            $this->warn('No orderId returned; cannot demonstrate change/cancel.');
+            return;
+        }
+
+        if ($this->confirm('Preview a change on this order?')) {
+            $newLimit = (float) $this->ask('New limit price for change preview', (string) ($this->extractLimitPrice($builder) * 0.5));
+
+            $builder = $this->cloneBuilderWithNewLimit($builder, $newLimit)->orderId($placedOrderId);
+            $builder->clientOrderId($this->randomOrderId());
+
+            $changePreview = $this->withApiCall('Preview change order', fn () => app(EtradeApiClient::class)->previewChangeOrder($builder->buildPreviewRequest()));
+            $this->renderJson($changePreview?->toArray());
+
+            $changePreviewIds = collect($changePreview?->previewIds ?? [])->map(fn ($dto) => $dto->previewId ?? null)->filter()->all();
+            if (!empty($changePreviewIds) && $this->confirmDanger('Place the change order live?')) {
+                $changePlaced = $this->withApiCall('Placing change order', fn () => app(EtradeApiClient::class)->placeChangeOrder($builder->buildPlaceRequest($changePreviewIds)));
+                $placedOrderId = $changePlaced->orderId ?? ($changePlaced->orderIds[0]->orderId ?? null);
+                $this->renderJson($changePlaced?->toArray());
+            }
+        }
+
+        if ($this->confirmDanger('Cancel this order now? (destructive)')) {
+            $cancelled = $this->withApiCall('Cancel order', function () use ($builder, $placedOrderId) {
+                return app(EtradeApiClient::class)->cancelOrder(new CancelOrderRequestDTO([
+                    'accountIdKey' => $this->extractAccountId($builder),
+                    'orderId' => $placedOrderId,
+                ]));
+            });
+            $this->renderJson($cancelled?->toArray());
+        }
+    }
+
+    private function runDestructiveMenu(): void
+    {
+        $this->section('Destructive operations (extra prompts)');
+
+        $choice = $this->choice(
+            'Pick an action',
+            [
+                'delete-alerts' => 'Delete alerts by id',
+                'cancel-order' => 'Cancel an order by id',
+                'revoke' => 'Revoke access token',
+                'back' => 'Back',
+            ],
+            'delete-alerts'
+        );
+
+        if ($choice === 'back') {
+            return;
+        }
+
+        match ($choice) {
+            'delete-alerts' => $this->deleteAlertsFlow(),
+            'cancel-order' => $this->cancelOrderFlow(),
+            'revoke' => $this->revokeTokenFlow(),
+            default => null,
+        };
+    }
+
+    private function deleteAlertsFlow(): void
+    {
+        $alerts = $this->withApiCall('List alerts first', fn () => app(EtradeApiClient::class)->getAlerts(new ListAlertsRequestDTO(['count' => 10])));
+        $this->renderJson($alerts?->toArray());
+
+        $idsRaw = $this->ask('Comma-separated alert IDs to delete (blank to abort)');
+        $ids = array_values(array_filter(array_map('trim', explode(',', (string) $idsRaw))));
+
+        if (empty($ids)) {
+            $this->warn('No alert IDs provided. Skipping delete.');
+            return;
+        }
+
+        if (!$this->confirmDanger('Delete these alerts now?')) {
+            $this->comment('Skipping alert deletion.');
+            return;
+        }
+
+        $deleted = $this->withApiCall('Deleting alerts', fn () => app(EtradeApiClient::class)->deleteAlerts(new DeleteAlertsRequestDTO(['alertIds' => $ids])));
+        $this->renderJson($deleted?->toArray());
+    }
+
+    private function cancelOrderFlow(): void
+    {
+        $accountIdKey = $this->resolveAccountIdKey();
+        if (!$accountIdKey) {
+            return;
+        }
+
+        $orderId = (int) $this->ask('Order ID to cancel (from a live order)', '');
+        if (!$orderId) {
+            $this->warn('No order ID provided. Skipping cancel.');
+            return;
+        }
+
+        if (!$this->confirmDanger("Cancel order {$orderId}?")) {
+            $this->comment('Skipping cancel.');
+            return;
+        }
+
+        $cancelled = $this->withApiCall('Cancelling order', fn () => app(EtradeApiClient::class)->cancelOrder(new CancelOrderRequestDTO([
+            'accountIdKey' => $accountIdKey,
+            'orderId' => $orderId,
+        ])));
+        $this->renderJson($cancelled?->toArray());
+    }
+
+    private function revokeTokenFlow(): void
+    {
+        if (!$this->confirmDanger('Revoke the cached access token? This will require re-authentication.')) {
+            $this->comment('Skipping token revoke.');
+            return;
+        }
+
+        try {
+            app(EtradeApiClient::class)->revokeAccessToken();
+            $this->info('Access token revoked successfully.');
+        } catch (Throwable $e) {
+            $this->reportError('Revoking access token', $e);
+        }
+    }
+
+    private function renderAccounts(mixed $accounts): void
+    {
+        if (!$accounts || empty($accounts->accounts ?? [])) {
+            $this->warn('No accounts returned.');
+            return;
+        }
+
+        $rows = [];
+        foreach ($accounts->accounts as $account) {
+            $rows[] = [
+                $account->accountId ?? '',
+                $account->accountIdKey ?? '',
+                $account->accountName ?? '',
+                $account->accountType ?? '',
+            ];
+        }
+
+        $this->table(['Account ID', 'Account Key', 'Name', 'Type'], $rows);
+    }
+
+    private function renderJson(mixed $payload): void
+    {
+        if ($payload === null) {
+            return;
+        }
+
+        $this->line(json_encode($payload, JSON_PRETTY_PRINT));
+    }
+
+    private function pickAccountFromList(mixed $accounts): ?string
+    {
+        if (!$accounts || empty($accounts->accounts ?? [])) {
+            return null;
+        }
+
+        $options = [];
+        foreach ($accounts->accounts as $account) {
+            $key = $account->accountIdKey ?? '';
+            $options[$key] = "{$account->accountName} ({$account->accountId})";
+        }
+
+        $selected = $this->choice('Select an account', array_map(fn ($label, $key) => "{$label} [{$key}]", $options, array_keys($options)));
+        preg_match('/\[(.+)]$/', $selected, $matches);
+
+        return $matches[1] ?? null;
+    }
+
+    private function resolveAccountIdKey(): ?string
+    {
+        try {
+            $accounts = app(EtradeApiClient::class)->getAccountList();
+        } catch (Throwable $e) {
+            $this->reportError('Unable to fetch account list', $e);
+            return null;
+        }
+
+        return $this->pickAccountFromList($accounts);
+    }
+
+    private function buildOrderByScenario(string $scenario, string $accountIdKey): ?EtradeOrderBuilder
+    {
+        $symbol = strtoupper($this->ask('Symbol', 'AAPL'));
+        $quantity = (float) $this->ask('Quantity', '1');
+        $limit = (float) $this->ask('Limit price (kept unrealistically low/high to avoid fills)', '2.00');
+        $needsOptions = $scenario !== 'equity';
+        $expiry = now()->addMonths(2);
+        $expiryYear = $needsOptions ? (int) $this->ask('Option expiry year', (string) $expiry->year) : null;
+        $expiryMonth = $needsOptions ? (int) $this->ask('Option expiry month (1-12)', (string) $expiry->month) : null;
+        $expiryDay = $needsOptions ? (int) $this->ask('Option expiry day', '15') : null;
+
+        $baseBuilder = EtradeOrderBuilder::forAccount($accountIdKey)
+            ->clientOrderId($this->randomOrderId())
+            ->quantityType('QUANTITY')
+            ->gfd()
+            ->marketSession('REGULAR');
+
+        return match ($scenario) {
+            'equity' => $baseBuilder
+                ->orderType('EQ')
+                ->withSymbol($symbol)
+                ->priceType('LIMIT')
+                ->limitPrice($limit)
+                ->addEquity('BUY', $quantity),
+
+            'single-option' => $baseBuilder
+                ->orderType('OPTN')
+                ->withSymbol($symbol)
+                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
+                ->priceType('LIMIT')
+                ->limitPrice($limit)
+                ->addLongCall(
+                    (float) $this->ask('Call strike', '200'),
+                    $quantity
+                ),
+
+            'vertical' => $baseBuilder
+                ->orderType('SPREADS')
+                ->withSymbol($symbol)
+                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
+                ->netDebit($limit)
+                ->addLongCall((float) $this->ask('Long call strike', '180'), $quantity)
+                ->addShortCall((float) $this->ask('Short call strike', '185'), $quantity),
+
+            'three-leg' => $baseBuilder
+                ->orderType('SPREADS')
+                ->withSymbol($symbol)
+                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
+                ->netDebit($limit)
+                ->addLongCall((float) $this->ask('Long call strike', '180'), $quantity)
+                ->addShortCall((float) $this->ask('Short call strike', '185'), $quantity)
+                ->addShortPut((float) $this->ask('Short put strike', '120'), $quantity),
+
+            'iron-condor' => $baseBuilder
+                ->orderType('SPREADS')
+                ->withSymbol($symbol)
+                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
+                ->netCredit($limit)
+                ->addShortPut((float) $this->ask('Short put strike', '110'), $quantity)
+                ->addLongPut((float) $this->ask('Long put strike', '105'), $quantity)
+                ->addShortCall((float) $this->ask('Short call strike', '190'), $quantity)
+                ->addLongCall((float) $this->ask('Long call strike', '195'), $quantity),
+
+            'buy-write' => $baseBuilder
+                ->orderType('SPREADS')
+                ->withSymbol($symbol)
+                ->priceType('LIMIT')
+                ->limitPrice($limit)
+                ->addEquity('BUY', $quantity)
+                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
+                ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
+
+            'collar' => $baseBuilder
+                ->orderType('SPREADS')
+                ->withSymbol($symbol)
+                ->priceType('LIMIT')
+                ->limitPrice($limit)
+                ->addEquity('BUY', $quantity)
+                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
+                ->addLongPut((float) $this->ask('Protective put strike', '120'), $quantity)
+                ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
+
+            default => null,
+        };
+    }
+
+    private function extractLimitPrice(EtradeOrderBuilder $builder): float
+    {
+        $reflection = new \ReflectionClass($builder);
+        $prop = $reflection->getProperty('orderDetailFields');
+        $fields = $prop->getValue($builder);
+
+        return (float) ($fields['limitPrice'] ?? $fields['stopLimitPrice'] ?? $fields['stopPrice'] ?? 0);
+    }
+
+    private function extractAccountId(EtradeOrderBuilder $builder): string
+    {
+        $reflection = new \ReflectionClass($builder);
+        $prop = $reflection->getProperty('accountIdKey');
+
+        return (string) $prop->getValue($builder);
+    }
+
+    private function cloneBuilderWithNewLimit(EtradeOrderBuilder $builder, float $newLimit): EtradeOrderBuilder
+    {
+        $reflection = new \ReflectionClass($builder);
+        /** @var EtradeOrderBuilder $clone */
+        $clone = $reflection->newInstanceWithoutConstructor();
+        foreach ($reflection->getProperties() as $property) {
+            $property->setValue($clone, $property->getValue($builder));
+        }
+
+        $clone->limitPrice($newLimit);
+
+        return $clone;
+    }
+
+    private function confirmDanger(string $question): bool
+    {
+        if (!$this->confirm($question)) {
+            return false;
+        }
+
+        return $this->confirm('🚨🚨🚨 Really proceed? This will hit your live E*TRADE account! 🚨🚨🚨');
+    }
+
+    private function withApiCall(string $label, callable $callback): mixed
+    {
+        $this->line(PHP_EOL . "-> {$label}");
+
+        try {
+            return $callback();
+        } catch (Throwable $e) {
+            $this->reportError($label, $e);
+            return null;
+        }
+    }
+
+    private function reportError(string $context, Throwable $e): void
+    {
+        $message = $e instanceof EtradeApiException || $e instanceof GuzzleException
+            ? $e->getMessage()
+            : ($e->getMessage() ?: get_class($e));
+
+        $this->error("{$context} failed: {$message}");
+    }
+
+    private function section(string $title): void
+    {
+        $this->line('');
+        $this->info($title);
+    }
+
+    private function subSection(string $title): void
+    {
+        $this->line('');
+        $this->comment("{$title} ----------------");
+    }
+
+    private function randomOrderId(): string
+    {
+        return 'test'. bin2hex(random_bytes(8));
     }
 }
