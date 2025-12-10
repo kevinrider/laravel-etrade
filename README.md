@@ -15,7 +15,7 @@ This package aims to provide a robust and easy-to-use client for the ETrade API 
     - ✅ Market (MarketGetQuotes, MarketLookUp, MarketGetOptionChain, MarketGetOptionExp)
     - ✅ Order (ListOrders, PreviewOrder, PlaceOrder, ChangePreviewOrder, PlaceChangeOrder, CancelOrder)
 - ⌛ **EtradeOrderBuilder**: Build a variety of order objects with simple and fluent syntax
-- ❌ **Demo/Examples**
+- ⌛ **Demo/Examples**
 
 ## Key Technologies
 -   **Language**: PHP 8.3+
