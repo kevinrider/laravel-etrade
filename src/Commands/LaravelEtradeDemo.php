@@ -6,6 +6,20 @@ use Carbon\CarbonInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\CancelOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\GetQuotesResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\LookupResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OptionChainResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OptionExpireDateResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\OrdersResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\PlaceOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\PreviewOrderResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\AccountBalanceRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\CancelOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\DeleteAlertsRequestDTO;
@@ -19,6 +33,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionDetailsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ListTransactionsRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\LookupRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
+use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\EtradeOrderBuilder;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
@@ -207,7 +222,7 @@ class LaravelEtradeDemo extends Command
                 'realTimeNAV' => 'true',
             ]));
         });
-        $this->renderJson($balanceDto?->toArray());
+        $this->renderResponse($balanceDto);
 
         $portfolio = $this->withApiCall('Portfolio (holdings)', function () use ($accountIdKey) {
             return $this->apiClient->getViewPortfolio(new ViewPortfolioRequestDTO([
@@ -216,7 +231,7 @@ class LaravelEtradeDemo extends Command
                 'totalsRequired' => true,
             ]));
         });
-        $this->renderJson($portfolio?->toArray());
+        $this->renderResponse($portfolio);
 
         $transactions = $this->withApiCall('Recent transactions', function () use ($accountIdKey) {
             return $this->apiClient->getAccountTransactions(new ListTransactionsRequestDTO([
@@ -225,7 +240,7 @@ class LaravelEtradeDemo extends Command
                 'sortOrder' => 'DESC',
             ]));
         });
-        $this->renderJson($transactions?->toArray());
+        $this->renderResponse($transactions);
 
         if ($transactions && !empty($transactions->transactions)) {
             $firstId = $transactions->transactions[0]->transactionId ?? null;
@@ -236,7 +251,7 @@ class LaravelEtradeDemo extends Command
                         'transactionId' => $firstId,
                     ]));
                 });
-                $this->renderJson($details?->toArray());
+                $this->renderResponse($details);
             }
         }
     }
@@ -252,7 +267,7 @@ class LaravelEtradeDemo extends Command
         $lookup = $this->withApiCall('Product lookup', function () use ($search) {
             return $this->apiClient->lookupProduct(new LookupRequestDTO(['search' => $search]));
         });
-        $this->renderJson($lookup?->toArray());
+        $this->renderResponse($lookup);
 
         $symbolsRaw = $this->ask('Comma-separated symbols for quotes', 'SPY,MSFT,QQQ');
         $symbols = array_values(array_filter(array_map('trim', explode(',', (string) $symbolsRaw))));
@@ -265,7 +280,7 @@ class LaravelEtradeDemo extends Command
                     'requireEarningsDate' => false,
                 ]));
             });
-            $this->renderJson($quotes?->toArray());
+            $this->renderResponse($quotes);
         }
 
         $optionSymbol = $this->ask('Symbol for option expirations & chains', 'SPY');
@@ -278,7 +293,7 @@ class LaravelEtradeDemo extends Command
                 'expiryType' => $expiryType,
             ]));
         });
-        $this->renderJson($expirations?->toArray());
+        $this->renderResponse($expirations);
 
         $year = (int) $this->ask('Expiry year for option chain', (string) $defaultExpiry->year);
         $month = (int) $this->ask('Expiry month for option chain (1-12)', (string) $defaultExpiry->month);
@@ -296,7 +311,7 @@ class LaravelEtradeDemo extends Command
                 'priceType' => 'ATNM',
             ]));
         });
-        $this->renderJson($chains?->toArray());
+        $this->renderResponse($chains);
     }
 
     /**
@@ -312,7 +327,7 @@ class LaravelEtradeDemo extends Command
                 'direction' => 'DESC',
             ]));
         });
-        $this->renderJson($alerts?->toArray());
+        $this->renderResponse($alerts);
 
         if ($alerts && !empty($alerts->alerts)) {
             $firstAlertId = $alerts->alerts[0]->alertId ?? null;
@@ -324,7 +339,7 @@ class LaravelEtradeDemo extends Command
                         'htmlTags' => false,
                     ]));
                 });
-                $this->renderJson($details?->toArray());
+                $this->renderResponse($details);
             }
         }
     }
@@ -352,7 +367,7 @@ class LaravelEtradeDemo extends Command
         ]);
 
         $orders = $this->withApiCall('Orders', fn () => $this->apiClient->listAllOrders($listRequest));
-        $this->renderJson($orders?->toArray());
+        $this->renderResponse($orders);
     }
 
     /**
@@ -409,7 +424,7 @@ class LaravelEtradeDemo extends Command
             return;
         }
 
-        $this->renderJson($previewResponse->toArray());
+        $this->renderResponse($previewResponse);
 
         $previewIds = collect($previewResponse->previewIds ?? [])->map(fn ($dto) => $dto->previewId ?? null)->filter()->all();
         if (empty($previewIds)) {
@@ -427,7 +442,7 @@ class LaravelEtradeDemo extends Command
             return;
         }
 
-        $this->renderJson($placeResponse->toArray());
+        $this->renderResponse($placeResponse);
 
         $placedOrderId = $placeResponse->orderId ?? ($placeResponse->orderIds[0]->orderId ?? null);
         if (!$placedOrderId) {
@@ -442,13 +457,13 @@ class LaravelEtradeDemo extends Command
             $builder->clientOrderId($this->randomOrderId());
 
             $changePreview = $this->withApiCall('Preview change order', fn () => $this->apiClient->previewChangeOrder($builder->buildPreviewRequest()));
-            $this->renderJson($changePreview?->toArray());
+            $this->renderResponse($changePreview);
 
             $changePreviewIds = collect($changePreview?->previewIds ?? [])->map(fn ($dto) => $dto->previewId ?? null)->filter()->all();
             if (!empty($changePreviewIds) && $this->confirmDanger('Place the change order live?')) {
                 $changePlaced = $this->withApiCall('Placing change order', fn () => $this->apiClient->placeChangeOrder($builder->buildPlaceRequest($changePreviewIds)));
                 $placedOrderId = $changePlaced->orderId ?? ($changePlaced->orderIds[0]->orderId ?? null);
-                $this->renderJson($changePlaced?->toArray());
+                $this->renderResponse($changePlaced);
             }
         }
 
@@ -459,7 +474,7 @@ class LaravelEtradeDemo extends Command
                     'orderId' => $placedOrderId,
                 ]));
             });
-            $this->renderJson($cancelled?->toArray());
+            $this->renderResponse($cancelled);
         }
     }
 
@@ -499,7 +514,7 @@ class LaravelEtradeDemo extends Command
     private function deleteAlertsFlow(): void
     {
         $alerts = $this->withApiCall('List alerts first', fn () => $this->apiClient->getAlerts(new ListAlertsRequestDTO(['count' => 10])));
-        $this->renderJson($alerts?->toArray());
+        $this->renderResponse($alerts);
 
         $idsRaw = $this->ask('Comma-separated alert IDs to delete (blank to abort)');
         $ids = array_values(array_filter(array_map('trim', explode(',', (string) $idsRaw))));
@@ -515,7 +530,7 @@ class LaravelEtradeDemo extends Command
         }
 
         $deleted = $this->withApiCall('Deleting alerts', fn () => $this->apiClient->deleteAlerts(new DeleteAlertsRequestDTO(['alertIds' => $ids])));
-        $this->renderJson($deleted?->toArray());
+        $this->renderResponse($deleted);
     }
 
     /**
@@ -543,7 +558,7 @@ class LaravelEtradeDemo extends Command
             'accountIdKey' => $accountIdKey,
             'orderId' => $orderId,
         ])));
-        $this->renderJson($cancelled?->toArray());
+        $this->renderResponse($cancelled);
     }
 
     /**
@@ -592,13 +607,598 @@ class LaravelEtradeDemo extends Command
      * @param mixed $payload
      * @return void
      */
-    private function renderJson(mixed $payload): void
+    private function renderResponse(mixed $payload): void
     {
         if ($payload === null) {
             return;
         }
 
-        $this->line(json_encode($payload, JSON_PRETTY_PRINT));
+        match (true) {
+            $payload instanceof AccountBalanceResponseDTO => $this->renderAccountBalance($payload),
+            $payload instanceof ViewPortfolioResponseDTO => $this->renderPortfolio($payload),
+            $payload instanceof ListTransactionsResponseDTO => $this->renderTransactions($payload),
+            $payload instanceof ListTransactionDetailsResponseDTO => $this->renderTransactionDetail($payload),
+            $payload instanceof LookupResponseDTO => $this->renderLookup($payload),
+            $payload instanceof GetQuotesResponseDTO => $this->renderQuotes($payload),
+            $payload instanceof OptionExpireDateResponseDTO => $this->renderOptionExpirations($payload),
+            $payload instanceof OptionChainResponseDTO => $this->renderOptionChains($payload),
+            $payload instanceof ListAlertsResponseDTO => $this->renderAlerts($payload),
+            $payload instanceof ListAlertDetailsResponseDTO => $this->renderAlertDetail($payload),
+            $payload instanceof OrdersResponseDTO => $this->renderOrders($payload),
+            $payload instanceof PreviewOrderResponseDTO => $this->renderOrderPreview($payload),
+            $payload instanceof PlaceOrderResponseDTO => $this->renderOrderPlacement($payload),
+            $payload instanceof CancelOrderResponseDTO => $this->renderCancelledOrder($payload),
+            $payload instanceof DeleteAlertsResponseDTO => $this->renderDeleteAlerts($payload),
+            default => $this->renderFallbackTable($payload),
+        };
+    }
+
+    /**
+     * @param AccountBalanceResponseDTO $balance
+     * @return void
+     */
+    private function renderAccountBalance(AccountBalanceResponseDTO $balance): void
+    {
+        $this->table(
+            ['Account', 'Type', 'As of', 'Mode', 'Option Lvl'],
+            [[
+                $balance->accountId ?? '-',
+                $balance->accountType ?? '-',
+                $balance->asOfDate ?? '-',
+                strtoupper($balance->accountMode ?? ''),
+                $balance->optionLevel ?? '-',
+            ]]
+        );
+
+        $computed = $balance->computedBalance ?? null;
+        $rows = [
+            ['Cash available (invest)', $this->formatMoney($computed?->cashAvailableForInvestment)],
+            ['Cash available (withdraw)', $this->formatMoney($computed?->cashAvailableForWithdrawal)],
+            ['Net cash', $this->formatMoney($computed?->netCash)],
+            ['Cash balance', $this->formatMoney($computed?->cashBalance)],
+            ['Margin buying power', $this->formatMoney($computed?->marginBuyingPower)],
+            ['Cash buying power', $this->formatMoney($computed?->cashBuyingPower)],
+        ];
+
+        $this->table(['Balance Metric', 'Amount'], $rows);
+    }
+
+    /**
+     * @param ViewPortfolioResponseDTO $portfolio
+     * @return void
+     */
+    private function renderPortfolio(ViewPortfolioResponseDTO $portfolio): void
+    {
+        if (empty($portfolio->positions)) {
+            $this->warn('No positions returned.');
+            return;
+        }
+
+        $positions = array_slice($portfolio->positions, 0, 15);
+        $rows = [];
+        foreach ($positions as $position) {
+            $rows[] = [
+                $position->product?->symbol ?? '-',
+                $this->formatNumber($position->quantity),
+                $this->formatMoney($position->pricePaid),
+                $this->formatPercent($position->daysGainPct),
+                $this->formatMoney($position->marketValue),
+                $this->formatPercent($position->totalGainPct),
+            ];
+        }
+
+        $this->table(['Symbol', 'Qty', 'Last', 'Day %', 'Market Value', 'Total Gain %'], $rows);
+
+        if (count($portfolio->positions) > count($positions)) {
+            $this->comment('Showing first 15 positions.');
+        }
+    }
+
+    /**
+     * @param ListTransactionsResponseDTO $transactions
+     * @return void
+     */
+    private function renderTransactions(ListTransactionsResponseDTO $transactions): void
+    {
+        if (empty($transactions->transactions ?? [])) {
+            $this->warn('No transactions returned.');
+            return;
+        }
+
+        $items = array_slice($transactions->transactions, 0, 15);
+        $rows = [];
+        foreach ($items as $transaction) {
+            $rows[] = [
+                $transaction->transactionId ?? '-',
+                $this->truncate($transaction->description ?? '', 60),
+                $this->formatMoney($transaction->amount ?? null),
+                strtoupper((string) ($transaction->transactionType ?? '')),
+                $this->formatTimestamp($transaction->transactionDate ?? null),
+            ];
+        }
+
+        $this->table(['ID', 'Description', 'Amount', 'Type', 'Date'], $rows);
+
+        if (count($transactions->transactions) > count($items)) {
+            $this->comment('Showing first 15 transactions.');
+        }
+    }
+
+    /**
+     * @param ListTransactionDetailsResponseDTO $details
+     * @return void
+     */
+    private function renderTransactionDetail(ListTransactionDetailsResponseDTO $details): void
+    {
+        $transaction = $details->transaction ?? null;
+        if (!$transaction) {
+            $this->warn('No transaction details returned.');
+            return;
+        }
+
+        $brokerage = $transaction->brokerage ?? null;
+        $rows = [
+            ['Transaction ID', $transaction->transactionId ?? '-'],
+            ['Type', strtoupper($transaction->transactionType ?? '')],
+            ['Description', $transaction->description ?? '-'],
+            ['Symbol', $brokerage?->product?->symbol ?? '-'],
+            ['Action', strtoupper($brokerage?->transactionType ?? '')],
+            ['Quantity', $this->formatNumber($brokerage?->quantity)],
+            ['Price', $this->formatMoney($brokerage?->price)],
+            ['Amount', $this->formatMoney($transaction->amount ?? null)],
+            ['Date', $this->formatTimestamp($transaction->transactionDate ?? null)],
+            ['Memo', $this->truncate($brokerage?->memo ?? '', 80)],
+        ];
+
+        $this->table(['Field', 'Value'], $rows);
+    }
+
+    /**
+     * @param LookupResponseDTO $lookup
+     * @return void
+     */
+    private function renderLookup(LookupResponseDTO $lookup): void
+    {
+        if (empty($lookup->data)) {
+            $this->warn('No lookup results.');
+            return;
+        }
+
+        $rows = [];
+        foreach (array_slice($lookup->data, 0, 15) as $datum) {
+            $rows[] = [
+                $datum->symbol ?? '-',
+                $datum->description ?? '-',
+                strtoupper((string) ($datum->type ?? '')),
+            ];
+        }
+
+        $this->table(['Symbol', 'Description', 'Type'], $rows);
+    }
+
+    /**
+     * @param GetQuotesResponseDTO $quotes
+     * @return void
+     */
+    private function renderQuotes(GetQuotesResponseDTO $quotes): void
+    {
+        if (empty($quotes->quoteData)) {
+            $this->warn('No quotes returned.');
+            return;
+        }
+
+        $rows = [];
+        foreach (array_slice($quotes->quoteData, 0, 10) as $symbol => $quote) {
+            $all = $quote->all;
+            $rows[] = [
+                is_string($symbol) ? $symbol : ($quote->product?->symbol ?? '-'),
+                $this->formatMoney($all?->lastTrade),
+                $this->formatPercent($all?->changeClosePercentage),
+                $this->formatMoney($all?->bid),
+                $this->formatMoney($all?->ask),
+                $this->formatNumber($all?->totalVolume, 0),
+            ];
+        }
+
+        $this->table(['Symbol', 'Last', 'Change %', 'Bid', 'Ask', 'Volume'], $rows);
+    }
+
+    /**
+     * @param OptionExpireDateResponseDTO $expirations
+     * @return void
+     */
+    private function renderOptionExpirations(OptionExpireDateResponseDTO $expirations): void
+    {
+        if (empty($expirations->expirationDates)) {
+            $this->warn('No expiration dates returned.');
+            return;
+        }
+
+        $rows = [];
+        foreach (array_slice($expirations->expirationDates, 0, 15) as $expiration) {
+            $rows[] = [
+                $expiration->year ?? '-',
+                $expiration->month ?? '-',
+                $expiration->day ?? '-',
+                strtoupper((string) ($expiration->expiryType ?? '')),
+            ];
+        }
+
+        $this->table(['Year', 'Month', 'Day', 'Type'], $rows);
+    }
+
+    /**
+     * @param OptionChainResponseDTO $chains
+     * @return void
+     */
+    private function renderOptionChains(OptionChainResponseDTO $chains): void
+    {
+        if (empty($chains->optionPairs)) {
+            $this->warn('No option chain data returned.');
+            return;
+        }
+
+        if ($chains->nearPrice !== null) {
+            $this->line('Near price: '.$this->formatMoney($chains->nearPrice));
+        }
+
+        $rows = [];
+        foreach (array_slice($this->sortOptionPairsByStrike($chains->optionPairs), 0, 10) as $pair) {
+            $call = $pair->call;
+            $put = $pair->put;
+            $rows[] = [
+                $call?->strikePrice ?? $put?->strikePrice ?? '-',
+                $this->formatBidAsk($call?->bid, $call?->ask),
+                $this->formatMoney($call?->lastPrice),
+                $this->formatBidAsk($put?->bid, $put?->ask),
+                $this->formatMoney($put?->lastPrice),
+                $this->formatVolumePair($call?->volume, $put?->volume),
+            ];
+        }
+
+        $this->table(
+            ['Strike', 'Call Bid/Ask', 'Call Last', 'Put Bid/Ask', 'Put Last', 'Volume (C/P)'],
+            $rows
+        );
+
+        if (count($chains->optionPairs) > 10) {
+            $this->comment('Showing first 10 strikes.');
+        }
+    }
+
+    /**
+     * @param ListAlertsResponseDTO $alerts
+     * @return void
+     */
+    private function renderAlerts(ListAlertsResponseDTO $alerts): void
+    {
+        if (empty($alerts->alerts)) {
+            $this->warn('No alerts returned.');
+            return;
+        }
+
+        $rows = [];
+        foreach ($alerts->alerts as $alert) {
+            $rows[] = [
+                $alert->id ?? '-',
+                $this->truncate($alert->subject ?? '', 60),
+                strtoupper($alert->status ?? ''),
+                $this->formatTimestamp($alert->createTime ?? null),
+            ];
+        }
+
+        $this->table(['Alert ID', 'Subject', 'Status', 'Created'], $rows);
+    }
+
+    /**
+     * @param ListAlertDetailsResponseDTO $details
+     * @return void
+     */
+    private function renderAlertDetail(ListAlertDetailsResponseDTO $details): void
+    {
+        $rows = [
+            ['Alert ID', $details->id ?? '-'],
+            ['Subject', $details->subject ?? '-'],
+            ['Symbol', $details->symbol ?? '-'],
+            ['Created', $this->formatTimestamp($details->createTime ?? null)],
+            ['Read', $this->formatTimestamp($details->readTime ?? null)],
+            ['Deleted', $this->formatTimestamp($details->deleteTime ?? null)],
+            ['Message', $this->truncate($details->msgText ?? '', 120)],
+        ];
+
+        $this->table(['Field', 'Value'], $rows);
+    }
+
+    /**
+     * @param OrdersResponseDTO $orders
+     * @return void
+     */
+    private function renderOrders(OrdersResponseDTO $orders): void
+    {
+        if (empty($orders->order)) {
+            $this->warn('No orders returned.');
+            return;
+        }
+
+        $rows = [];
+        foreach ($orders->order as $order) {
+            $detail = $order->orderDetail[0] ?? null;
+            $instrument = $detail->instrument[0] ?? null;
+            $rows[] = [
+                $order->orderId ?? '-',
+                strtoupper($detail->status ?? ''),
+                strtoupper($instrument?->orderAction ?? ''),
+                $instrument?->product?->symbol ?? '-',
+                $this->formatNumber($instrument?->orderedQuantity),
+                $this->formatPriceForDetail($detail),
+            ];
+        }
+
+        $this->table(['Order ID', 'Status', 'Action', 'Symbol', 'Qty', 'Price'], $rows);
+    }
+
+    /**
+     * @param PreviewOrderResponseDTO $preview
+     * @return void
+     */
+    private function renderOrderPreview(PreviewOrderResponseDTO $preview): void
+    {
+        $previewIds = collect($preview->previewIds ?? [])->map(fn ($dto) => $dto->previewId ?? null)->filter()->all();
+        $rows = [
+            ['Order Type', strtoupper($preview->orderType ?? '')],
+            ['Total Value', $this->formatMoney($preview->totalOrderValue)],
+            ['Commission', $this->formatMoney($preview->totalCommission)],
+            ['Account', $preview->accountId ?? '-'],
+            ['Preview IDs', empty($previewIds) ? '-' : implode(', ', $previewIds)],
+        ];
+
+        $this->table(['Field', 'Value'], $rows);
+        $this->renderOrderLegs($preview->order);
+    }
+
+    /**
+     * @param PlaceOrderResponseDTO $order
+     * @return void
+     */
+    private function renderOrderPlacement(PlaceOrderResponseDTO $order): void
+    {
+        $firstOrderId = $order->orderIds[0] ?? null;
+        $orderId = $order->orderId ?? ($firstOrderId?->orderId ?? null);
+        $rows = [
+            ['Order ID', $orderId ?? '-'],
+            ['Order Type', strtoupper($order->orderType ?? '')],
+            ['Total Value', $this->formatMoney($order->totalOrderValue)],
+            ['Commission', $this->formatMoney($order->totalCommission)],
+            ['Placed', $this->formatTimestamp($order->placedTime ?? null)],
+        ];
+
+        $this->table(['Field', 'Value'], $rows);
+        $this->renderOrderLegs($order->order);
+    }
+
+    /**
+     * @param CancelOrderResponseDTO $cancelled
+     * @return void
+     */
+    private function renderCancelledOrder(CancelOrderResponseDTO $cancelled): void
+    {
+        $rows = [
+            ['Account', $cancelled->accountId ?? '-'],
+            ['Order ID', $cancelled->orderId ?? '-'],
+            ['Cancelled At', $this->formatTimestamp($cancelled->cancelTime ?? null)],
+        ];
+
+        $this->table(['Field', 'Value'], $rows);
+    }
+
+    /**
+     * @param DeleteAlertsResponseDTO $response
+     * @return void
+     */
+    private function renderDeleteAlerts(DeleteAlertsResponseDTO $response): void
+    {
+        $rows = [
+            ['Result', $response->result ?? '-'],
+            ['Failed IDs', empty($response->failedAlerts?->alertId ?? []) ? '-' : implode(', ', $response->failedAlerts->alertId)],
+        ];
+
+        $this->table(['Field', 'Value'], $rows);
+    }
+
+    /**
+     * @param array $orderDetails
+     * @return void
+     */
+    private function renderOrderLegs(array $orderDetails): void
+    {
+        if (empty($orderDetails)) {
+            return;
+        }
+
+        $rows = [];
+        foreach ($orderDetails as $detail) {
+            if (!$detail) {
+                continue;
+            }
+
+            foreach ($detail->instrument ?? [] as $instrument) {
+                $rows[] = [
+                    strtoupper($instrument->orderAction ?? ''),
+                    $instrument->product?->symbol ?? $instrument->symbolDescription ?? '-',
+                    $this->formatNumber($instrument->quantity),
+                    strtoupper($detail->priceType ?? ''),
+                    $this->formatPriceForDetail($detail),
+                    strtoupper($detail->status ?? ''),
+                ];
+            }
+        }
+
+        if (empty($rows)) {
+            return;
+        }
+
+        $this->table(['Action', 'Symbol', 'Qty', 'Price Type', 'Price/Stop', 'Status'], $rows);
+    }
+
+    /**
+     * @param array $pairs
+     * @return array
+     */
+    private function sortOptionPairsByStrike(array $pairs): array
+    {
+        usort($pairs, function ($a, $b) {
+            $strikeA = $a->call?->strikePrice ?? $a->put?->strikePrice ?? 0;
+            $strikeB = $b->call?->strikePrice ?? $b->put?->strikePrice ?? 0;
+            return $strikeA <=> $strikeB;
+        });
+
+        return $pairs;
+    }
+
+    /**
+     * @param mixed $payload
+     * @return void
+     */
+    private function renderFallbackTable(mixed $payload): void
+    {
+        $data = is_object($payload) && method_exists($payload, 'toArray')
+            ? $payload->toArray()
+            : (array) $payload;
+
+        $rows = [];
+        foreach (array_slice($data, 0, 10, true) as $key => $value) {
+            $rows[] = [$key, $this->stringifyValue($value)];
+        }
+
+        $this->table(['Key', 'Value'], $rows);
+    }
+
+    /**
+     * @param float|null $value
+     * @return string
+     */
+    private function formatMoney(?float $value): string
+    {
+        return $value === null ? '-' : number_format($value, 2, '.', ',');
+    }
+
+    /**
+     * @param float|int|null $value
+     * @param int $decimals
+     * @return string
+     */
+    private function formatNumber(float|int|null $value, int $decimals = 2): string
+    {
+        return $value === null ? '-' : number_format($value, $decimals, '.', ',');
+    }
+
+    /**
+     * @param float|null $value
+     * @return string
+     */
+    private function formatPercent(?float $value): string
+    {
+        return $value === null ? '-' : number_format($value, 2, '.', ',') . '%';
+    }
+
+    /**
+     * @param float|null $bid
+     * @param float|null $ask
+     * @return string
+     */
+    private function formatBidAsk(?float $bid, ?float $ask): string
+    {
+        if ($bid === null && $ask === null) {
+            return '-';
+        }
+
+        return trim($this->formatMoney($bid) . ' / ' . $this->formatMoney($ask), ' /');
+    }
+
+    /**
+     * @param int|null $callVolume
+     * @param int|null $putVolume
+     * @return string
+     */
+    private function formatVolumePair(?int $callVolume, ?int $putVolume): string
+    {
+        if ($callVolume === null && $putVolume === null) {
+            return '-';
+        }
+
+        return sprintf(
+            '%s / %s',
+            $this->formatNumber($callVolume, 0),
+            $this->formatNumber($putVolume, 0)
+        );
+    }
+
+    /**
+     * @param object|null $detail
+     * @return string
+     */
+    private function formatPriceForDetail(?object $detail): string
+    {
+        if ($detail === null) {
+            return '-';
+        }
+
+        $price = $detail->limitPrice ?? $detail->stopPrice ?? $detail->stopLimitPrice ?? $detail->priceValue ?? null;
+
+        if ($price !== null) {
+            if (is_numeric($price)) {
+                return $this->formatMoney((float) $price);
+            }
+
+            return strtoupper((string) $price);
+        }
+
+        return strtoupper((string) ($detail->priceType ?? 'MKT'));
+    }
+
+    /**
+     * @param int|null $timestamp
+     * @return string
+     */
+    private function formatTimestamp(?int $timestamp): string
+    {
+        if ($timestamp === null) {
+            return '-';
+        }
+
+        try {
+            $seconds = $timestamp > 9999999999 ? $timestamp / 1000 : $timestamp;
+            return Carbon::createFromTimestamp((int) $seconds)->toDateTimeString();
+        } catch (Throwable) {
+            return (string) $timestamp;
+        }
+    }
+
+    /**
+     * @param string|null $value
+     * @param int $length
+     * @return string
+     */
+    private function truncate(?string $value, int $length = 80): string
+    {
+        if ($value === null) {
+            return '-';
+        }
+
+        return strlen($value) > $length ? substr($value, 0, $length - 3) . '...' : $value;
+    }
+
+    /**
+     * @param mixed $value
+     * @return string
+     */
+    private function stringifyValue(mixed $value): string
+    {
+        if (is_scalar($value) || $value === null) {
+            return (string) ($value ?? '-');
+        }
+
+        return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '-';
     }
 
     /**
