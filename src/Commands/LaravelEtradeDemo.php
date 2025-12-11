@@ -41,6 +41,15 @@ use Random\RandomException;
 use ReflectionException;
 use Throwable;
 
+/**
+ * Interactive console demo for the Laravel E*TRADE client.
+ *
+ * Walks through authentication, read-only endpoints (accounts, market data, alerts, order list),
+ * order lifecycle previews/placements, and destructive flows (delete alerts, cancel order, revoke token).
+ * WARNING: The orders menu option uses your configured credentials and will place/modify real live orders
+ * unless the underlying account itself is a sandbox (laravel-etrade.production === false). Proceed with
+ * extreme caution when confirming place/change/cancel prompts.
+ */
 class LaravelEtradeDemo extends Command
 {
     /**
@@ -1079,7 +1088,7 @@ class LaravelEtradeDemo extends Command
      */
     private function formatMoney(?float $value): string
     {
-        return $value === null ? '-' : number_format($value, 2, '.', ',');
+        return $value === null ? '-' : number_format($value, 2);
     }
 
     /**
@@ -1089,7 +1098,7 @@ class LaravelEtradeDemo extends Command
      */
     private function formatNumber(float|int|null $value, int $decimals = 2): string
     {
-        return $value === null ? '-' : number_format($value, $decimals, '.', ',');
+        return $value === null ? '-' : number_format($value, $decimals);
     }
 
     /**
@@ -1098,7 +1107,7 @@ class LaravelEtradeDemo extends Command
      */
     private function formatPercent(?float $value): string
     {
-        return $value === null ? '-' : number_format($value, 2, '.', ',') . '%';
+        return $value === null ? '-' : number_format($value, 2) . '%';
     }
 
     /**
