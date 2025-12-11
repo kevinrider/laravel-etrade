@@ -356,7 +356,7 @@ it('throws exception on malformed response for renew access token request', func
     $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
     $mockGuzzleClient->shouldReceive('get')
         ->once()
-        ->andReturn(new Response(200, [], 'failure'));
+        ->andReturn(new Response(400, [], 'failure'));
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
 
@@ -445,7 +445,7 @@ it('throws exception on malformed response for revoke access token request', fun
     $mockGuzzleClient = \Mockery::mock('overload:GuzzleHttp\\Client');
     $mockGuzzleClient->shouldReceive('get')
         ->once()
-        ->andReturn(new Response(200, [], 'failure'));
+        ->andReturn(new Response(500, [], 'failure'));
 
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
 

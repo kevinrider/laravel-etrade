@@ -168,7 +168,7 @@ class EtradeApiClient
 
         $response = $this->client->get(EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN);
 
-        if ($response->getStatusCode() !== 200 || $response->getBody()->getContents() != EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN_SUCCESS) {
+        if ($response->getStatusCode() !== 200) {
             throw new EtradeApiException('Failed to renew access token');
         }
         $accessToken['oauth_token'] = $accessTokenDTO->oauthToken;
@@ -199,7 +199,7 @@ class EtradeApiClient
             'token_secret' => $accessTokenDTO->oauthTokenSecret,
         ]);
         $response = $this->client->get(EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN);
-        if ($response->getStatusCode() !== 200 || $response->getBody()->getContents() != EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN_SUCCESS) {
+        if ($response->getStatusCode() !== 200) {
             throw new EtradeApiException('Failed to revoke access token');
         }
     }
