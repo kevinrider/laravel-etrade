@@ -68,6 +68,10 @@ class LaravelEtradeDemo extends Command
                 break;
             }
 
+            if (in_array($choice, ['reads', 'orders', 'destructive'], true) && !$this->hasActiveAuthToken()) {
+                continue;
+            }
+
             match ($choice) {
                 'auth' => $this->authenticateFlow(),
                 'reads' => $this->runReadOnlyMenu(),
@@ -869,5 +873,19 @@ class LaravelEtradeDemo extends Command
     private function randomOrderId(): string
     {
         return 'test'. bin2hex(random_bytes(8));
+    }
+
+    /**
+     * @return bool
+     */
+    private function hasActiveAuthToken(): bool
+    {
+        try {
+            app(EtradeApiClient::class)->getAccessToken();
+            return true;
+        } catch (Throwable) {
+            $this->error('Please authenticate first via the auth option.');
+            return false;
+        }
     }
 }
