@@ -42,6 +42,11 @@ class LaravelEtradeDemo extends Command
      */
     protected $description = 'Run a basic demo showcasing Laravel E*TRADE integration.';
 
+    public function __construct(private readonly EtradeApiClient $apiClient)
+    {
+        parent::__construct();
+    }
+
     /**
      * @return int
      * @throws RandomException
@@ -111,7 +116,7 @@ class LaravelEtradeDemo extends Command
         }
 
         try {
-            $authUrl = app(EtradeApiClient::class)->getAuthorizationUrl();
+            $authUrl = $this->apiClient->getAuthorizationUrl();
         } catch (Throwable $e) {
             $this->reportError('Unable to get request token', $e);
             return;
@@ -128,7 +133,7 @@ class LaravelEtradeDemo extends Command
         }
 
         try {
-            app(EtradeApiClient::class)->requestAccessTokenAndStore(trim($verifier));
+            $this->apiClient->requestAccessTokenAndStore(trim($verifier));
             $this->info('Access token stored in the configured Laravel cache store. You are authenticated.');
         } catch (Throwable $e) {
             $this->reportError('Failed to exchange verifier for access token', $e);
@@ -191,7 +196,7 @@ class LaravelEtradeDemo extends Command
     {
         $this->subSection('Accounts');
 
-        $accounts = $this->withApiCall('Account list', fn () => app(EtradeApiClient::class)->getAccountList());
+        $accounts = $this->withApiCall('Account list', fn () => $this->apiClient->getAccountList());
         $this->renderAccounts($accounts);
 
         $accountIdKey ??= $this->pickAccountFromList($accounts);
@@ -201,7 +206,7 @@ class LaravelEtradeDemo extends Command
         }
 
         $balanceDto = $this->withApiCall('Account balance', function () use ($accountIdKey) {
-            return app(EtradeApiClient::class)->getAccountBalance(new AccountBalanceRequestDTO([
+            return $this->apiClient->getAccountBalance(new AccountBalanceRequestDTO([
                 'accountIdKey' => $accountIdKey,
                 'realTimeNAV' => 'true',
             ]));
@@ -209,7 +214,7 @@ class LaravelEtradeDemo extends Command
         $this->renderJson($balanceDto?->toArray());
 
         $portfolio = $this->withApiCall('Portfolio (holdings)', function () use ($accountIdKey) {
-            return app(EtradeApiClient::class)->getViewPortfolio(new ViewPortfolioRequestDTO([
+            return $this->apiClient->getViewPortfolio(new ViewPortfolioRequestDTO([
                 'accountIdKey' => $accountIdKey,
                 'view' => 'PERFORMANCE',
                 'totalsRequired' => true,
@@ -218,7 +223,7 @@ class LaravelEtradeDemo extends Command
         $this->renderJson($portfolio?->toArray());
 
         $transactions = $this->withApiCall('Recent transactions', function () use ($accountIdKey) {
-            return app(EtradeApiClient::class)->getAccountTransactions(new ListTransactionsRequestDTO([
+            return $this->apiClient->getAccountTransactions(new ListTransactionsRequestDTO([
                 'accountIdKey' => $accountIdKey,
                 'count' => 10,
                 'sortOrder' => 'DESC',
@@ -230,7 +235,7 @@ class LaravelEtradeDemo extends Command
             $firstId = $transactions->transactions[0]->transactionId ?? null;
             if ($firstId && $this->confirm("Fetch details for transaction {$firstId}?")) {
                 $details = $this->withApiCall('Transaction details', function () use ($accountIdKey, $firstId) {
-                    return app(EtradeApiClient::class)->getAccountTransactionDetails(new ListTransactionDetailsRequestDTO([
+                    return $this->apiClient->getAccountTransactionDetails(new ListTransactionDetailsRequestDTO([
                         'accountIdKey' => $accountIdKey,
                         'transactionId' => $firstId,
                     ]));
@@ -249,7 +254,7 @@ class LaravelEtradeDemo extends Command
 
         $search = $this->ask('Symbol search term for lookup', 'SPY');
         $lookup = $this->withApiCall('Product lookup', function () use ($search) {
-            return app(EtradeApiClient::class)->lookupProduct(new LookupRequestDTO(['search' => $search]));
+            return $this->apiClient->lookupProduct(new LookupRequestDTO(['search' => $search]));
         });
         $this->renderJson($lookup?->toArray());
 
@@ -258,7 +263,7 @@ class LaravelEtradeDemo extends Command
 
         if (!empty($symbols)) {
             $quotes = $this->withApiCall('Get quotes', function () use ($symbols) {
-                return app(EtradeApiClient::class)->getQuotes(new GetQuotesRequestDTO([
+                return $this->apiClient->getQuotes(new GetQuotesRequestDTO([
                     'symbols' => $symbols,
                     'detailFlag' => 'ALL',
                     'requireEarningsDate' => false,
@@ -272,7 +277,7 @@ class LaravelEtradeDemo extends Command
         $defaultExpiry = $this->defaultOptionExpiryDate();
 
         $expirations = $this->withApiCall('Option expiration dates', function () use ($optionSymbol, $expiryType) {
-            return app(EtradeApiClient::class)->getOptionExpireDates(new GetOptionExpireDatesRequestDTO([
+            return $this->apiClient->getOptionExpireDates(new GetOptionExpireDatesRequestDTO([
                 'symbol' => $optionSymbol,
                 'expiryType' => $expiryType,
             ]));
@@ -285,7 +290,7 @@ class LaravelEtradeDemo extends Command
         $strikes = (int) $this->ask('How many strikes around the money?', '5');
 
         $chains = $this->withApiCall('Option chain', function () use ($optionSymbol, $year, $month, $day, $strikes) {
-            return app(EtradeApiClient::class)->getOptionChains(new GetOptionChainsRequestDTO([
+            return $this->apiClient->getOptionChains(new GetOptionChainsRequestDTO([
                 'symbol' => $optionSymbol,
                 'expiryYear' => $year,
                 'expiryMonth' => $month,
@@ -306,7 +311,7 @@ class LaravelEtradeDemo extends Command
         $this->subSection('Alerts');
 
         $alerts = $this->withApiCall('List alerts', function () {
-            return app(EtradeApiClient::class)->getAlerts(new ListAlertsRequestDTO([
+            return $this->apiClient->getAlerts(new ListAlertsRequestDTO([
                 'count' => 10,
                 'direction' => 'DESC',
             ]));
@@ -318,7 +323,7 @@ class LaravelEtradeDemo extends Command
             $selected = $this->ask('Alert ID to view details (blank to skip)', $firstAlertId);
             if (!empty($selected)) {
                 $details = $this->withApiCall('Alert details', function () use ($selected) {
-                    return app(EtradeApiClient::class)->getAlertDetails(new ListAlertDetailsRequestDTO([
+                    return $this->apiClient->getAlertDetails(new ListAlertDetailsRequestDTO([
                         'alertId' => (int) $selected,
                         'htmlTags' => false,
                     ]));
@@ -350,7 +355,7 @@ class LaravelEtradeDemo extends Command
             'callDepth' => 3,
         ]);
 
-        $orders = $this->withApiCall('Orders', fn () => app(EtradeApiClient::class)->listAllOrders($listRequest));
+        $orders = $this->withApiCall('Orders', fn () => $this->apiClient->listAllOrders($listRequest));
         $this->renderJson($orders?->toArray());
     }
 
@@ -403,7 +408,7 @@ class LaravelEtradeDemo extends Command
      */
     private function runOrderLifecycle(EtradeOrderBuilder $builder): void
     {
-        $previewResponse = $this->withApiCall('Previewing order (dry-run)', fn () => app(EtradeApiClient::class)->previewOrder($builder->buildPreviewRequest()));
+        $previewResponse = $this->withApiCall('Previewing order (dry-run)', fn () => $this->apiClient->previewOrder($builder->buildPreviewRequest()));
         if (!$previewResponse) {
             return;
         }
@@ -421,7 +426,7 @@ class LaravelEtradeDemo extends Command
             return;
         }
 
-        $placeResponse = $this->withApiCall('Placing live order', fn () => app(EtradeApiClient::class)->placeOrder($builder->buildPlaceRequest($previewIds)));
+        $placeResponse = $this->withApiCall('Placing live order', fn () => $this->apiClient->placeOrder($builder->buildPlaceRequest($previewIds)));
         if (!$placeResponse) {
             return;
         }
@@ -440,12 +445,12 @@ class LaravelEtradeDemo extends Command
             $builder = $this->cloneBuilderWithNewLimit($builder, $newLimit)->orderId($placedOrderId);
             $builder->clientOrderId($this->randomOrderId());
 
-            $changePreview = $this->withApiCall('Preview change order', fn () => app(EtradeApiClient::class)->previewChangeOrder($builder->buildPreviewRequest()));
+            $changePreview = $this->withApiCall('Preview change order', fn () => $this->apiClient->previewChangeOrder($builder->buildPreviewRequest()));
             $this->renderJson($changePreview?->toArray());
 
             $changePreviewIds = collect($changePreview?->previewIds ?? [])->map(fn ($dto) => $dto->previewId ?? null)->filter()->all();
             if (!empty($changePreviewIds) && $this->confirmDanger('Place the change order live?')) {
-                $changePlaced = $this->withApiCall('Placing change order', fn () => app(EtradeApiClient::class)->placeChangeOrder($builder->buildPlaceRequest($changePreviewIds)));
+                $changePlaced = $this->withApiCall('Placing change order', fn () => $this->apiClient->placeChangeOrder($builder->buildPlaceRequest($changePreviewIds)));
                 $placedOrderId = $changePlaced->orderId ?? ($changePlaced->orderIds[0]->orderId ?? null);
                 $this->renderJson($changePlaced?->toArray());
             }
@@ -453,7 +458,7 @@ class LaravelEtradeDemo extends Command
 
         if ($this->confirmDanger('Cancel this order now? (destructive)')) {
             $cancelled = $this->withApiCall('Cancel order', function () use ($builder, $placedOrderId) {
-                return app(EtradeApiClient::class)->cancelOrder(new CancelOrderRequestDTO([
+                return $this->apiClient->cancelOrder(new CancelOrderRequestDTO([
                     'accountIdKey' => $this->extractAccountId($builder),
                     'orderId' => $placedOrderId,
                 ]));
@@ -497,7 +502,7 @@ class LaravelEtradeDemo extends Command
      */
     private function deleteAlertsFlow(): void
     {
-        $alerts = $this->withApiCall('List alerts first', fn () => app(EtradeApiClient::class)->getAlerts(new ListAlertsRequestDTO(['count' => 10])));
+        $alerts = $this->withApiCall('List alerts first', fn () => $this->apiClient->getAlerts(new ListAlertsRequestDTO(['count' => 10])));
         $this->renderJson($alerts?->toArray());
 
         $idsRaw = $this->ask('Comma-separated alert IDs to delete (blank to abort)');
@@ -513,7 +518,7 @@ class LaravelEtradeDemo extends Command
             return;
         }
 
-        $deleted = $this->withApiCall('Deleting alerts', fn () => app(EtradeApiClient::class)->deleteAlerts(new DeleteAlertsRequestDTO(['alertIds' => $ids])));
+        $deleted = $this->withApiCall('Deleting alerts', fn () => $this->apiClient->deleteAlerts(new DeleteAlertsRequestDTO(['alertIds' => $ids])));
         $this->renderJson($deleted?->toArray());
     }
 
@@ -538,7 +543,7 @@ class LaravelEtradeDemo extends Command
             return;
         }
 
-        $cancelled = $this->withApiCall('Cancelling order', fn () => app(EtradeApiClient::class)->cancelOrder(new CancelOrderRequestDTO([
+        $cancelled = $this->withApiCall('Cancelling order', fn () => $this->apiClient->cancelOrder(new CancelOrderRequestDTO([
             'accountIdKey' => $accountIdKey,
             'orderId' => $orderId,
         ])));
@@ -556,7 +561,7 @@ class LaravelEtradeDemo extends Command
         }
 
         try {
-            app(EtradeApiClient::class)->revokeAccessToken();
+            $this->apiClient->revokeAccessToken();
             $this->info('Access token revoked successfully.');
         } catch (Throwable $e) {
             $this->reportError('Revoking access token', $e);
@@ -628,7 +633,7 @@ class LaravelEtradeDemo extends Command
     private function resolveAccountIdKey(): ?string
     {
         try {
-            $accounts = app(EtradeApiClient::class)->getAccountList();
+            $accounts = $this->apiClient->getAccountList();
         } catch (Throwable $e) {
             $this->reportError('Unable to fetch account list', $e);
             return null;
@@ -881,10 +886,10 @@ class LaravelEtradeDemo extends Command
     private function hasActiveAuthToken(): bool
     {
         try {
-            app(EtradeApiClient::class)->getAccessToken();
+            $this->apiClient->getAccessToken();
             return true;
         } catch (Throwable) {
-            $this->error('Please authenticate first via the auth option.');
+            $this->error('No active access token found. Please authenticate first via the auth option.');
             return false;
         }
     }
