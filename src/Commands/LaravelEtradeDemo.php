@@ -33,7 +33,7 @@ class LaravelEtradeDemo extends Command
      *
      * @var string
      */
-    protected $signature = 'laravel-etrade:demo {--skip-intro : Hide the long intro text if you already know the flow}';
+    protected $signature = 'laravel-etrade:demo';
 
     /**
      * The console command description.
@@ -94,10 +94,6 @@ class LaravelEtradeDemo extends Command
      */
     private function intro(): void
     {
-        if ($this->option('skip-intro')) {
-            return;
-        }
-
         $this->line('');
         $this->line('👋 Welcome to the Laravel E*TRADE interactive demo. 👋');
         $this->line('');
