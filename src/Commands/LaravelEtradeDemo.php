@@ -61,7 +61,7 @@ class LaravelEtradeDemo extends Command
                     'destructive' => 'Destructive ops (delete alert, cancel order, revoke token)',
                     'exit' => 'Exit',
                 ],
-                'reads'
+                'auth'
             );
 
             if ($choice === 'exit') {
