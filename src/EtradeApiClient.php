@@ -59,6 +59,14 @@ class EtradeApiClient
     }
 
     /**
+     * @return bool
+     */
+    public function isProduction(): bool
+    {
+        return $this->isProduction;
+    }
+
+    /**
      * @return AuthorizationUrlDTO
      * @throws EtradeApiException
      * @throws GuzzleException
