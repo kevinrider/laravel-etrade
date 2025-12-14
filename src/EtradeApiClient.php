@@ -202,6 +202,7 @@ class EtradeApiClient
         if ($response->getStatusCode() !== 200) {
             throw new EtradeApiException('Failed to revoke access token');
         }
+        $this->deleteAccessTokenInCache();
     }
 
     /**
@@ -920,6 +921,14 @@ class EtradeApiClient
             Crypt::encryptString(json_encode($tokenData)),
             $expiresAt
         );
+    }
+
+    /**
+     * @return void
+     */
+    private function deleteAccessTokenInCache(): void
+    {
+        Cache::forget(config('laravel-etrade.oauth_access_token_key'));
     }
 
     /**
