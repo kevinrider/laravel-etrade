@@ -121,6 +121,10 @@ class LaravelEtradeDemo extends Command
         $this->line('');
         $this->line('👋 Welcome to the Laravel E*TRADE interactive demo. 👋');
         $this->line('');
+        if (config('laravel-etrade.production')) {
+            $this->error('WARNING: YOU ARE IN PRODUCTION MODE!');
+            $this->error('ORDERS WILL BE PLACED AGAINST YOUR LIVE ACCOUNT!');
+        }
     }
 
     /**
