@@ -81,6 +81,7 @@ class LaravelEtradeDemo extends Command
         $this->intro();
 
         while (true) {
+            $this->printModeBanner();
             $choice = $this->choice(
                 'What would you like to explore?',
                 [
@@ -121,10 +122,6 @@ class LaravelEtradeDemo extends Command
         $this->line('');
         $this->line('👋 Welcome to the Laravel E*TRADE interactive demo. 👋');
         $this->line('');
-        if (config('laravel-etrade.production')) {
-            $this->error('WARNING: YOU ARE IN PRODUCTION MODE!');
-            $this->error('ORDERS WILL BE PLACED AGAINST YOUR LIVE ACCOUNT!');
-        }
     }
 
     /**
@@ -170,6 +167,7 @@ class LaravelEtradeDemo extends Command
     private function runReadOnlyMenu(): void
     {
         $this->section('Read-only demos');
+        $this->printModeBanner();
 
         $choices = [
             'full' => 'Run the full read-only tour (recommended)',
@@ -390,7 +388,8 @@ class LaravelEtradeDemo extends Command
      */
     private function runOrderMenu(): void
     {
-        $this->section('Order lifecycle demos. 🚨🚨🚨 Orders will be placed against your live E*Trade account! 🚨🚨🚨');
+        $this->section('Order lifecycle demos.');
+        $this->printModeBanner();
 
         $accountIdKey = $this->resolveAccountIdKey();
         if (!$accountIdKey) {
@@ -497,6 +496,7 @@ class LaravelEtradeDemo extends Command
     private function runDestructiveMenu(): void
     {
         $this->section('Destructive operations (extra prompts)');
+        $this->printModeBanner();
 
         $choice = $this->choice(
             'Pick an action',
@@ -674,6 +674,19 @@ class LaravelEtradeDemo extends Command
         ];
 
         $this->table(['Balance Metric', 'Amount'], $rows);
+    }
+
+    /**
+     * @return void
+     */
+    private function printModeBanner(): void
+    {
+        $production = (bool) config('laravel-etrade.production');
+        $message = $production
+            ? 'WARNING: LIVE TRADING IS ENABLED. ORDERS WILL BE PLACED LIVE!'
+            : 'Sandbox testing mode';
+
+        $production ? $this->error($message) : $this->info($message);
     }
 
     /**
@@ -1261,7 +1274,7 @@ class LaravelEtradeDemo extends Command
     {
         $symbol = strtoupper($this->ask('Symbol', 'SPY'));
         $quantity = (float) $this->ask('Quantity', '1');
-        $limit = (float) $this->ask('Limit price (kept unrealistically low/high to avoid fills)', '2.00');
+        $limit = (float) $this->ask('Limit price', '2.00');
         $needsOptions = $scenario !== 'equity';
         $defaultExpiry = $this->defaultOptionExpiryDate();
         $expiryYear = $needsOptions ? (int) $this->ask('Option expiry year', (string) $defaultExpiry->year) : null;
@@ -1425,8 +1438,10 @@ class LaravelEtradeDemo extends Command
         if (!$this->confirm($question)) {
             return false;
         }
-
-        return $this->confirm('🚨🚨🚨 Really proceed? This will hit your live E*TRADE account! 🚨🚨🚨');
+        $additionalWarning = $this->apiClient->isProduction()
+            ? ' 🚨🚨🚨 This action will be executed on your live E*TRADE account! 🚨🚨🚨'
+            : '';
+        return $this->confirm('Really proceed?' . $additionalWarning);
     }
 
     /**
