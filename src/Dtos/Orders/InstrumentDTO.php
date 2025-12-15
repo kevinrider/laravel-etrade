@@ -3,6 +3,8 @@
 namespace KevinRider\LaravelEtrade\Dtos\Orders;
 
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
+use KevinRider\LaravelEtrade\Dtos\Shared\LotDTO;
+use KevinRider\LaravelEtrade\Dtos\Shared\MFQuantityDTO;
 use ReflectionClass;
 use ReflectionProperty;
 

@@ -3,6 +3,7 @@
 namespace KevinRider\LaravelEtrade\Dtos\ListOrders;
 
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
+use KevinRider\LaravelEtrade\Dtos\Shared\ProductIdDTO;
 
 class ProductDTO extends BaseDTO
 {

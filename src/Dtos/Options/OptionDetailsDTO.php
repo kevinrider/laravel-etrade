@@ -3,6 +3,7 @@
 namespace KevinRider\LaravelEtrade\Dtos\Options;
 
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
+use KevinRider\LaravelEtrade\Dtos\Shared\OptionGreeksDTO;
 
 class OptionDetailsDTO extends BaseDTO
 {

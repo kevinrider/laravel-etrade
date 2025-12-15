@@ -3,11 +3,12 @@
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
+use KevinRider\LaravelEtrade\Dtos\Shared\ProductIdDTO;
 
 class ProductDTO extends BaseDTO
 {
-    public string $symbol;
-    public string $securityType;
+    public ?string $symbol = null;
+    public ?string $securityType = null;
     public ?string $securitySubType = null;
     public ?string $callPut = null;
     public ?int $expiryYear = null;
