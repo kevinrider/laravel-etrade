@@ -7,30 +7,30 @@ use Illuminate\Support\Facades\Crypt;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
-use KevinRider\LaravelEtrade\Dtos\AccountBalanceResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\AccountBalanceResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Alerts\AlertDTO;
 use KevinRider\LaravelEtrade\Dtos\Alerts\FailedAlertsDTO;
 use KevinRider\LaravelEtrade\Dtos\AuthorizationUrlDTO;
-use KevinRider\LaravelEtrade\Dtos\CancelOrderResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\DeleteAlertsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\CancelOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\DeleteAlertsResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\EtradeAccessTokenDTO;
-use KevinRider\LaravelEtrade\Dtos\GetQuotesResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\ListAlertDetailsResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\ListAlertsResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\ListTransactionDetailsResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\ListTransactionsResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\LookupResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\OptionChainResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\OptionExpireDateResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\GetQuotesResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\ListAlertDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\ListAlertsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\ListTransactionDetailsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\ListTransactionsResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\LookupResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\OptionChainResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\OptionExpireDateResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\LookupProduct\DataDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\ExpirationDateDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionChainPairDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionDetailsDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionGreeksDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\SelectedEDDTO;
-use KevinRider\LaravelEtrade\Dtos\OrdersResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\PlaceOrderResponseDTO;
-use KevinRider\LaravelEtrade\Dtos\PreviewOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\OrdersResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\PlaceOrderResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\PreviewOrderResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\ListOrders\InstrumentDTO;
 use KevinRider\LaravelEtrade\Dtos\ListOrders\LotDTO;
 use KevinRider\LaravelEtrade\Dtos\ListOrders\OrderDTO;
@@ -55,7 +55,7 @@ use KevinRider\LaravelEtrade\Dtos\Transaction\BrokerageDTO;
 use KevinRider\LaravelEtrade\Dtos\Transaction\CategoryDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\ProductDTO;
 use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\QuickViewDTO;
-use KevinRider\LaravelEtrade\Dtos\ViewPortfolioResponseDTO;
+use KevinRider\LaravelEtrade\Dtos\Response\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\EtradeConfig;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
@@ -488,7 +488,7 @@ it('can get account list successfully', function () {
     $etradeClient = new EtradeApiClient('test_key', 'test_secret');
     $accountListDto = $etradeClient->getAccountList();
 
-    expect($accountListDto)->toBeInstanceOf(\KevinRider\LaravelEtrade\Dtos\AccountListResponseDTO::class)
+    expect($accountListDto)->toBeInstanceOf(\KevinRider\LaravelEtrade\Dtos\Response\AccountListResponseDTO::class)
         ->and($accountListDto->accounts)->toBeArray()
         ->and(count($accountListDto->accounts))->toBe(2);
 
