@@ -6,9 +6,9 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class RealTimeValuesDTO extends BaseDTO
 {
-    public float $totalAccountValue;
-    public float $netMv;
-    public float $netMvLong;
-    public float $netMvShort;
-    public float $totalLongValue;
+    public ?float $totalAccountValue = null;
+    public ?float $netMv = null;
+    public ?float $netMvLong = null;
+    public ?float $netMvShort = null;
+    public ?float $totalLongValue = null;
 }

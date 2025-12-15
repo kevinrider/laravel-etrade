@@ -6,15 +6,15 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class PortfolioMarginDTO extends BaseDTO
 {
-    public float $dtCashOpenOrderReserve;
-    public float $dtMarginOpenOrderReserve;
-    public float $liquidatingEquity;
-    public float $houseExcessEquity;
-    public float $totalHouseRequirement;
-    public float $excessEquityMinusRequirement;
-    public float $totalMarginRqmts;
-    public float $availExcessEquity;
-    public float $excessEquity;
-    public float $openOrderReserve;
-    public float $fundsOnHold;
+    public ?float $dtCashOpenOrderReserve = null;
+    public ?float $dtMarginOpenOrderReserve = null;
+    public ?float $liquidatingEquity = null;
+    public ?float $houseExcessEquity = null;
+    public ?float $totalHouseRequirement = null;
+    public ?float $excessEquityMinusRequirement = null;
+    public ?float $totalMarginRqmts = null;
+    public ?float $availExcessEquity = null;
+    public ?float $excessEquity = null;
+    public ?float $openOrderReserve = null;
+    public ?float $fundsOnHold = null;
 }

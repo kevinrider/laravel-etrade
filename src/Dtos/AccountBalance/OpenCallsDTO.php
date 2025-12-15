@@ -6,8 +6,8 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class OpenCallsDTO extends BaseDTO
 {
-    public float $minEquityCall;
-    public float $fedCall;
-    public float $cashCall;
-    public float $houseCall;
+    public ?float $minEquityCall = null;
+    public ?float $fedCall = null;
+    public ?float $cashCall = null;
+    public ?float $houseCall = null;
 }

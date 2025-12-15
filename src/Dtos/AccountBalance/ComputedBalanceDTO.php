@@ -6,27 +6,27 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class ComputedBalanceDTO extends BaseDTO
 {
-    public float $cashAvailableForInvestment;
-    public float $cashAvailableForWithdrawal;
-    public float $totalAvailableForWithdrawal;
-    public float $netCash;
-    public float $cashBalance;
-    public float $settledCashForInvestment;
-    public float $unSettledCashForInvestment;
-    public float $fundsWithheldFromPurchasePower;
-    public float $fundsWithheldFromWithdrawal;
-    public float $marginBuyingPower;
-    public float $cashBuyingPower;
-    public float $dtMarginBuyingPower;
-    public float $dtCashBuyingPower;
-    public float $marginBalance;
-    public float $shortAdjustBalance;
-    public float $regtEquity;
-    public float $regtEquityPercent;
-    public float $accountBalance;
-    public OpenCallsDTO $openCalls;
-    public RealTimeValuesDTO $realTimeValues;
-    public PortfolioMarginDTO $portfolioMargin;
+    public ?float $cashAvailableForInvestment = null;
+    public ?float $cashAvailableForWithdrawal = null;
+    public ?float $totalAvailableForWithdrawal = null;
+    public ?float $netCash = null;
+    public ?float $cashBalance = null;
+    public ?float $settledCashForInvestment = null;
+    public ?float $unSettledCashForInvestment = null;
+    public ?float $fundsWithheldFromPurchasePower = null;
+    public ?float $fundsWithheldFromWithdrawal = null;
+    public ?float $marginBuyingPower = null;
+    public ?float $cashBuyingPower = null;
+    public ?float $dtMarginBuyingPower = null;
+    public ?float $dtCashBuyingPower = null;
+    public ?float $marginBalance = null;
+    public ?float $shortAdjustBalance = null;
+    public ?float $regtEquity = null;
+    public ?float $regtEquityPercent = null;
+    public ?float $accountBalance = null;
+    public ?OpenCallsDTO $openCalls = null;
+    public ?RealTimeValuesDTO $realTimeValues = null;
+    public ?PortfolioMarginDTO $portfolioMargin = null;
 
     /**
      * @param array $data

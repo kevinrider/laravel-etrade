@@ -6,13 +6,13 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class AccountDTO extends BaseDTO
 {
-    public string $accountId;
-    public string $accountIdKey;
-    public string $accountMode;
-    public string $accountDesc;
-    public string $accountName;
-    public string $accountType;
-    public string $institutionType;
-    public string $accountStatus;
-    public int $closedDate;
+    public ?string $accountId = null;
+    public ?string $accountIdKey = null;
+    public ?string $accountMode = null;
+    public ?string $accountDesc = null;
+    public ?string $accountName = null;
+    public ?string $accountType = null;
+    public ?string $institutionType = null;
+    public ?string $accountStatus = null;
+    public ?int $closedDate = null;
 }

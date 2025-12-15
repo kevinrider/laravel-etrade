@@ -6,17 +6,17 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class TransactionDTO extends BaseDTO
 {
-    public string $transactionId;
-    public string $accountId;
-    public int $transactionDate;
-    public int $postDate;
-    public float $amount;
-    public string $description;
-    public string $transactionType;
-    public string $instType;
-    public string $storeId;
-    public CategoryDTO $category;
-    public BrokerageDTO $brokerage;
+    public ?string $transactionId = null;
+    public ?string $accountId = null;
+    public ?int $transactionDate = null;
+    public ?int $postDate = null;
+    public ?float $amount = null;
+    public ?string $description = null;
+    public ?string $transactionType = null;
+    public ?string $instType = null;
+    public ?string $storeId = null;
+    public ?CategoryDTO $category = null;
+    public ?BrokerageDTO $brokerage = null;
 
     public function __construct(array $data)
     {

@@ -6,6 +6,6 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class CashDTO extends BaseDTO
 {
-    public float $fundsForOpenOrdersCash;
-    public float $moneyMktBalance;
+    public ?float $fundsForOpenOrdersCash = null;
+    public ?float $moneyMktBalance = null;
 }

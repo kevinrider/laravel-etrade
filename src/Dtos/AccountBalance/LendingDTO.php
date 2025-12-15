@@ -6,15 +6,15 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class LendingDTO extends BaseDTO
 {
-    public float $currentBalance;
-    public float $creditLine;
-    public float $outstandingBalance;
-    public float $minPaymentDue;
-    public float $amountPastDue;
-    public float $availableCredit;
-    public float $ytdInterestPaid;
-    public float $lastYtdInterestPaid;
-    public int $paymentDueDate;
-    public int $lastPaymentReceivedDate;
-    public float $paymentReceivedMtd;
+    public ?float $currentBalance = null;
+    public ?float $creditLine = null;
+    public ?float $outstandingBalance = null;
+    public ?float $minPaymentDue = null;
+    public ?float $amountPastDue = null;
+    public ?float $availableCredit = null;
+    public ?float $ytdInterestPaid = null;
+    public ?float $lastYtdInterestPaid = null;
+    public ?int $paymentDueDate = null;
+    public ?int $lastPaymentReceivedDate = null;
+    public ?float $paymentReceivedMtd = null;
 }

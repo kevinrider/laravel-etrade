@@ -6,6 +6,6 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class MarginDTO extends BaseDTO
 {
-    public float $dtCashOpenOrderReserve;
-    public float $dtMarginOpenOrderReserve;
+    public ?float $dtCashOpenOrderReserve = null;
+    public ?float $dtMarginOpenOrderReserve = null;
 }

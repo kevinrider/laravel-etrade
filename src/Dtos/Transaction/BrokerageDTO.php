@@ -6,17 +6,17 @@ use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class BrokerageDTO extends BaseDTO
 {
-    public string $transactionType;
-    public ProductDTO $product;
-    public float $quantity;
-    public float $price;
-    public string $settlementCurrency;
-    public string $paymentCurrency;
-    public float $fee;
-    public string $memo;
+    public ?string $transactionType = null;
+    public ?ProductDTO $product = null;
+    public ?float $quantity = null;
+    public ?float $price = null;
+    public ?string $settlementCurrency = null;
+    public ?string $paymentCurrency = null;
+    public ?float $fee = null;
+    public ?string $memo = null;
 
-    public string $checkNo;
-    public string $orderNo;
+    public ?string $checkNo = null;
+    public ?string $orderNo = null;
 
     /**
      * @param array $data
