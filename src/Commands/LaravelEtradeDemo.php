@@ -1183,13 +1183,17 @@ class LaravelEtradeDemo extends Command
     }
 
     /**
-     * @param int|null $timestamp
+     * @param Carbon|int|null $timestamp
      * @return string
      */
-    private function formatTimestamp(?int $timestamp): string
+    private function formatTimestamp(Carbon|int|null $timestamp): string
     {
         if ($timestamp === null) {
             return '-';
+        }
+
+        if ($timestamp instanceof Carbon) {
+            return $timestamp->toDateTimeString();
         }
 
         try {
@@ -1220,6 +1224,10 @@ class LaravelEtradeDemo extends Command
      */
     private function stringifyValue(mixed $value): string
     {
+        if ($value instanceof Carbon) {
+            return $value->toDateTimeString();
+        }
+
         if (is_scalar($value) || $value === null) {
             return (string) ($value ?? '-');
         }
