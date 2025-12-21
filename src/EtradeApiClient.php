@@ -239,7 +239,7 @@ class EtradeApiClient
      */
     public function getAccountBalance(AccountBalanceRequestDTO $accountBalanceRequestDTO): AccountBalanceResponseDTO
     {
-        if (!isset($accountBalanceRequestDTO->accountIdKey)) {
+        if (empty($accountBalanceRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
 
@@ -266,7 +266,7 @@ class EtradeApiClient
      */
     public function getAccountTransactions(ListTransactionsRequestDTO $listTransactionsRequestDTO): ListTransactionsResponseDTO
     {
-        if (!isset($listTransactionsRequestDTO->accountIdKey)) {
+        if (empty($listTransactionsRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
 
@@ -293,10 +293,10 @@ class EtradeApiClient
      */
     public function getAccountTransactionDetails(ListTransactionDetailsRequestDTO $listTransactionDetailsRequestDTO): ListTransactionDetailsResponseDTO
     {
-        if (!isset($listTransactionDetailsRequestDTO->accountIdKey)) {
+        if (empty($listTransactionDetailsRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
-        if (!isset($listTransactionDetailsRequestDTO->transactionId)) {
+        if (empty($listTransactionDetailsRequestDTO->transactionId)) {
             throw new EtradeApiException('transactionId is required!');
         }
 
@@ -323,7 +323,7 @@ class EtradeApiClient
      */
     public function getViewPortfolio(ViewPortfolioRequestDTO $viewPortfolioRequestDTO): ViewPortfolioResponseDTO
     {
-        if (!isset($viewPortfolioRequestDTO->accountIdKey)) {
+        if (empty($viewPortfolioRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
 
@@ -371,7 +371,7 @@ class EtradeApiClient
      */
     public function getAlertDetails(ListAlertDetailsRequestDTO $listAlertDetailsRequestDTO): ListAlertDetailsResponseDTO
     {
-        if (!isset($listAlertDetailsRequestDTO->alertId)) {
+        if (empty($listAlertDetailsRequestDTO->alertId)) {
             throw new EtradeApiException('alertId is required!');
         }
 
