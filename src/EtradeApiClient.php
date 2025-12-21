@@ -889,7 +889,7 @@ class EtradeApiClient
     ): mixed {
         $response = $this->client->{$method}($uri, $options);
 
-        if ($response->getStatusCode() !== 200) {
+        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
             throw new EtradeApiException($errorMessage);
         }
 
