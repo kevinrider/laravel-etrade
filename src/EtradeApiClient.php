@@ -279,6 +279,10 @@ class EtradeApiClient
      */
     public function getAccountTransactions(ListTransactionsRequestDTO $listTransactionsRequestDTO): ListTransactionsResponseDTO
     {
+        if (!isset($listTransactionsRequestDTO->accountIdKey)) {
+            throw new EtradeApiException('accountIdKey is required!');
+        }
+
         $accessTokenDTO = $this->getAccessToken();
 
         $this->client = $this->createOauthClient([
@@ -311,6 +315,13 @@ class EtradeApiClient
      */
     public function getAccountTransactionDetails(ListTransactionDetailsRequestDTO $listTransactionDetailsRequestDTO): ListTransactionDetailsResponseDTO
     {
+        if (!isset($listTransactionDetailsRequestDTO->accountIdKey)) {
+            throw new EtradeApiException('accountIdKey is required!');
+        }
+        if (!isset($listTransactionDetailsRequestDTO->transactionId)) {
+            throw new EtradeApiException('transactionId is required!');
+        }
+
         $accessTokenDTO = $this->getAccessToken();
 
         $this->client = $this->createOauthClient([
