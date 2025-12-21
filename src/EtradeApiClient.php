@@ -78,13 +78,27 @@ class EtradeApiClient
         $response = $this->client->get(EtradeConfig::OAUTH_REQUEST_TOKEN);
 
         if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get request token');
+            throw new EtradeApiException(
+                'Failed to get request token',
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                null,
+                'GET',
+                EtradeConfig::OAUTH_REQUEST_TOKEN
+            );
         }
 
         parse_str($response->getBody()->getContents(), $token);
 
         if (!isset($token['oauth_token']) || !isset($token['oauth_token_secret'])) {
-            throw new EtradeApiException('Malformed get request token response');
+            throw new EtradeApiException(
+                'Malformed get request token response',
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                null,
+                'GET',
+                EtradeConfig::OAUTH_REQUEST_TOKEN
+            );
         }
 
         $this->storeTokenInCache(
@@ -126,13 +140,27 @@ class EtradeApiClient
         $response = $this->client->get(EtradeConfig::OAUTH_ACCESS_TOKEN);
 
         if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get access token');
+            throw new EtradeApiException(
+                'Failed to get access token',
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                null,
+                'GET',
+                EtradeConfig::OAUTH_ACCESS_TOKEN
+            );
         }
 
         parse_str($response->getBody()->getContents(), $accessToken);
 
         if (!isset($accessToken['oauth_token']) || !isset($accessToken['oauth_token_secret'])) {
-            throw new EtradeApiException('Malformed get access token response');
+            throw new EtradeApiException(
+                'Malformed get access token response',
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                null,
+                'GET',
+                EtradeConfig::OAUTH_ACCESS_TOKEN
+            );
         }
 
         $accessToken['inactive_at'] = now()->addHours(2)->getTimestamp();
@@ -177,7 +205,14 @@ class EtradeApiClient
         $response = $this->client->get(EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN);
 
         if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to renew access token');
+            throw new EtradeApiException(
+                'Failed to renew access token',
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                null,
+                'GET',
+                EtradeConfig::OAUTH_RENEW_ACCESS_TOKEN
+            );
         }
         $accessToken['oauth_token'] = $accessTokenDTO->oauthToken;
         $accessToken['oauth_token_secret'] = $accessTokenDTO->oauthTokenSecret;
@@ -208,7 +243,14 @@ class EtradeApiClient
         ]);
         $response = $this->client->get(EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN);
         if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to revoke access token');
+            throw new EtradeApiException(
+                'Failed to revoke access token',
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                null,
+                'GET',
+                EtradeConfig::OAUTH_REVOKE_ACCESS_TOKEN
+            );
         }
         $this->deleteAccessTokenInCache();
     }
@@ -749,7 +791,8 @@ class EtradeApiClient
         return new Client([
             'base_uri' => $this->baseUrl,
             'handler' => $stack,
-            'auth' => 'oauth'
+            'auth' => 'oauth',
+            'http_errors' => false,
         ]);
     }
 
@@ -888,11 +931,19 @@ class EtradeApiClient
         callable $parser
     ): mixed {
         $response = $this->client->{$method}($uri, $options);
+        $body = $response->getBody()->getContents();
 
         if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
-            throw new EtradeApiException($errorMessage);
+            throw new EtradeApiException(
+                $errorMessage,
+                $response->getStatusCode(),
+                $response->getHeaders(),
+                $body,
+                strtoupper($method),
+                $uri
+            );
         }
 
-        return $parser($response->getBody()->getContents());
+        return $parser($body);
     }
 }
