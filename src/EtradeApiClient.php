@@ -723,7 +723,12 @@ class EtradeApiClient
         if (!$encryptedTokenArray) {
             throw new EtradeApiException($exceptionMessage);
         }
-        return json_decode(Crypt::decryptString($encryptedTokenArray), true);
+        $decoded = json_decode(Crypt::decryptString($encryptedTokenArray), true);
+        if (!is_array($decoded)) {
+            throw new EtradeApiException($exceptionMessage);
+        }
+
+        return $decoded;
     }
 
     /**
