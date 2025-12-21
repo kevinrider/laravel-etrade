@@ -2,7 +2,9 @@
 
 namespace KevinRider\LaravelEtrade\Dtos;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
+use DateTimeInterface;
 use ReflectionClass;
 use ReflectionProperty;
 use stdClass;
@@ -64,6 +66,10 @@ abstract class BaseDTO implements Arrayable
                     if ($typeName === 'bool' && is_string($value) && preg_match('/(true|false)/i', $value)) {
                         $value = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
                     }
+
+                    if ($typeName === Carbon::class) {
+                        $value = $this->castToCarbon($value);
+                    }
                 }
 
                 $this->{$key} = $value;
@@ -91,5 +97,73 @@ abstract class BaseDTO implements Arrayable
             'object' => new stdClass(),
             default => null,
         };
+    }
+
+    /**
+     * @param mixed $value
+     * @return Carbon|null
+     */
+    private function castToCarbon(mixed $value): ?Carbon
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof Carbon) {
+            return $value;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return Carbon::instance($value);
+        }
+
+        if (is_numeric($value)) {
+            if ((int) $value === 0) {
+                return null;
+            }
+
+            $digits = (string) (int) $value;
+            $length = strlen($digits);
+
+            if ($length >= 13) {
+                return Carbon::createFromTimestampMs((int) $value);
+            }
+
+            if ($length === 8) {
+                try {
+                    return Carbon::createFromFormat('Ymd', $digits);
+                } catch (\Throwable) {
+                    return null;
+                }
+            }
+
+            if ($length === 6 || $length === 4) {
+                $format = $length === 6 ? 'His' : 'Hi';
+                try {
+                    $time = Carbon::createFromFormat($format, $digits);
+                    return Carbon::today()->setTimeFromTimeString($time->format('H:i:s'));
+                } catch (\Throwable) {
+                    return null;
+                }
+            }
+
+            return Carbon::createFromTimestamp((int) $value);
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            $quoteFormat = 'H:i:s T m-d-Y';
+
+            $parsed = Carbon::createFromFormat($quoteFormat, $trimmed);
+            if ($parsed !== false) {
+                return $parsed;
+            }
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
