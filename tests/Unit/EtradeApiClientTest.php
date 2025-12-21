@@ -501,7 +501,7 @@ it('can get account list successfully', function () {
         ->and($account1->accountType)->toBe('INDIVIDUAL')
         ->and($account1->institutionType)->toBe('BROKERAGE')
         ->and($account1->accountStatus)->toBe('ACTIVE')
-        ->and($account1->closedDate)->toBe(0);
+        ->and($account1->closedDate)->toBeNull();
 
     $account2 = $accountListDto->accounts[1];
     expect($account2->accountId)->toBe('840104291')
@@ -512,7 +512,7 @@ it('can get account list successfully', function () {
         ->and($account2->accountType)->toBe('INDIVIDUAL')
         ->and($account2->institutionType)->toBe('BROKERAGE')
         ->and($account2->accountStatus)->toBe('ACTIVE')
-        ->and($account2->closedDate)->toBe(0);
+        ->and($account2->closedDate)->toBeNull();
 });
 
 it('throws exception on non-200 response for get account list', function () {
@@ -689,8 +689,10 @@ it('can get account transactions successfully', function () {
     $transaction1 = $listTransactionsDto->transactions[0];
     expect($transaction1->transactionId)->toBe('18165100001766')
         ->and($transaction1->accountId)->toBe('835649790')
-        ->and($transaction1->transactionDate)->toBe(1528948800000)
-        ->and($transaction1->postDate)->toBe(1528948800000)
+        ->and($transaction1->transactionDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction1->transactionDate?->getTimestampMs())->toBe(1528948800000)
+        ->and($transaction1->postDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction1->postDate?->getTimestampMs())->toBe(1528948800000)
         ->and($transaction1->amount)->toBe(-2.0)
         ->and($transaction1->description)->toBe('ACH WITHDRAWL REFID:109187276;')
         ->and($transaction1->transactionType)->toBe('Transfer')
@@ -704,8 +706,10 @@ it('can get account transactions successfully', function () {
     $transaction2 = $listTransactionsDto->transactions[1];
     expect($transaction2->transactionId)->toBe('18158100000983')
         ->and($transaction2->accountId)->toBe('835649790')
-        ->and($transaction2->transactionDate)->toBe(1528344000000)
-        ->and($transaction2->postDate)->toBe(1528344000000)
+        ->and($transaction2->transactionDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction2->transactionDate?->getTimestampMs())->toBe(1528344000000)
+        ->and($transaction2->postDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction2->postDate?->getTimestampMs())->toBe(1528344000000)
         ->and($transaction2->amount)->toBe(-2.0)
         ->and($transaction2->description)->toBe('ACH WITHDRAWL REFID:98655276;')
         ->and($transaction2->transactionType)->toBe('Transfer')
@@ -719,8 +723,10 @@ it('can get account transactions successfully', function () {
     $transaction3 = $listTransactionsDto->transactions[2];
     expect($transaction3->transactionId)->toBe('18151100002634')
         ->and($transaction3->accountId)->toBe('835649790')
-        ->and($transaction3->transactionDate)->toBe(1527739200000)
-        ->and($transaction3->postDate)->toBe(1527739200000)
+        ->and($transaction3->transactionDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction3->transactionDate?->getTimestampMs())->toBe(1527739200000)
+        ->and($transaction3->postDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction3->postDate?->getTimestampMs())->toBe(1527739200000)
         ->and($transaction3->amount)->toBe(-2.0)
         ->and($transaction3->description)->toBe('ACH WITHDRAWL REFID:87756276;')
         ->and($transaction3->transactionType)->toBe('Transfer')
@@ -807,7 +813,8 @@ it('can get account transaction details successfully', function () {
     $transaction = $listTransactionDetailsDto->transaction;
     expect($transaction->transactionId)->toBe('18144100000861')
         ->and($transaction->accountId)->toBe('835649790')
-        ->and($transaction->transactionDate)->toBe(1527134400000)
+        ->and($transaction->transactionDate)->toBeInstanceOf(Carbon::class)
+        ->and($transaction->transactionDate?->getTimestampMs())->toBe(1527134400000)
         ->and($transaction->amount)->toBe(-2.0)
         ->and($transaction->description)->toBe('ACH WITHDRAWL REFID:77521276;')
         ->and($transaction->category)->toBeInstanceOf(CategoryDTO::class)
@@ -906,7 +913,8 @@ it('can view portfolio successfully', function () {
     $firstPosition = $portfolioDto->positions[0];
     expect($firstPosition->positionId)->toEqual(10087531)
         ->and($firstPosition->symbolDescription)->toBe('A')
-        ->and($firstPosition->dateAcquired)->toEqual(-68400000)
+        ->and($firstPosition->dateAcquired)->toBeInstanceOf(Carbon::class)
+        ->and($firstPosition->dateAcquired?->getTimestamp())->toEqual(-68400000)
         ->and($firstPosition->pricePaid)->toEqual(0.0)
         ->and($firstPosition->commissions)->toEqual(0.0)
         ->and($firstPosition->otherFees)->toEqual(0.0)
@@ -938,7 +946,8 @@ it('can view portfolio successfully', function () {
         ->and($firstPosition->quick->change)->toEqual(-1.59)
         ->and($firstPosition->quick->changePct)->toEqual(-2.4472)
         ->and($firstPosition->quick->lastTrade)->toEqual(63.38)
-        ->and($firstPosition->quick->lastTradeTime)->toEqual(1529429280)
+        ->and($firstPosition->quick->lastTradeTime)->toBeInstanceOf(Carbon::class)
+        ->and($firstPosition->quick->lastTradeTime?->getTimestamp())->toEqual(1529429280)
         ->and($firstPosition->quick->quoteStatus)->toBe('DELAYED')
         ->and($firstPosition->quick->volume)->toEqual(2431617);
 
@@ -1039,8 +1048,10 @@ it('can get quotes successfully', function () {
         ->and($quotesResponse->quoteData)->toHaveCount(1);
 
     $quote = $quotesResponse->quoteData[$symbol];
-    expect($quote->dateTime)->toBe('15:17:00 EDT 06-20-2018')
-        ->and($quote->dateTimeUTC)->toBe(1529522220)
+    expect($quote->dateTime)->toBeInstanceOf(Carbon::class)
+        ->and($quote->dateTime?->format('H:i:s T m-d-Y'))->toBe('15:17:00 EDT 06-20-2018')
+        ->and($quote->dateTimeUTC)->toBeInstanceOf(Carbon::class)
+        ->and($quote->dateTimeUTC?->getTimestamp())->toBe(1529522220)
         ->and($quote->quoteStatus)->toBe('DELAYED')
         ->and($quote->ahFlag)->toBeFalse()
         ->and($quote->hasMiniOptions)->toBeFalse()
@@ -1086,8 +1097,10 @@ it('can get multi quotes successfully', function () {
         ->and($quotesResponse->quoteData)->toHaveCount(2);
 
     $googQuote = $quotesResponse->quoteData[$googSymbol];
-    expect($googQuote->dateTime)->toBe('15:17:00 EDT 06-20-2018')
-        ->and($googQuote->dateTimeUTC)->toBe(1529522220)
+    expect($googQuote->dateTime)->toBeInstanceOf(Carbon::class)
+        ->and($googQuote->dateTime?->format('H:i:s T m-d-Y'))->toBe('15:17:00 EDT 06-20-2018')
+        ->and($googQuote->dateTimeUTC)->toBeInstanceOf(Carbon::class)
+        ->and($googQuote->dateTimeUTC?->getTimestamp())->toBe(1529522220)
         ->and($googQuote->quoteStatus)->toBe('DELAYED')
         ->and($googQuote->ahFlag)->toBeFalse()
         ->and($googQuote->hasMiniOptions)->toBeFalse()
@@ -1119,8 +1132,10 @@ it('can get multi quotes successfully', function () {
         ->and($googQuote->mutualFund->netAssetValue)->toBe(1175.74);
 
     $tslaQuote = $quotesResponse->quoteData[$tslaSymbol];
-    expect($tslaQuote->dateTime)->toBe('16:00:00 EDT 06-20-2018')
-        ->and($tslaQuote->dateTimeUTC)->toBe(1529524800)
+    expect($tslaQuote->dateTime)->toBeInstanceOf(Carbon::class)
+        ->and($tslaQuote->dateTime?->format('H:i:s T m-d-Y'))->toBe('16:00:00 EDT 06-20-2018')
+        ->and($tslaQuote->dateTimeUTC)->toBeInstanceOf(Carbon::class)
+        ->and($tslaQuote->dateTimeUTC?->getTimestamp())->toBe(1529524800)
         ->and($tslaQuote->quoteStatus)->toBe('REALTIME')
         ->and($tslaQuote->ahFlag)->toBeTrue()
         ->and($tslaQuote->hasMiniOptions)->toBeTrue()
@@ -1315,7 +1330,8 @@ it('can get option chains successfully', function () {
     expect($optionChainsResponse)->toBeInstanceOf(OptionChainResponseDTO::class)
         ->and($optionChainsResponse->optionPairs)->toHaveCount(2)
         ->and($optionChainsResponse->nearPrice)->toBe(200.0)
-        ->and($optionChainsResponse->timeStamp)->toBe(1529430420)
+        ->and($optionChainsResponse->timeStamp)->toBeInstanceOf(Carbon::class)
+        ->and($optionChainsResponse->timeStamp?->getTimestamp())->toBe(1529430420)
         ->and($optionChainsResponse->quoteType)->toBe('DELAYED')
         ->and($optionChainsResponse->selected)->toBeInstanceOf(SelectedEDDTO::class)
         ->and($optionChainsResponse->selected->day)->toBe(17)
@@ -1740,7 +1756,8 @@ it('can preview option orders successfully', function () {
     expect($previewResponse)->toBeInstanceOf(PreviewOrderResponseDTO::class)
         ->and($previewResponse->orderType)->toBe('OPTN')
         ->and($previewResponse->totalOrderValue)->toBe(330.4644)
-        ->and($previewResponse->previewTime)->toBe(1544038038415)
+        ->and($previewResponse->previewTime)->toBeInstanceOf(Carbon::class)
+        ->and($previewResponse->previewTime?->getTimestampMs())->toBe(1544038038415)
         ->and($previewResponse->accountId)->toBe('314497960')
         ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
         ->and($previewResponse->optionLevelCd)->toBe(4)
@@ -1856,7 +1873,8 @@ it('can preview spread orders successfully', function () {
         ->and($previewResponse->order)->toHaveCount(1)
         ->and($previewResponse->accountId)->toBe('838796270')
         ->and($previewResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
-        ->and($previewResponse->previewTime)->toBe(1549316444960)
+        ->and($previewResponse->previewTime)->toBeInstanceOf(Carbon::class)
+        ->and($previewResponse->previewTime?->getTimestampMs())->toBe(1549316444960)
         ->and($previewResponse->dstFlag)->toBeFalse()
         ->and($previewResponse->previewIds[0]->previewId)->toBe(3429218279);
 
@@ -2261,7 +2279,8 @@ it('can place option orders successfully', function () {
 
     expect($placeResponse)->toBeInstanceOf(PlaceOrderResponseDTO::class)
         ->and($placeResponse->orderType)->toBe('OPTN')
-        ->and($placeResponse->placedTime)->toBe(1544038195663)
+        ->and($placeResponse->placedTime)->toBeInstanceOf(Carbon::class)
+        ->and($placeResponse->placedTime?->getTimestampMs())->toBe(1544038195663)
         ->and($placeResponse->accountId)->toBe('314497960')
         ->and($placeResponse->dstFlag)->toBeFalse()
         ->and($placeResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
@@ -2377,7 +2396,8 @@ it('can place spread orders successfully', function () {
         ->and($placeResponse->optionLevelCd)->toBe(4)
         ->and($placeResponse->dstFlag)->toBeFalse()
         ->and($placeResponse->marginLevelCd)->toBe('MARGIN_TRADING_ALLOWED')
-        ->and($placeResponse->placedTime)->toBe(1549316465349)
+        ->and($placeResponse->placedTime)->toBeInstanceOf(Carbon::class)
+        ->and($placeResponse->placedTime?->getTimestampMs())->toBe(1549316465349)
         ->and($placeResponse->orderIds[0]->orderId)->toBe(484);
 
     $order = $placeResponse->order[0];
@@ -2705,7 +2725,8 @@ it('can cancel orders successfully', function () {
     expect($cancelResponse)->toBeInstanceOf(CancelOrderResponseDTO::class)
         ->and($cancelResponse->accountId)->toBe('634386170')
         ->and($cancelResponse->orderId)->toBe(11)
-        ->and($cancelResponse->cancelTime)->toBe(1529563499081)
+        ->and($cancelResponse->cancelTime)->toBeInstanceOf(Carbon::class)
+        ->and($cancelResponse->cancelTime?->getTimestampMs())->toBe(1529563499081)
         ->and($cancelResponse->messages->message[0]->code)->toBe(5011)
         ->and($cancelResponse->messages->message[0]->description)->toContain('request to cancel your order is being processed.')
         ->and($cancelResponse->messages->message[0]->type)->toBe('WARNING');
