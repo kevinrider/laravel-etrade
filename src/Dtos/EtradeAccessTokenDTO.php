@@ -8,5 +8,5 @@ class EtradeAccessTokenDTO extends BaseDTO
 {
     public string $oauthToken;
     public string $oauthTokenSecret;
-    public ?Carbon $inactiveAt = null;
+    public Carbon $inactiveAt;
 }
