@@ -44,7 +44,7 @@
     "scripts": {
         "lint": "vendor/bin/pint",
         "test": "vendor/bin/pest",
-        "coverage": "vendor/bin/phpunit --coverage-text",
+        "coverage": "vendor/bin/pest --coverage",
         "post-autoload-dump": [
             "@clear",
             "@prepare"
