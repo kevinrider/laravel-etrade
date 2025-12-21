@@ -220,20 +220,15 @@ class EtradeApiClient
      */
     public function getAccountList(): AccountListResponseDTO
     {
-        $accessTokenDTO = $this->getAccessToken();
+        $this->setAuthenticatedClient();
 
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
-
-        $response = $this->client->get(EtradeConfig::ACCOUNTS_LIST);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get account list');
-        }
-
-        return AccountListResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            EtradeConfig::ACCOUNTS_LIST,
+            [],
+            'Failed to get account list',
+            fn (string $body) => AccountListResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -244,31 +239,23 @@ class EtradeApiClient
      */
     public function getAccountBalance(AccountBalanceRequestDTO $accountBalanceRequestDTO): AccountBalanceResponseDTO
     {
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
-
         if (!isset($accountBalanceRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
 
+        $this->setAuthenticatedClient();
+
         $uri = str_replace('{accountIdKey}', $accountBalanceRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_BALANCE);
 
-        $queryParams = [];
-        foreach (AccountBalanceRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($accountBalanceRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($accountBalanceRequestDTO->$param);
-            }
-        }
-        $response = $this->client->get($uri, ['query' => $queryParams]);
+        $queryParams = $this->buildQueryParams(AccountBalanceRequestDTO::ALLOWED_QUERY_PARAMS, $accountBalanceRequestDTO);
 
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get account balance');
-        }
-        return AccountBalanceResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to get account balance',
+            fn (string $body) => AccountBalanceResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -283,28 +270,19 @@ class EtradeApiClient
             throw new EtradeApiException('accountIdKey is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{accountIdKey}', $listTransactionsRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_TRANSACTIONS);
 
-        $queryParams = [];
-        foreach (ListTransactionsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($listTransactionsRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($listTransactionsRequestDTO->$param);
-            }
-        }
-        $response = $this->client->get($uri, ['query' => $queryParams]);
+        $queryParams = $this->buildQueryParams(ListTransactionsRequestDTO::ALLOWED_QUERY_PARAMS, $listTransactionsRequestDTO);
 
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get account transactions');
-        }
-
-        return ListTransactionsResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to get account transactions',
+            fn (string $body) => ListTransactionsResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -322,28 +300,19 @@ class EtradeApiClient
             throw new EtradeApiException('transactionId is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace(['{accountIdKey}', '{transactionId}'], [$listTransactionDetailsRequestDTO->accountIdKey, $listTransactionDetailsRequestDTO->transactionId], EtradeConfig::ACCOUNTS_TRANSACTIONS_DETAILS);
 
-        $queryParams = [];
-        foreach (ListTransactionDetailsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($listTransactionDetailsRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($listTransactionDetailsRequestDTO->$param);
-            }
-        }
-        $response = $this->client->get($uri, ['query' => $queryParams]);
+        $queryParams = $this->buildQueryParams(ListTransactionDetailsRequestDTO::ALLOWED_QUERY_PARAMS, $listTransactionDetailsRequestDTO);
 
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get account transaction details');
-        }
-
-        return ListTransactionDetailsResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to get account transaction details',
+            fn (string $body) => ListTransactionDetailsResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -354,32 +323,23 @@ class EtradeApiClient
      */
     public function getViewPortfolio(ViewPortfolioRequestDTO $viewPortfolioRequestDTO): ViewPortfolioResponseDTO
     {
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
-
         if (!isset($viewPortfolioRequestDTO->accountIdKey)) {
             throw new EtradeApiException('accountIdKey is required!');
         }
 
+        $this->setAuthenticatedClient();
+
         $uri = str_replace('{accountIdKey}', $viewPortfolioRequestDTO->accountIdKey, EtradeConfig::ACCOUNTS_PORTFOLIO);
 
-        $queryParams = [];
-        foreach (ViewPortfolioRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($viewPortfolioRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($viewPortfolioRequestDTO->$param);
-            }
-        }
+        $queryParams = $this->buildQueryParams(ViewPortfolioRequestDTO::ALLOWED_QUERY_PARAMS, $viewPortfolioRequestDTO);
 
-        $response = $this->client->get($uri, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to view account portfolio');
-        }
-        return ViewPortfolioResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to view account portfolio',
+            fn (string $body) => ViewPortfolioResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -390,27 +350,17 @@ class EtradeApiClient
      */
     public function getAlerts(ListAlertsRequestDTO $listAlertsRequestDTO): ListAlertsResponseDTO
     {
-        $accessTokenDTO = $this->getAccessToken();
+        $this->setAuthenticatedClient();
 
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $queryParams = $this->buildQueryParams(ListAlertsRequestDTO::ALLOWED_QUERY_PARAMS, $listAlertsRequestDTO);
 
-        $queryParams = [];
-        foreach (ListAlertsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($listAlertsRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($listAlertsRequestDTO->$param);
-            }
-        }
-
-        $response = $this->client->get(EtradeConfig::ALERTS_LIST, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to list alerts');
-        }
-
-        return ListAlertsResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            EtradeConfig::ALERTS_LIST,
+            ['query' => $queryParams],
+            'Failed to list alerts',
+            fn (string $body) => ListAlertsResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -425,29 +375,19 @@ class EtradeApiClient
             throw new EtradeApiException('alertId is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{alertId}', $listAlertDetailsRequestDTO->alertId, EtradeConfig::ALERTS_DETAILS);
 
-        $queryParams = [];
-        foreach (ListAlertDetailsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($listAlertDetailsRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($listAlertDetailsRequestDTO->$param);
-            }
-        }
+        $queryParams = $this->buildQueryParams(ListAlertDetailsRequestDTO::ALLOWED_QUERY_PARAMS, $listAlertDetailsRequestDTO);
 
-        $response = $this->client->get($uri, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get alert details');
-        }
-
-        return ListAlertDetailsResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to get alert details',
+            fn (string $body) => ListAlertDetailsResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -463,22 +403,17 @@ class EtradeApiClient
             throw new EtradeApiException('At least one alertId is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{alertId}', $alertIdPathSegment, EtradeConfig::ALERTS_DELETE);
 
-        $response = $this->client->delete($uri);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to delete alerts');
-        }
-
-        return DeleteAlertsResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'delete',
+            $uri,
+            [],
+            'Failed to delete alerts',
+            fn (string $body) => DeleteAlertsResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -493,29 +428,19 @@ class EtradeApiClient
             throw new EtradeApiException('accountIdKey is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{accountIdKey}', $listOrdersRequestDTO->accountIdKey, EtradeConfig::ORDER_LIST);
 
-        $queryParams = [];
-        foreach (ListOrdersRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($listOrdersRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($listOrdersRequestDTO->$param);
-            }
-        }
+        $queryParams = $this->buildQueryParams(ListOrdersRequestDTO::ALLOWED_QUERY_PARAMS, $listOrdersRequestDTO);
 
-        $response = $this->client->get($uri, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to list orders');
-        }
-
-        return OrdersResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to list orders',
+            fn (string $body) => OrdersResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -560,22 +485,17 @@ class EtradeApiClient
             }
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{accountIdKey}', $previewOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_PREVIEW);
 
-        $response = $this->client->post($uri, ['json' => $previewOrderRequestDTO->toRequestBody()]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to preview order');
-        }
-
-        return PreviewOrderResponseDTO::fromJson($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'post',
+            $uri,
+            ['json' => $previewOrderRequestDTO->toRequestBody()],
+            'Failed to preview order',
+            fn (string $body) => PreviewOrderResponseDTO::fromJson($body)
+        );
     }
 
     /**
@@ -592,22 +512,17 @@ class EtradeApiClient
             }
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{accountIdKey}', $placeOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_PLACE);
 
-        $response = $this->client->post($uri, ['json' => $placeOrderRequestDTO->toRequestBody()]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to place order');
-        }
-
-        return PlaceOrderResponseDTO::fromJson($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'post',
+            $uri,
+            ['json' => $placeOrderRequestDTO->toRequestBody()],
+            'Failed to place order',
+            fn (string $body) => PlaceOrderResponseDTO::fromJson($body)
+        );
     }
 
     /**
@@ -664,22 +579,17 @@ class EtradeApiClient
             throw new EtradeApiException('orderId is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{accountIdKey}', $cancelOrderRequestDTO->accountIdKey, EtradeConfig::ORDER_CANCEL);
 
-        $response = $this->client->put($uri, ['json' => $cancelOrderRequestDTO->toRequestBody()]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to cancel order');
-        }
-
-        return CancelOrderResponseDTO::fromJson($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'put',
+            $uri,
+            ['json' => $cancelOrderRequestDTO->toRequestBody()],
+            'Failed to cancel order',
+            fn (string $body) => CancelOrderResponseDTO::fromJson($body)
+        );
     }
 
     /**
@@ -694,22 +604,17 @@ class EtradeApiClient
             throw new EtradeApiException('search is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{search}', $lookupRequestDTO->search, EtradeConfig::MARKET_LOOKUP);
 
-        $response = $this->client->get($uri);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to lookup product');
-        }
-
-        return LookupResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            [],
+            'Failed to lookup product',
+            fn (string $body) => LookupResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -724,27 +629,17 @@ class EtradeApiClient
             throw new EtradeApiException('symbol is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
+        $this->setAuthenticatedClient();
 
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $queryParams = $this->buildQueryParams(GetOptionChainsRequestDTO::ALLOWED_QUERY_PARAMS, $getOptionChainsRequestDTO);
 
-        $queryParams = [];
-        foreach (GetOptionChainsRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($getOptionChainsRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($getOptionChainsRequestDTO->$param);
-            }
-        }
-
-        $response = $this->client->get(EtradeConfig::MARKET_OPTION_CHAINS, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get option chains');
-        }
-
-        return OptionChainResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            EtradeConfig::MARKET_OPTION_CHAINS,
+            ['query' => $queryParams],
+            'Failed to get option chains',
+            fn (string $body) => OptionChainResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -759,27 +654,17 @@ class EtradeApiClient
             throw new EtradeApiException('symbol is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
+        $this->setAuthenticatedClient();
 
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $queryParams = $this->buildQueryParams(GetOptionExpireDatesRequestDTO::ALLOWED_QUERY_PARAMS, $getOptionExpireDatesRequestDTO);
 
-        $queryParams = [];
-        foreach (GetOptionExpireDatesRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($getOptionExpireDatesRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($getOptionExpireDatesRequestDTO->$param);
-            }
-        }
-
-        $response = $this->client->get(EtradeConfig::MARKET_OPTION_EXPIRY, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get option expiration dates');
-        }
-
-        return OptionExpireDateResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            EtradeConfig::MARKET_OPTION_EXPIRY,
+            ['query' => $queryParams],
+            'Failed to get option expiration dates',
+            fn (string $body) => OptionExpireDateResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -794,29 +679,19 @@ class EtradeApiClient
             throw new EtradeApiException('symbols is required!');
         }
 
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace('{symbols}', $getQuotesRequestDTO->getSymbols(), EtradeConfig::MARKET_QUOTES);
 
-        $queryParams = [];
-        foreach (GetQuotesRequestDTO::ALLOWED_QUERY_PARAMS as $param) {
-            if (isset($getQuotesRequestDTO->$param)) {
-                $queryParams[$param] = $this->normalizeQueryParamValue($getQuotesRequestDTO->$param);
-            }
-        }
+        $queryParams = $this->buildQueryParams(GetQuotesRequestDTO::ALLOWED_QUERY_PARAMS, $getQuotesRequestDTO);
 
-        $response = $this->client->get($uri, ['query' => $queryParams]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException('Failed to get quotes');
-        }
-
-        return GetQuotesResponseDTO::fromXml($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'get',
+            $uri,
+            ['query' => $queryParams],
+            'Failed to get quotes',
+            fn (string $body) => GetQuotesResponseDTO::fromXml($body)
+        );
     }
 
     /**
@@ -905,12 +780,7 @@ class EtradeApiClient
         callable $responseParser,
         string $errorMessage
     ): mixed {
-        $accessTokenDTO = $this->getAccessToken();
-
-        $this->client = $this->createOauthClient([
-            'token' => $accessTokenDTO->oauthToken,
-            'token_secret' => $accessTokenDTO->oauthTokenSecret,
-        ]);
+        $this->setAuthenticatedClient();
 
         $uri = str_replace(
             ['{accountIdKey}', '{orderId}'],
@@ -918,13 +788,13 @@ class EtradeApiClient
             $uriTemplate
         );
 
-        $response = $this->client->put($uri, ['json' => $payload]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new EtradeApiException($errorMessage);
-        }
-
-        return $responseParser($response->getBody()->getContents());
+        return $this->requestAndParse(
+            'put',
+            $uri,
+            ['json' => $payload],
+            $errorMessage,
+            $responseParser
+        );
     }
 
     /**
@@ -961,5 +831,63 @@ class EtradeApiClient
         }
 
         return $value;
+    }
+
+    /**
+     * @return void
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    private function setAuthenticatedClient(): void
+    {
+        $accessTokenDTO = $this->getAccessToken();
+
+        $this->client = $this->createOauthClient([
+            'token' => $accessTokenDTO->oauthToken,
+            'token_secret' => $accessTokenDTO->oauthTokenSecret,
+        ]);
+    }
+
+    /**
+     * @param array $allowedParams
+     * @param object $dto
+     * @return array
+     */
+    private function buildQueryParams(array $allowedParams, object $dto): array
+    {
+        $queryParams = [];
+        foreach ($allowedParams as $param) {
+            if (isset($dto->$param)) {
+                $queryParams[$param] = $this->normalizeQueryParamValue($dto->$param);
+            }
+        }
+
+        return $queryParams;
+    }
+
+    /**
+     * @param string $method
+     * @param string $uri
+     * @param array $options
+     * @param string $errorMessage
+     * @param callable $parser
+     * @return mixed
+     * @throws EtradeApiException
+     * @throws GuzzleException
+     */
+    private function requestAndParse(
+        string $method,
+        string $uri,
+        array $options,
+        string $errorMessage,
+        callable $parser
+    ): mixed {
+        $response = $this->client->{$method}($uri, $options);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new EtradeApiException($errorMessage);
+        }
+
+        return $parser($response->getBody()->getContents());
     }
 }
