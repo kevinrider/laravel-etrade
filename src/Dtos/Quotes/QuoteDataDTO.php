@@ -2,12 +2,13 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Quotes;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class QuoteDataDTO extends BaseDTO
 {
-    public ?string $dateTime = null;
-    public ?int $dateTimeUTC = null;
+    public ?Carbon $dateTime = null;
+    public ?Carbon $dateTimeUTC = null;
     public ?string $quoteStatus = null;
     public ?bool $ahFlag = null;
     public ?string $errorMessage = null;

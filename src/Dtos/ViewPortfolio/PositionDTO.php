@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class PositionDTO extends BaseDTO
@@ -11,7 +12,7 @@ class PositionDTO extends BaseDTO
     public ?ProductDTO $product = null;
     public ?string $osiKey = null;
     public ?string $symbolDescription = null;
-    public ?int $dateAcquired = null;
+    public ?Carbon $dateAcquired = null;
     public ?float $pricePaid = null;
     public ?float $price = null;
     public ?float $commissions = null;
@@ -34,7 +35,7 @@ class PositionDTO extends BaseDTO
     public ?float $todayPricePaid = null;
     public ?float $todayQuantity = null;
     public ?string $quoteStatus = null;
-    public ?int $dateTimeUTC = null;
+    public ?Carbon $dateTimeUTC = null;
     public ?float $adjPrevClose = null;
     public ?PerformanceViewDTO $performance = null;
     public ?FundamentalViewDTO $fundamental = null;

@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class OptionsWatchViewDTO extends BaseDTO
@@ -12,5 +13,5 @@ class OptionsWatchViewDTO extends BaseDTO
     public ?float $bid = null;
     public ?float $ask = null;
     public ?string $quoteStatus = null;
-    public ?int $lastTradeTime = null;
+    public ?Carbon $lastTradeTime = null;
 }

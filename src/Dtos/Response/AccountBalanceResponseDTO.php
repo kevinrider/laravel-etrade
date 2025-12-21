@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Response;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
@@ -13,7 +14,7 @@ class AccountBalanceResponseDTO extends BaseDTO
     public string $accountId;
     public string $accountType;
     public string $institutionType;
-    public string $asOfDate;
+    public ?Carbon $asOfDate = null;
     public string $optionLevel;
     public string $accountDescription;
     public string $quoteMode;

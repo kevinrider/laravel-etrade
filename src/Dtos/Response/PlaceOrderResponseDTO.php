@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Response;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\DisclosureDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\MessagesDTO;
@@ -29,7 +30,7 @@ class PlaceOrderResponseDTO extends BaseDTO
      * @var OrderIdDTO[]
      */
     public array $orderIds = [];
-    public ?int $placedTime = null;
+    public ?Carbon $placedTime = null;
     public ?string $accountId = null;
     public ?PortfolioMarginDTO $portfolioMargin = null;
     public ?DisclosureDTO $disclosure = null;

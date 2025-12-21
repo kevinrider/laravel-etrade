@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Response;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\CashBuyingPowerDetailsDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\DisclosureDTO;
@@ -26,7 +27,7 @@ class PreviewOrderResponseDTO extends BaseDTO
      * @var PreviewIdDTO[]
      */
     public array $previewIds = [];
-    public ?int $previewTime = null;
+    public ?Carbon $previewTime = null;
     public ?bool $dstFlag = null;
     public ?string $accountId = null;
     public ?int $optionLevelCd = null;

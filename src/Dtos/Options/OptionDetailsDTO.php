@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Options;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use KevinRider\LaravelEtrade\Dtos\Shared\OptionGreeksDTO;
 
@@ -9,7 +10,7 @@ class OptionDetailsDTO extends BaseDTO
 {
     public ?string $optionCategory = null;
     public ?string $optionRootSymbol = null;
-    public ?int $timeStamp = null;
+    public ?Carbon $timeStamp = null;
     public ?bool $adjustedFlag = null;
     public ?string $displaySymbol = null;
     public ?string $optionType = null;

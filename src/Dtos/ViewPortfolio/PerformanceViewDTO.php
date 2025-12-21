@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class PerformanceViewDTO extends BaseDTO
@@ -14,5 +15,5 @@ class PerformanceViewDTO extends BaseDTO
     public ?float $totalGainPct = null;
     public ?float $marketValue = null;
     public ?string $quoteStatus = null;
-    public ?int $lastTradeTime = null;
+    public ?Carbon $lastTradeTime = null;
 }

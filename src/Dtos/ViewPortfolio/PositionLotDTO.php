@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class PositionLotDTO extends BaseDTO
@@ -22,7 +23,7 @@ class PositionLotDTO extends BaseDTO
     public ?float $availableQty = null;
     public ?int $orderNo = null;
     public ?int $legNo = null;
-    public ?int $acquiredDate = null;
+    public ?Carbon $acquiredDate = null;
     public ?int $locationCode = null;
     public ?float $exchangeRate = null;
     public ?string $settlementCurrency = null;

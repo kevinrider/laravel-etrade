@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class CompleteViewDTO extends BaseDTO
@@ -15,7 +16,7 @@ class CompleteViewDTO extends BaseDTO
     public ?float $adjPrevClose = null;
     public ?float $volume = null;
     public ?float $lastTrade = null;
-    public ?int $lastTradeTime = null;
+    public ?Carbon $lastTradeTime = null;
     public ?float $adjLastTrade = null;
     public ?string $symbolDescription = null;
     public ?float $perform1Month = null;
@@ -68,8 +69,8 @@ class CompleteViewDTO extends BaseDTO
     public ?float $annualDividend = null;
     public ?float $dividend = null;
     public ?float $divYield = null;
-    public ?int $divPayDate = null;
-    public ?int $exDividendDate = null;
+    public ?Carbon $divPayDate = null;
+    public ?Carbon $exDividendDate = null;
     public ?string $cusip = null;
     public ?string $quoteStatus = null;
 }

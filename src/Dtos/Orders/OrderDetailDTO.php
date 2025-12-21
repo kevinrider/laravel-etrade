@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Orders;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use ReflectionClass;
 use ReflectionProperty;
@@ -10,9 +11,9 @@ class OrderDetailDTO extends BaseDTO
 {
     public ?int $orderNumber = null;
     public ?string $accountId = null;
-    public ?int $previewTime = null;
-    public ?int $placedTime = null;
-    public ?int $executedTime = null;
+    public ?Carbon $previewTime = null;
+    public ?Carbon $placedTime = null;
+    public ?Carbon $executedTime = null;
     public ?float $orderValue = null;
     public ?string $status = null;
     public ?string $orderType = null;

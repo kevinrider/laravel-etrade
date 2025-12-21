@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ListAccounts;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class AccountDTO extends BaseDTO
@@ -14,5 +15,5 @@ class AccountDTO extends BaseDTO
     public ?string $accountType = null;
     public ?string $institutionType = null;
     public ?string $accountStatus = null;
-    public ?int $closedDate = null;
+    public ?Carbon $closedDate = null;
 }

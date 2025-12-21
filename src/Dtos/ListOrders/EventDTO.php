@@ -2,12 +2,13 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ListOrders;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class EventDTO extends BaseDTO
 {
     public ?string $name = null;
-    public ?int $dateTime = null;
+    public ?Carbon $dateTime = null;
     public ?int $orderNumber = null;
     /**
      * @var InstrumentDTO[]

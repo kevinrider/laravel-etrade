@@ -2,12 +2,13 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\ViewPortfolio;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class QuickViewDTO extends BaseDTO
 {
     public ?float $lastTrade = null;
-    public ?int $lastTradeTime = null;
+    public ?Carbon $lastTradeTime = null;
     public ?float $change = null;
     public ?float $changePct = null;
     public ?int $volume = null;

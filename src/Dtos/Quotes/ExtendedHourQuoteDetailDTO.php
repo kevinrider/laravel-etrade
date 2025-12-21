@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Quotes;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class ExtendedHourQuoteDetailDTO extends BaseDTO
@@ -14,7 +15,7 @@ class ExtendedHourQuoteDetailDTO extends BaseDTO
     public ?float $ask = null;
     public ?int $askSize = null;
     public ?int $volume = null;
-    public ?int $timeOfLastTrade = null;
+    public ?Carbon $timeOfLastTrade = null;
     public ?string $timeZone = null;
     public ?string $quoteStatus = null;
 }

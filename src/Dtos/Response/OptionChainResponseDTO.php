@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Response;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\OptionChainPairDTO;
 use KevinRider\LaravelEtrade\Dtos\Options\SelectedEDDTO;
@@ -12,7 +13,7 @@ class OptionChainResponseDTO extends BaseDTO
      * @var OptionChainPairDTO[]
      */
     public array $optionPairs = [];
-    public ?int $timeStamp = null;
+    public ?Carbon $timeStamp = null;
     public ?string $quoteType = null;
     public ?float $nearPrice = null;
     public ?SelectedEDDTO $selected = null;

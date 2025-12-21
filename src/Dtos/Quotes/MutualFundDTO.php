@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Quotes;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class MutualFundDTO extends BaseDTO
@@ -18,17 +19,17 @@ class MutualFundDTO extends BaseDTO
     public ?string $fundFamily = null;
     public ?string $fundName = null;
     public ?float $changeClosePercentage = null;
-    public ?int $timeOfLastTrade = null;
+    public ?Carbon $timeOfLastTrade = null;
     public ?float $netAssetValue = null;
     public ?float $publicOfferPrice = null;
     public ?float $netExpenseRatio = null;
     public ?float $grossExpenseRatio = null;
-    public ?int $orderCutoffTime = null;
+    public ?Carbon $orderCutoffTime = null;
     public ?string $salesCharge = null;
     public ?float $initialIraInvestment = null;
     public ?float $subsequentIraInvestment = null;
     public ?NetAssetDTO $netAssets = null;
-    public ?int $fundInceptionDate = null;
+    public ?Carbon $fundInceptionDate = null;
     public ?float $averageAnnualReturns = null;
     public ?float $sevenDayCurrentYield = null;
     public ?float $annualTotalReturn = null;
@@ -39,15 +40,15 @@ class MutualFundDTO extends BaseDTO
     public ?float $averageAnnualReturn10Yr = null;
     public ?float $high52 = null;
     public ?float $low52 = null;
-    public ?int $week52LowDate = null;
-    public ?int $week52HiDate = null;
+    public ?Carbon $week52LowDate = null;
+    public ?Carbon $week52HiDate = null;
     public ?string $exchangeName = null;
     public ?float $sinceInception = null;
     public ?float $quarterlySinceInception = null;
     public ?float $lastTrade = null;
     public ?float $actual12B1Fee = null;
-    public ?string $performanceAsOfDate = null;
-    public ?string $qtrlyPerformanceAsOfDate = null;
+    public ?Carbon $performanceAsOfDate = null;
+    public ?Carbon $qtrlyPerformanceAsOfDate = null;
     public ?RedemptionDTO $redemption = null;
     public ?string $morningStarCategory = null;
     public ?float $monthlyTrailingReturn1Y = null;

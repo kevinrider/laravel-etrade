@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Response;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 use KevinRider\LaravelEtrade\Dtos\Orders\MessagesDTO;
 
@@ -9,7 +10,7 @@ class CancelOrderResponseDTO extends BaseDTO
 {
     public ?string $accountId = null;
     public ?int $orderId = null;
-    public ?int $cancelTime = null;
+    public ?Carbon $cancelTime = null;
     public ?MessagesDTO $messages = null;
 
     /**

@@ -2,6 +2,7 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Quotes;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class AllQuoteDetailsDTO extends BaseDTO
@@ -9,11 +10,11 @@ class AllQuoteDetailsDTO extends BaseDTO
     public ?bool $adjustedFlag = null;
     public ?float $ask = null;
     public ?int $askSize = null;
-    public ?string $askTime = null;
+    public ?Carbon $askTime = null;
     public ?float $bid = null;
     public ?string $bidExchange = null;
     public ?int $bidSize = null;
-    public ?string $bidTime = null;
+    public ?Carbon $bidTime = null;
     public ?float $changeClose = null;
     public ?float $changeClosePercentage = null;
     public ?string $companyName = null;
@@ -22,7 +23,7 @@ class AllQuoteDetailsDTO extends BaseDTO
     public ?float $dividend = null;
     public ?float $eps = null;
     public ?float $estEarnings = null;
-    public ?int $exDividendDate = null;
+    public ?Carbon $exDividendDate = null;
     public ?float $high = null;
     public ?float $high52 = null;
     public ?float $lastTrade = null;
@@ -46,24 +47,24 @@ class AllQuoteDetailsDTO extends BaseDTO
     public ?float $cashDeliverable = null;
     public ?float $marketCap = null;
     public ?float $sharesOutstanding = null;
-    public ?string $nextEarningDate = null;
+    public ?Carbon $nextEarningDate = null;
     public ?float $beta = null;
     public ?float $yield = null;
     public ?float $declaredDividend = null;
-    public ?int $dividendPayableDate = null;
+    public ?Carbon $dividendPayableDate = null;
     public ?float $pe = null;
-    public ?int $week52LowDate = null;
-    public ?int $week52HiDate = null;
+    public ?Carbon $week52LowDate = null;
+    public ?Carbon $week52HiDate = null;
     public ?float $intrinsicValue = null;
     public ?float $timePremium = null;
     public ?float $optionMultiplier = null;
     public ?float $contractSize = null;
-    public ?int $expirationDate = null;
+    public ?Carbon $expirationDate = null;
     public ?ExtendedHourQuoteDetailDTO $ehQuote = null;
     public ?float $optionPreviousBidPrice = null;
     public ?float $optionPreviousAskPrice = null;
     public ?string $osiKey = null;
-    public ?int $timeOfLastTrade = null;
+    public ?Carbon $timeOfLastTrade = null;
     public ?int $averageVolume = null;
 
     /**

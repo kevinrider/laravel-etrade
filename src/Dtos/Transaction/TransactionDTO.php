@@ -2,14 +2,15 @@
 
 namespace KevinRider\LaravelEtrade\Dtos\Transaction;
 
+use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\BaseDTO;
 
 class TransactionDTO extends BaseDTO
 {
     public ?string $transactionId = null;
     public ?string $accountId = null;
-    public ?int $transactionDate = null;
-    public ?int $postDate = null;
+    public ?Carbon $transactionDate = null;
+    public ?Carbon $postDate = null;
     public ?float $amount = null;
     public ?string $description = null;
     public ?string $transactionType = null;
