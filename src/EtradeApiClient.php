@@ -83,7 +83,7 @@ class EtradeApiClient
 
         parse_str($response->getBody()->getContents(), $token);
 
-        if (!isset($token['oauth_token']) && !isset($token['oauth_token_secret'])) {
+        if (!isset($token['oauth_token']) || !isset($token['oauth_token_secret'])) {
             throw new EtradeApiException('Malformed get request token response');
         }
 
@@ -131,7 +131,7 @@ class EtradeApiClient
 
         parse_str($response->getBody()->getContents(), $accessToken);
 
-        if (!isset($accessToken['oauth_token']) && !isset($accessToken['oauth_token_secret'])) {
+        if (!isset($accessToken['oauth_token']) || !isset($accessToken['oauth_token_secret'])) {
             throw new EtradeApiException('Malformed get access token response');
         }
 
