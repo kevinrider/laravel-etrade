@@ -4,6 +4,7 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Validation\ValidationException;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\CashDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\ComputedBalanceDTO;
 use KevinRider\LaravelEtrade\Dtos\AccountBalance\MarginDTO;
@@ -1172,7 +1173,7 @@ it('throws exception if symbols are missing when getting quotes', function () {
 
     expect(function () use ($etradeClient) {
         $etradeClient->getQuotes(new GetQuotesRequestDTO());
-    })->toThrow(EtradeApiException::class, 'symbols is required!');
+    })->toThrow(ValidationException::class, 'The symbols field is required.');
 });
 
 it('throws exception on non-200 response for get quotes', function () {
@@ -1255,7 +1256,7 @@ it('throws exception if search is missing when looking up products', function ()
 
     expect(function () use ($etradeClient) {
         $etradeClient->lookupProduct(new LookupRequestDTO());
-    })->toThrow(EtradeApiException::class, 'search is required!');
+    })->toThrow(ValidationException::class, 'The search field is required.');
 });
 
 it('throws exception on non-200 response for lookup product', function () {
@@ -1352,7 +1353,7 @@ it('throws exception if symbol is missing when getting option chains', function 
 
     expect(function () use ($etradeClient) {
         $etradeClient->getOptionChains(new GetOptionChainsRequestDTO());
-    })->toThrow(EtradeApiException::class, 'symbol is required!');
+    })->toThrow(ValidationException::class, 'The symbol field is required.');
 });
 
 it('throws exception on non-200 response for get option chains', function () {
@@ -1437,7 +1438,7 @@ it('throws exception if symbol is missing when getting option expire dates', fun
 
     expect(function () use ($etradeClient) {
         $etradeClient->getOptionExpireDates(new GetOptionExpireDatesRequestDTO());
-    })->toThrow(EtradeApiException::class, 'symbol is required!');
+    })->toThrow(ValidationException::class, 'The symbol field is required.');
 });
 
 it('throws exception on non-200 response for get option expire dates', function () {
@@ -1596,7 +1597,7 @@ it('throws exception if accountIdKey is missing when listing orders', function (
 
     expect(function () use ($etradeClient) {
         $etradeClient->listOrders(new ListOrdersRequestDTO());
-    })->toThrow(EtradeApiException::class, 'accountIdKey is required!');
+    })->toThrow(ValidationException::class, 'The account id key field is required.');
 });
 
 it('throws exception on non-200 response for list orders', function () {
@@ -1947,7 +1948,7 @@ it('throws exception if preview order payload is missing required values', funct
 
     expect(function () use ($etradeClient, $previewOrderRequestDto) {
         $etradeClient->previewOrder($previewOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'order is required!');
+    })->toThrow(ValidationException::class, 'The order field is required.');
 });
 
 it('throws exception on non-200 response for preview order', function () {
@@ -2088,7 +2089,7 @@ it('throws exception if preview change order payload is missing orderId', functi
 
     expect(function () use ($etradeClient, $previewOrderRequestDto) {
         $etradeClient->previewChangeOrder($previewOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'orderId is required!');
+    })->toThrow(ValidationException::class, 'The order id field is required.');
 });
 
 it('throws exception on non-200 response for preview change order', function () {
@@ -2472,7 +2473,7 @@ it('throws exception if place order payload is missing required values', functio
 
     expect(function () use ($etradeClient, $placeOrderRequestDto) {
         $etradeClient->placeOrder($placeOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'previewIds is required!');
+    })->toThrow(ValidationException::class, 'The preview ids field is required.');
 });
 
 it('throws exception on non-200 response for place order', function () {
@@ -2613,7 +2614,7 @@ it('throws exception if place change order payload is missing orderId', function
 
     expect(function () use ($etradeClient, $placeOrderRequestDto) {
         $etradeClient->placeChangeOrder($placeOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'orderId is required!');
+    })->toThrow(ValidationException::class, 'The order id field is required.');
 });
 
 it('throws exception on non-200 response for place change order', function () {
@@ -2740,7 +2741,7 @@ it('throws exception if cancel order payload is missing required values', functi
 
     expect(function () use ($etradeClient, $cancelOrderRequestDto) {
         $etradeClient->cancelOrder($cancelOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'accountIdKey is required!');
+    })->toThrow(ValidationException::class, 'The account id key field is required.');
 
     $cancelOrderRequestDto = new CancelOrderRequestDTO([
         'accountIdKey' => 'account-key',
@@ -2748,7 +2749,7 @@ it('throws exception if cancel order payload is missing required values', functi
 
     expect(function () use ($etradeClient, $cancelOrderRequestDto) {
         $etradeClient->cancelOrder($cancelOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'orderId is required!');
+    })->toThrow(ValidationException::class, 'The order id field is required.');
 });
 
 it('throws exception on non-200 response for cancel order', function () {
@@ -2903,7 +2904,7 @@ it('throws exception if alert id is missing when requesting alert details', func
 
     expect(function () use ($etradeClient) {
         $etradeClient->getAlertDetails(new ListAlertDetailsRequestDTO());
-    })->toThrow(EtradeApiException::class, 'alertId is required!');
+    })->toThrow(ValidationException::class, 'The alert id field is required.');
 });
 
 it('throws exception on non-200 response when requesting alert details', function () {
@@ -2980,7 +2981,7 @@ it('throws exception if delete alerts has no alert ids', function () {
 
     expect(function () use ($etradeClient) {
         $etradeClient->deleteAlerts(new DeleteAlertsRequestDTO());
-    })->toThrow(EtradeApiException::class, 'At least one alertId is required!');
+    })->toThrow(ValidationException::class, 'The alert id path segment field is required.');
 });
 
 it('throws exception on non-200 response when deleting alerts', function () {
