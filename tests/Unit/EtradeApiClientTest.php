@@ -59,6 +59,7 @@ use KevinRider\LaravelEtrade\Dtos\ViewPortfolio\QuickViewDTO;
 use KevinRider\LaravelEtrade\Dtos\Response\ViewPortfolioResponseDTO;
 use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\EtradeConfig;
+use KevinRider\LaravelEtrade\Exceptions\EtradeAuthException;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 
 beforeEach(function () {
@@ -161,7 +162,7 @@ it('throws exception if request tokens are missing from cache', function () {
 
     expect(function () use ($etradeClient) {
         $etradeClient->requestAccessTokenAndStore('some_verifier');
-    })->toThrow(EtradeApiException::class, 'Request tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Request tokens missing or expired.');
 });
 
 it('throws exception on non-200 response for access token request', function () {
@@ -276,7 +277,7 @@ it('throws exception if cached access tokens are missing', function () {
 
     expect(function () use ($etradeClient) {
         $etradeClient->getAccessToken();
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can renew access token successfully', function () {
@@ -374,7 +375,7 @@ it('throws exception if renewing access token when no token is cached', function
 
     expect(function () use ($etradeClient) {
         $etradeClient->renewAccessToken();
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can revoke access token successfully', function () {
@@ -463,7 +464,7 @@ it('throws exception if revoking access token when no token is cached', function
 
     expect(function () use ($etradeClient) {
         $etradeClient->revokeAccessToken();
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get account list successfully', function () {
@@ -550,7 +551,7 @@ it('throws exception if getting account list when no token is cached', function 
 
     expect(function () use ($etradeClient) {
         $etradeClient->getAccountList();
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get account balance successfully', function () {
@@ -650,7 +651,7 @@ it('throws exception if getting account balance when no token is cached', functi
 
     expect(function () use ($etradeClient, $accountBalanceRequestDto) {
         $etradeClient->getAccountBalance($accountBalanceRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get account transactions successfully', function () {
@@ -779,7 +780,7 @@ it('throws exception if getting account transactions when no token is cached', f
 
     expect(function () use ($etradeClient, $listTransactionsRequestDto) {
         $etradeClient->getAccountTransactions($listTransactionsRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get account transaction details successfully', function () {
@@ -876,7 +877,7 @@ it('throws exception if getting account transaction details when no token is cac
 
     expect(function () use ($etradeClient, $listTransactionDetailsRequestDto) {
         $etradeClient->getAccountTransactionDetails($listTransactionDetailsRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can view portfolio successfully', function () {
@@ -1014,7 +1015,7 @@ it('throws exception if viewing portfolio when no token is cached', function () 
 
     expect(function () use ($etradeClient, $viewPortfolioRequestDto) {
         $etradeClient->getViewPortfolio($viewPortfolioRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get quotes successfully', function () {
@@ -1213,7 +1214,7 @@ it('throws exception if getting quotes when no token is cached', function () {
 
     expect(function () use ($etradeClient, $getQuotesRequestDto) {
         $etradeClient->getQuotes($getQuotesRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can lookup products successfully', function () {
@@ -1296,7 +1297,7 @@ it('throws exception if looking up product when no token is cached', function ()
 
     expect(function () use ($etradeClient, $lookupRequestDto) {
         $etradeClient->lookupProduct($lookupRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get option chains successfully', function () {
@@ -1393,7 +1394,7 @@ it('throws exception if getting option chains when no token is cached', function
 
     expect(function () use ($etradeClient, $getOptionChainsRequestDto) {
         $etradeClient->getOptionChains($getOptionChainsRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can get option expire dates successfully', function () {
@@ -1478,7 +1479,7 @@ it('throws exception if getting option expire dates when no token is cached', fu
 
     expect(function () use ($etradeClient, $getOptionExpireDatesRequestDto) {
         $etradeClient->getOptionExpireDates($getOptionExpireDatesRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can list orders successfully', function () {
@@ -1637,7 +1638,7 @@ it('throws exception if listing orders when no token is cached', function () {
 
     expect(function () use ($etradeClient, $listOrdersRequestDto) {
         $etradeClient->listOrders($listOrdersRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can preview equity orders successfully', function () {
@@ -2167,7 +2168,7 @@ it('throws exception if previewing change order when no token is cached', functi
 
     expect(function () use ($etradeClient, $previewOrderRequestDto) {
         $etradeClient->previewChangeOrder($previewOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can place equity orders successfully', function () {
@@ -2694,7 +2695,7 @@ it('throws exception if placing change order when no token is cached', function 
 
     expect(function () use ($etradeClient, $placeOrderRequestDto) {
         $etradeClient->placeChangeOrder($placeOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can cancel orders successfully', function () {
@@ -2791,7 +2792,7 @@ it('throws exception if canceling order when no token is cached', function () {
 
     expect(function () use ($etradeClient, $cancelOrderRequestDto) {
         $etradeClient->cancelOrder($cancelOrderRequestDto);
-    })->toThrow(EtradeApiException::class, 'Cached access tokens missing or expired.');
+    })->toThrow(EtradeAuthException::class, 'Cached access tokens missing or expired.');
 });
 
 it('can list alerts successfully', function () {
