@@ -45,6 +45,7 @@ use KevinRider\LaravelEtrade\Dtos\Request\GetOptionExpireDatesRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\PreviewOrderRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Request\ViewPortfolioRequestDTO;
 use KevinRider\LaravelEtrade\Dtos\Response\ViewPortfolioResponseDTO;
+use KevinRider\LaravelEtrade\Exceptions\EtradeAuthException;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 
 class EtradeApiClient
@@ -124,6 +125,7 @@ class EtradeApiClient
      * @param string $verifierCode
      * @return void
      * @throws EtradeApiException
+     * @throws EtradeAuthException
      * @throws GuzzleException
      */
     public function requestAccessTokenAndStore(string $verifierCode): void
@@ -176,6 +178,7 @@ class EtradeApiClient
     /**
      * @return EtradeAccessTokenDTO
      * @throws EtradeApiException
+     * @throws EtradeAuthException
      * @throws GuzzleException
      */
     public function getAccessToken(): EtradeAccessTokenDTO
@@ -191,6 +194,7 @@ class EtradeApiClient
      * @param EtradeAccessTokenDTO|null $accessTokenDTO
      * @return EtradeAccessTokenDTO
      * @throws EtradeApiException
+     * @throws EtradeAuthException
      * @throws GuzzleException
      */
     public function renewAccessToken(?EtradeAccessTokenDTO $accessTokenDTO = null): EtradeAccessTokenDTO
@@ -234,6 +238,7 @@ class EtradeApiClient
     /**
      * @return void
      * @throws EtradeApiException
+     * @throws EtradeAuthException
      * @throws GuzzleException
      */
     public function revokeAccessToken(): void
@@ -720,7 +725,7 @@ class EtradeApiClient
 
     /**
      * @return EtradeAccessTokenDTO
-     * @throws EtradeApiException
+     * @throws EtradeAuthException
      */
     protected function getCachedAccessToken(): EtradeAccessTokenDTO
     {
@@ -739,17 +744,17 @@ class EtradeApiClient
      * @param string $key
      * @param string $exceptionMessage
      * @return array
-     * @throws EtradeApiException
+     * @throws EtradeAuthException
      */
     private function getTokenInCache(string $key, string $exceptionMessage): array
     {
         $encryptedTokenArray = Cache::get($key);
         if (!$encryptedTokenArray) {
-            throw new EtradeApiException($exceptionMessage);
+            throw new EtradeAuthException($exceptionMessage);
         }
         $decoded = json_decode(Crypt::decryptString($encryptedTokenArray), true);
         if (!is_array($decoded)) {
-            throw new EtradeApiException($exceptionMessage);
+            throw new EtradeAuthException($exceptionMessage);
         }
 
         return $decoded;
