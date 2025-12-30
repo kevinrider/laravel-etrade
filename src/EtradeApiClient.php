@@ -9,6 +9,8 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use KevinRider\LaravelEtrade\Dtos\Response\AccountBalanceResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Response\AccountListResponseDTO;
 use KevinRider\LaravelEtrade\Dtos\Response\ListAlertDetailsResponseDTO;
@@ -278,12 +280,11 @@ class EtradeApiClient
      * @return AccountBalanceResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getAccountBalance(AccountBalanceRequestDTO $accountBalanceRequestDTO): AccountBalanceResponseDTO
     {
-        if (empty($accountBalanceRequestDTO->accountIdKey)) {
-            throw new EtradeApiException('accountIdKey is required!');
-        }
+        $this->validateRequiredProperties($accountBalanceRequestDTO, ['accountIdKey']);
 
         $this->setAuthenticatedClient();
 
@@ -305,12 +306,11 @@ class EtradeApiClient
      * @return ListTransactionsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getAccountTransactions(ListTransactionsRequestDTO $listTransactionsRequestDTO): ListTransactionsResponseDTO
     {
-        if (empty($listTransactionsRequestDTO->accountIdKey)) {
-            throw new EtradeApiException('accountIdKey is required!');
-        }
+        $this->validateRequiredProperties($listTransactionsRequestDTO, ['accountIdKey']);
 
         $this->setAuthenticatedClient();
 
@@ -332,15 +332,11 @@ class EtradeApiClient
      * @return ListTransactionDetailsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getAccountTransactionDetails(ListTransactionDetailsRequestDTO $listTransactionDetailsRequestDTO): ListTransactionDetailsResponseDTO
     {
-        if (empty($listTransactionDetailsRequestDTO->accountIdKey)) {
-            throw new EtradeApiException('accountIdKey is required!');
-        }
-        if (empty($listTransactionDetailsRequestDTO->transactionId)) {
-            throw new EtradeApiException('transactionId is required!');
-        }
+        $this->validateRequiredProperties($listTransactionDetailsRequestDTO, ['accountIdKey', 'transactionId']);
 
         $this->setAuthenticatedClient();
 
@@ -362,12 +358,11 @@ class EtradeApiClient
      * @return ViewPortfolioResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getViewPortfolio(ViewPortfolioRequestDTO $viewPortfolioRequestDTO): ViewPortfolioResponseDTO
     {
-        if (empty($viewPortfolioRequestDTO->accountIdKey)) {
-            throw new EtradeApiException('accountIdKey is required!');
-        }
+        $this->validateRequiredProperties($viewPortfolioRequestDTO, ['accountIdKey']);
 
         $this->setAuthenticatedClient();
 
@@ -410,12 +405,11 @@ class EtradeApiClient
      * @return ListAlertDetailsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getAlertDetails(ListAlertDetailsRequestDTO $listAlertDetailsRequestDTO): ListAlertDetailsResponseDTO
     {
-        if (empty($listAlertDetailsRequestDTO->alertId)) {
-            throw new EtradeApiException('alertId is required!');
-        }
+        $this->validateRequiredProperties($listAlertDetailsRequestDTO, ['alertId']);
 
         $this->setAuthenticatedClient();
 
@@ -437,13 +431,15 @@ class EtradeApiClient
      * @return DeleteAlertsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function deleteAlerts(DeleteAlertsRequestDTO $deleteAlertRequestDTO): DeleteAlertsResponseDTO
     {
         $alertIdPathSegment = $deleteAlertRequestDTO->getAlertIdsPathSegment();
-        if (!$alertIdPathSegment) {
-            throw new EtradeApiException('At least one alertId is required!');
-        }
+        $this->validate(
+            ['alertIdPathSegment' => $alertIdPathSegment],
+            ['alertIdPathSegment' => 'required']
+        );
 
         $this->setAuthenticatedClient();
 
@@ -463,12 +459,11 @@ class EtradeApiClient
      * @return OrdersResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function listOrders(ListOrdersRequestDTO $listOrdersRequestDTO): OrdersResponseDTO
     {
-        if (empty($listOrdersRequestDTO->accountIdKey)) {
-            throw new EtradeApiException('accountIdKey is required!');
-        }
+        $this->validateRequiredProperties($listOrdersRequestDTO, ['accountIdKey']);
 
         $this->setAuthenticatedClient();
 
@@ -518,14 +513,11 @@ class EtradeApiClient
      * @return PreviewOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function previewOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
     {
-        foreach (PreviewOrderRequestDTO::REQUIRED_PROPERTIES as $requiredProperty) {
-            if (empty($previewOrderRequestDTO->$requiredProperty)) {
-                throw new EtradeApiException($requiredProperty . ' is required!');
-            }
-        }
+        $this->validateRequiredProperties($previewOrderRequestDTO, PreviewOrderRequestDTO::REQUIRED_PROPERTIES);
 
         $this->setAuthenticatedClient();
 
@@ -545,14 +537,11 @@ class EtradeApiClient
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function placeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
     {
-        foreach (PlaceOrderRequestDTO::REQUIRED_PROPERTIES as $requiredProperty) {
-            if (empty($placeOrderRequestDTO->$requiredProperty)) {
-                throw new EtradeApiException($requiredProperty . ' is required!');
-            }
-        }
+        $this->validateRequiredProperties($placeOrderRequestDTO, PlaceOrderRequestDTO::REQUIRED_PROPERTIES);
 
         $this->setAuthenticatedClient();
 
@@ -572,6 +561,7 @@ class EtradeApiClient
      * @return PreviewOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function previewChangeOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
     {
@@ -591,6 +581,7 @@ class EtradeApiClient
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function placeChangeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
     {
@@ -610,16 +601,11 @@ class EtradeApiClient
      * @return CancelOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function cancelOrder(CancelOrderRequestDTO $cancelOrderRequestDTO): CancelOrderResponseDTO
     {
-        if (empty($cancelOrderRequestDTO->accountIdKey)) {
-            throw new EtradeApiException('accountIdKey is required!');
-        }
-
-        if (empty($cancelOrderRequestDTO->orderId)) {
-            throw new EtradeApiException('orderId is required!');
-        }
+        $this->validateRequiredProperties($cancelOrderRequestDTO, ['accountIdKey', 'orderId']);
 
         $this->setAuthenticatedClient();
 
@@ -639,12 +625,11 @@ class EtradeApiClient
      * @return LookupResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function lookupProduct(LookupRequestDTO $lookupRequestDTO): LookupResponseDTO
     {
-        if (empty($lookupRequestDTO->search)) {
-            throw new EtradeApiException('search is required!');
-        }
+        $this->validateRequiredProperties($lookupRequestDTO, ['search']);
 
         $this->setAuthenticatedClient();
 
@@ -664,12 +649,11 @@ class EtradeApiClient
      * @return OptionChainResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getOptionChains(GetOptionChainsRequestDTO $getOptionChainsRequestDTO): OptionChainResponseDTO
     {
-        if (empty($getOptionChainsRequestDTO->symbol)) {
-            throw new EtradeApiException('symbol is required!');
-        }
+        $this->validateRequiredProperties($getOptionChainsRequestDTO, ['symbol']);
 
         $this->setAuthenticatedClient();
 
@@ -689,12 +673,11 @@ class EtradeApiClient
      * @return OptionExpireDateResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getOptionExpireDates(GetOptionExpireDatesRequestDTO $getOptionExpireDatesRequestDTO): OptionExpireDateResponseDTO
     {
-        if (empty($getOptionExpireDatesRequestDTO->symbol)) {
-            throw new EtradeApiException('symbol is required!');
-        }
+        $this->validateRequiredProperties($getOptionExpireDatesRequestDTO, ['symbol']);
 
         $this->setAuthenticatedClient();
 
@@ -714,12 +697,11 @@ class EtradeApiClient
      * @return GetQuotesResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws ValidationException
      */
     public function getQuotes(GetQuotesRequestDTO $getQuotesRequestDTO): GetQuotesResponseDTO
     {
-        if (empty($getQuotesRequestDTO->symbols)) {
-            throw new EtradeApiException('symbols is required!');
-        }
+        $this->validateRequiredProperties($getQuotesRequestDTO, ['symbols']);
 
         $this->setAuthenticatedClient();
 
@@ -800,15 +782,29 @@ class EtradeApiClient
      * @param object $dto
      * @param array $requiredProperties
      * @return void
-     * @throws EtradeApiException
+     * @throws ValidationException
      */
     private function validateRequiredProperties(object $dto, array $requiredProperties): void
     {
+        $data = [];
+        $rules = [];
         foreach ($requiredProperties as $requiredProperty) {
-            if (empty($dto->$requiredProperty)) {
-                throw new EtradeApiException($requiredProperty . ' is required!');
-            }
+            $data[$requiredProperty] = $dto->$requiredProperty ?? null;
+            $rules[$requiredProperty] = 'required';
         }
+
+        $this->validate($data, $rules);
+    }
+
+    /**
+     * @param array $data
+     * @param array $rules
+     * @return void
+     * @throws ValidationException
+     */
+    private function validate(array $data, array $rules): void
+    {
+        Validator::make($data, $rules)->validate();
     }
 
     /**
