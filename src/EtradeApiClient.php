@@ -265,7 +265,7 @@ class EtradeApiClient
     /**
      * @return AccountListResponseDTO
      * @throws EtradeApiException
-     * @throws GuzzleException
+     * @throws GuzzleException|EtradeAuthException
      */
     public function getAccountList(): AccountListResponseDTO
     {
@@ -285,7 +285,7 @@ class EtradeApiClient
      * @return AccountBalanceResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getAccountBalance(AccountBalanceRequestDTO $accountBalanceRequestDTO): AccountBalanceResponseDTO
     {
@@ -311,7 +311,7 @@ class EtradeApiClient
      * @return ListTransactionsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getAccountTransactions(ListTransactionsRequestDTO $listTransactionsRequestDTO): ListTransactionsResponseDTO
     {
@@ -337,7 +337,7 @@ class EtradeApiClient
      * @return ListTransactionDetailsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getAccountTransactionDetails(ListTransactionDetailsRequestDTO $listTransactionDetailsRequestDTO): ListTransactionDetailsResponseDTO
     {
@@ -363,7 +363,7 @@ class EtradeApiClient
      * @return ViewPortfolioResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getViewPortfolio(ViewPortfolioRequestDTO $viewPortfolioRequestDTO): ViewPortfolioResponseDTO
     {
@@ -388,7 +388,7 @@ class EtradeApiClient
      * @param ListAlertsRequestDTO $listAlertsRequestDTO
      * @return ListAlertsResponseDTO
      * @throws EtradeApiException
-     * @throws GuzzleException
+     * @throws GuzzleException|EtradeAuthException
      */
     public function getAlerts(ListAlertsRequestDTO $listAlertsRequestDTO): ListAlertsResponseDTO
     {
@@ -410,7 +410,7 @@ class EtradeApiClient
      * @return ListAlertDetailsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getAlertDetails(ListAlertDetailsRequestDTO $listAlertDetailsRequestDTO): ListAlertDetailsResponseDTO
     {
@@ -436,7 +436,7 @@ class EtradeApiClient
      * @return DeleteAlertsResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function deleteAlerts(DeleteAlertsRequestDTO $deleteAlertRequestDTO): DeleteAlertsResponseDTO
     {
@@ -464,7 +464,7 @@ class EtradeApiClient
      * @return OrdersResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function listOrders(ListOrdersRequestDTO $listOrdersRequestDTO): OrdersResponseDTO
     {
@@ -489,7 +489,7 @@ class EtradeApiClient
      * @param ListOrdersRequestDTO $listOrdersRequestDTO
      * @return OrdersResponseDTO
      * @throws EtradeApiException
-     * @throws GuzzleException
+     * @throws GuzzleException|EtradeAuthException
      */
     public function listAllOrders(ListOrdersRequestDTO $listOrdersRequestDTO): OrdersResponseDTO
     {
@@ -518,7 +518,7 @@ class EtradeApiClient
      * @return PreviewOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function previewOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
     {
@@ -542,7 +542,7 @@ class EtradeApiClient
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function placeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
     {
@@ -566,7 +566,7 @@ class EtradeApiClient
      * @return PreviewOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function previewChangeOrder(PreviewOrderRequestDTO $previewOrderRequestDTO): PreviewOrderResponseDTO
     {
@@ -586,7 +586,7 @@ class EtradeApiClient
      * @return PlaceOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function placeChangeOrder(PlaceOrderRequestDTO $placeOrderRequestDTO): PlaceOrderResponseDTO
     {
@@ -606,7 +606,7 @@ class EtradeApiClient
      * @return CancelOrderResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function cancelOrder(CancelOrderRequestDTO $cancelOrderRequestDTO): CancelOrderResponseDTO
     {
@@ -630,7 +630,7 @@ class EtradeApiClient
      * @return LookupResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function lookupProduct(LookupRequestDTO $lookupRequestDTO): LookupResponseDTO
     {
@@ -654,7 +654,7 @@ class EtradeApiClient
      * @return OptionChainResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getOptionChains(GetOptionChainsRequestDTO $getOptionChainsRequestDTO): OptionChainResponseDTO
     {
@@ -678,7 +678,7 @@ class EtradeApiClient
      * @return OptionExpireDateResponseDTO
      * @throws EtradeApiException
      * @throws GuzzleException
-     * @throws ValidationException
+     * @throws ValidationException|EtradeAuthException
      */
     public function getOptionExpireDates(GetOptionExpireDatesRequestDTO $getOptionExpireDatesRequestDTO): OptionExpireDateResponseDTO
     {
@@ -703,6 +703,7 @@ class EtradeApiClient
      * @throws EtradeApiException
      * @throws GuzzleException
      * @throws ValidationException
+     * @throws EtradeAuthException
      */
     public function getQuotes(GetQuotesRequestDTO $getQuotesRequestDTO): GetQuotesResponseDTO
     {
@@ -821,6 +822,7 @@ class EtradeApiClient
      * @return mixed
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws EtradeAuthException
      */
     private function sendChangeOrderRequest(
         OrderRequestBaseDTO $dto,
@@ -886,6 +888,7 @@ class EtradeApiClient
      * @return void
      * @throws EtradeApiException
      * @throws GuzzleException
+     * @throws EtradeAuthException
      */
     private function setAuthenticatedClient(): void
     {
