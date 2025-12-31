@@ -13,6 +13,13 @@ use KevinRider\LaravelEtrade\Dtos\Request\PreviewOrderRequestDTO;
 class EtradeOrderBuilder
 {
     private const array VALID_QUANTITY_TYPES = ['QUANTITY', 'DOLLAR', 'ALL_I_OWN'];
+    private const array VALID_ORDER_TERMS = [
+        'GOOD_UNTIL_CANCEL',
+        'GOOD_FOR_DAY',
+        'GOOD_TILL_DATE',
+        'IMMEDIATE_OR_CANCEL',
+        'FILL_OR_KILL',
+    ];
 
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
@@ -118,6 +125,7 @@ class EtradeOrderBuilder
      */
     public function term(string $orderTerm): self
     {
+        $this->assertValidOrderTerm($orderTerm);
         $this->orderDetailFields['orderTerm'] = $orderTerm;
         return $this;
     }
@@ -474,6 +482,22 @@ class EtradeOrderBuilder
                 sprintf(
                     'quantityType must be one of: %s',
                     implode(', ', self::VALID_QUANTITY_TYPES)
+                )
+            );
+        }
+    }
+
+    /**
+     * @param string $orderTerm
+     * @return void
+     */
+    private function assertValidOrderTerm(string $orderTerm): void
+    {
+        if (!in_array($orderTerm, self::VALID_ORDER_TERMS, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'orderTerm must be one of: %s',
+                    implode(', ', self::VALID_ORDER_TERMS)
                 )
             );
         }
