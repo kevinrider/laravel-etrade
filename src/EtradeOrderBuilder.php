@@ -32,6 +32,28 @@ class EtradeOrderBuilder
         'MF',
         'MMF',
     ];
+    private const array VALID_PRICE_TYPES = [
+        'MARKET',
+        'LIMIT',
+        'STOP',
+        'STOP_LIMIT',
+        'TRAILING_STOP_CNST_BY_LOWER_TRIGGER',
+        'UPPER_TRIGGER_BY_TRAILING_STOP_CNST',
+        'TRAILING_STOP_PRCT_BY_LOWER_TRIGGER',
+        'UPPER_TRIGGER_BY_TRAILING_STOP_PRCT',
+        'TRAILING_STOP_CNST',
+        'TRAILING_STOP_PRCT',
+        'HIDDEN_STOP',
+        'HIDDEN_STOP_BY_LOWER_TRIGGER',
+        'UPPER_TRIGGER_BY_HIDDEN_STOP',
+        'NET_DEBIT',
+        'NET_CREDIT',
+        'NET_EVEN',
+        'MARKET_ON_OPEN',
+        'MARKET_ON_CLOSE',
+        'LIMIT_ON_OPEN',
+        'LIMIT_ON_CLOSE',
+    ];
 
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
@@ -165,6 +187,7 @@ class EtradeOrderBuilder
      */
     public function priceType(string $priceType): self
     {
+        $this->assertValidPriceType($priceType);
         $this->orderDetailFields['priceType'] = $priceType;
         return $this;
     }
@@ -527,6 +550,22 @@ class EtradeOrderBuilder
                 sprintf(
                     'orderType must be one of: %s',
                     implode(', ', self::VALID_ORDER_TYPES)
+                )
+            );
+        }
+    }
+
+    /**
+     * @param string $priceType
+     * @return void
+     */
+    private function assertValidPriceType(string $priceType): void
+    {
+        if (!in_array($priceType, self::VALID_PRICE_TYPES, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'priceType must be one of: %s',
+                    implode(', ', self::VALID_PRICE_TYPES)
                 )
             );
         }
