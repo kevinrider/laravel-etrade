@@ -54,6 +54,7 @@ class EtradeOrderBuilder
         'LIMIT_ON_OPEN',
         'LIMIT_ON_CLOSE',
     ];
+    private const array VALID_MARKET_SESSIONS = ['REGULAR', 'EXTENDED'];
 
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
@@ -254,6 +255,7 @@ class EtradeOrderBuilder
      */
     public function marketSession(string $marketSession): self
     {
+        $this->assertValidMarketSession($marketSession);
         $this->orderDetailFields['marketSession'] = $marketSession;
         return $this;
     }
@@ -566,6 +568,22 @@ class EtradeOrderBuilder
                 sprintf(
                     'priceType must be one of: %s',
                     implode(', ', self::VALID_PRICE_TYPES)
+                )
+            );
+        }
+    }
+
+    /**
+     * @param string $marketSession
+     * @return void
+     */
+    private function assertValidMarketSession(string $marketSession): void
+    {
+        if (!in_array($marketSession, self::VALID_MARKET_SESSIONS, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'marketSession must be one of: %s',
+                    implode(', ', self::VALID_MARKET_SESSIONS)
                 )
             );
         }
