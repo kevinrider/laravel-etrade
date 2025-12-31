@@ -150,6 +150,7 @@ class EtradeOrderBuilder
      */
     public function withExpiry(int $year, int $month, int $day): self
     {
+        $this->assertValidExpiryDate($year, $month, $day);
         $this->defaultExpiryYear = $year;
         $this->defaultExpiryMonth = $month;
         $this->defaultExpiryDay = $day;
@@ -495,6 +496,7 @@ class EtradeOrderBuilder
             throw new InvalidArgumentException('Expiry year, month, and day are required for option legs. Use withExpiry() or pass expiry overrides.');
         }
 
+        $this->assertValidExpiryDate($expiryYear, $expiryMonth, $expiryDay);
         $this->assertValidEnum($securityType, self::VALID_SECURITY_TYPES, 'securityType');
 
         $instrument = [
@@ -549,6 +551,19 @@ class EtradeOrderBuilder
                     implode(', ', $allowed)
                 )
             );
+        }
+    }
+
+    /**
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @return void
+     */
+    private function assertValidExpiryDate(int $year, int $month, int $day): void
+    {
+        if (!checkdate($month, $day, $year)) {
+            throw new InvalidArgumentException('Expiry date must be a valid calendar date.');
         }
     }
 
