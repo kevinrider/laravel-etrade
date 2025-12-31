@@ -38,6 +38,7 @@ use KevinRider\LaravelEtrade\EtradeApiClient;
 use KevinRider\LaravelEtrade\EtradeOrderBuilder;
 use KevinRider\LaravelEtrade\Exceptions\EtradeApiException;
 use Random\RandomException;
+use ReflectionClass;
 use ReflectionException;
 use Throwable;
 
@@ -255,7 +256,7 @@ class LaravelEtradeDemo extends Command
 
         if ($transactions && !empty($transactions->transactions)) {
             $firstId = $transactions->transactions[0]->transactionId ?? null;
-            if ($firstId && $this->confirm("Fetch details for transaction {$firstId}?")) {
+            if ($firstId && $this->confirm("Fetch details for transaction $firstId?")) {
                 $details = $this->withApiCall('Transaction details', function () use ($accountIdKey, $firstId) {
                     return $this->apiClient->getAccountTransactionDetails(new ListTransactionDetailsRequestDTO([
                         'accountIdKey' => $accountIdKey,
@@ -562,7 +563,7 @@ class LaravelEtradeDemo extends Command
             return;
         }
 
-        if (!$this->confirmDanger("Cancel order {$orderId}?")) {
+        if (!$this->confirmDanger("Cancel order $orderId?")) {
             $this->comment('Skipping cancel.');
             return;
         }
@@ -773,7 +774,7 @@ class LaravelEtradeDemo extends Command
             ['Price', $this->formatMoney($brokerage?->price)],
             ['Amount', $this->formatMoney($transaction->amount ?? null)],
             ['Date', $this->formatTimestamp($transaction->transactionDate ?? null)],
-            ['Memo', $this->truncate($brokerage?->memo ?? '', 80)],
+            ['Memo', $this->truncate($brokerage?->memo ?? '')],
         ];
 
         $this->table(['Field', 'Value'], $rows);
@@ -1248,10 +1249,10 @@ class LaravelEtradeDemo extends Command
         $options = [];
         foreach ($accounts->accounts as $account) {
             $key = $account->accountIdKey ?? '';
-            $options[$key] = "{$account->accountName} ({$account->accountId})";
+            $options[$key] = "$account->accountName ($account->accountId)";
         }
 
-        $selected = $this->choice('Select an account', array_map(fn ($label, $key) => "{$label} [{$key}]", $options, array_keys($options)));
+        $selected = $this->choice('Select an account', array_map(fn ($label, $key) => "$label [$key]", $options, array_keys($options)));
         preg_match('/\[(.+)]$/', $selected, $matches);
 
         return $matches[1] ?? null;
@@ -1370,7 +1371,7 @@ class LaravelEtradeDemo extends Command
      */
     private function extractLimitPrice(EtradeOrderBuilder $builder): float
     {
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         $prop = $reflection->getProperty('orderDetailFields');
         $fields = $prop->getValue($builder);
 
@@ -1383,7 +1384,7 @@ class LaravelEtradeDemo extends Command
      */
     private function extractAccountId(EtradeOrderBuilder $builder): string
     {
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         $prop = $reflection->getProperty('accountIdKey');
 
         return (string) $prop->getValue($builder);
@@ -1397,7 +1398,7 @@ class LaravelEtradeDemo extends Command
      */
     private function cloneBuilderWithNewLimit(EtradeOrderBuilder $builder, float $newLimit): EtradeOrderBuilder
     {
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         /** @var EtradeOrderBuilder $clone */
         $clone = $reflection->newInstanceWithoutConstructor();
         foreach ($reflection->getProperties() as $property) {
@@ -1459,7 +1460,7 @@ class LaravelEtradeDemo extends Command
      */
     private function withApiCall(string $label, callable $callback): mixed
     {
-        $this->line(PHP_EOL . "-> {$label}");
+        $this->line(PHP_EOL . "-> $label");
 
         try {
             return $callback();
@@ -1480,7 +1481,7 @@ class LaravelEtradeDemo extends Command
             ? $e->getMessage()
             : ($e->getMessage() ?: get_class($e));
 
-        $this->error("{$context} failed: {$message}");
+        $this->error("$context failed: $message");
     }
 
     /**
@@ -1500,7 +1501,7 @@ class LaravelEtradeDemo extends Command
     private function subSection(string $title): void
     {
         $this->line('');
-        $this->comment("{$title} ----------------");
+        $this->comment("$title ----------------");
     }
 
     /**
