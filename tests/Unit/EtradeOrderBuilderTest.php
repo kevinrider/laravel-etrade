@@ -296,15 +296,12 @@ it('validates positive numeric fields', function () {
         ->quantityType('QUANTITY');
 
     expect(fn () => $builder->limitPrice(0))
-        ->toThrow(InvalidArgumentException::class, 'limitPrice must be greater than 0.');
-
-    expect(fn () => $builder->stopPrice(-1))
-        ->toThrow(InvalidArgumentException::class, 'stopPrice must be 0 or greater.');
-
-    expect(fn () => $builder->stopLimitPrice(0))
-        ->toThrow(InvalidArgumentException::class, 'stopLimitPrice must be greater than 0.');
-
-    expect(fn () => $builder->addEquity('BUY', 0))
+        ->toThrow(InvalidArgumentException::class, 'limitPrice must be greater than 0.')
+        ->and(fn () => $builder->stopPrice(-1))
+        ->toThrow(InvalidArgumentException::class, 'stopPrice must be 0 or greater.')
+        ->and(fn () => $builder->stopLimitPrice(0))
+        ->toThrow(InvalidArgumentException::class, 'stopLimitPrice must be greater than 0.')
+        ->and(fn () => $builder->addEquity('BUY', 0))
         ->toThrow(InvalidArgumentException::class, 'quantity must be greater than 0.');
 
     $optionsBuilder = EtradeOrderBuilder::forAccount('ID')
@@ -313,7 +310,7 @@ it('validates positive numeric fields', function () {
         ->withSymbol('AAPL')
         ->withExpiry(2024, 1, 19);
 
-    expect(fn () => $optionsBuilder->addLongCall(0, 1))
+    expect(fn () => $optionsBuilder->addLongCall(0))
         ->toThrow(InvalidArgumentException::class, 'strikePrice must be greater than 0.');
 });
 
