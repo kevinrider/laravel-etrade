@@ -296,3 +296,88 @@ it('validates quantity types for defaults and overrides', function () {
 
     expect($instrument['quantityType'])->toBe('ALL_I_OWN');
 });
+
+it('validates order type values', function () {
+    expect(fn () => EtradeOrderBuilder::forAccount('ACC')->orderType('INVALID'))
+        ->toThrow(
+            InvalidArgumentException::class,
+            'orderType must be one of: EQ, OPTN, SPREADS, BUY_WRITES, BUTTERFLY, IRON_BUTTERFLY, CONDOR, IRON_CONDOR, MF, MMF'
+        );
+});
+
+it('validates order term values', function () {
+    $builder = EtradeOrderBuilder::forAccount('ACC')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY')
+        ->addEquity('BUY');
+
+    expect(fn () => $builder->term('NOT_A_TERM'))
+        ->toThrow(
+            InvalidArgumentException::class,
+            'orderTerm must be one of: GOOD_UNTIL_CANCEL, GOOD_FOR_DAY, GOOD_TILL_DATE, IMMEDIATE_OR_CANCEL, FILL_OR_KILL'
+        );
+});
+
+it('validates price type values', function () {
+    $builder = EtradeOrderBuilder::forAccount('ACC')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY')
+        ->addEquity('BUY');
+
+    expect(fn () => $builder->priceType('NOT_A_PRICE'))
+        ->toThrow(
+            InvalidArgumentException::class,
+            'priceType must be one of: MARKET, LIMIT, STOP, STOP_LIMIT, TRAILING_STOP_CNST_BY_LOWER_TRIGGER, UPPER_TRIGGER_BY_TRAILING_STOP_CNST, TRAILING_STOP_PRCT_BY_LOWER_TRIGGER, UPPER_TRIGGER_BY_TRAILING_STOP_PRCT, TRAILING_STOP_CNST, TRAILING_STOP_PRCT, HIDDEN_STOP, HIDDEN_STOP_BY_LOWER_TRIGGER, UPPER_TRIGGER_BY_HIDDEN_STOP, NET_DEBIT, NET_CREDIT, NET_EVEN, MARKET_ON_OPEN, MARKET_ON_CLOSE, LIMIT_ON_OPEN, LIMIT_ON_CLOSE'
+        );
+});
+
+it('validates market session values', function () {
+    $builder = EtradeOrderBuilder::forAccount('ACC')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY')
+        ->addEquity('BUY');
+
+    expect(fn () => $builder->marketSession('NOT_A_SESSION'))
+        ->toThrow(InvalidArgumentException::class, 'marketSession must be one of: REGULAR, EXTENDED');
+});
+
+it('validates order action values', function () {
+    $builder = EtradeOrderBuilder::forAccount('ACC')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY');
+
+    expect(fn () => $builder->addEquity('NOT_AN_ACTION'))
+        ->toThrow(
+            InvalidArgumentException::class,
+            'orderAction must be one of: BUY, SELL, BUY_TO_COVER, SELL_SHORT, BUY_OPEN, BUY_CLOSE, SELL_OPEN, SELL_CLOSE, EXCHANGE'
+        );
+});
+
+it('validates security type values', function () {
+    $builder = EtradeOrderBuilder::forAccount('ACC')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY');
+
+    expect(fn () => $builder->addEquity('BUY', 1, ['securityType' => 'INVALID']))
+        ->toThrow(InvalidArgumentException::class, 'securityType must be one of: EQ, OPTN, MF, MMF');
+
+    $optionsBuilder = EtradeOrderBuilder::forAccount('ACC')
+        ->orderType('OPTN')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->withExpiry(2024, 1, 19)
+        ->quantityType('QUANTITY');
+
+    expect(fn () => $optionsBuilder->addLongCall(100, 1, ['securityType' => 'INVALID']))
+        ->toThrow(InvalidArgumentException::class, 'securityType must be one of: EQ, OPTN, MF, MMF');
+});
