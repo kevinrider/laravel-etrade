@@ -288,6 +288,35 @@ it('validates expiry dates', function () {
         ->toThrow(InvalidArgumentException::class, 'Expiry date must be a valid calendar date.');
 });
 
+it('validates positive numeric fields', function () {
+    $builder = EtradeOrderBuilder::forAccount('ID')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY');
+
+    expect(fn () => $builder->limitPrice(0))
+        ->toThrow(InvalidArgumentException::class, 'limitPrice must be greater than 0.');
+
+    expect(fn () => $builder->stopPrice(-1))
+        ->toThrow(InvalidArgumentException::class, 'stopPrice must be 0 or greater.');
+
+    expect(fn () => $builder->stopLimitPrice(0))
+        ->toThrow(InvalidArgumentException::class, 'stopLimitPrice must be greater than 0.');
+
+    expect(fn () => $builder->addEquity('BUY', 0))
+        ->toThrow(InvalidArgumentException::class, 'quantity must be greater than 0.');
+
+    $optionsBuilder = EtradeOrderBuilder::forAccount('ID')
+        ->orderType('OPTN')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->withExpiry(2024, 1, 19);
+
+    expect(fn () => $optionsBuilder->addLongCall(0, 1))
+        ->toThrow(InvalidArgumentException::class, 'strikePrice must be greater than 0.');
+});
+
 it('normalizes empty stop prices to blank strings', function () {
     $builder = EtradeOrderBuilder::forAccount('ID')
         ->orderType('EQ')

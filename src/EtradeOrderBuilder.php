@@ -238,6 +238,7 @@ class EtradeOrderBuilder
      */
     public function limitPrice(float $limitPrice): self
     {
+        $this->assertPositiveFloat($limitPrice, 'limitPrice');
         $this->orderDetailFields['limitPrice'] = $limitPrice;
         return $this;
     }
@@ -248,6 +249,7 @@ class EtradeOrderBuilder
      */
     public function stopPrice(float $stopPrice): self
     {
+        $this->assertNonNegativeFloat($stopPrice, 'stopPrice');
         $this->orderDetailFields['stopPrice'] = $stopPrice;
         return $this;
     }
@@ -258,6 +260,7 @@ class EtradeOrderBuilder
      */
     public function stopLimitPrice(float $stopLimitPrice): self
     {
+        $this->assertPositiveFloat($stopLimitPrice, 'stopLimitPrice');
         $this->orderDetailFields['stopLimitPrice'] = $stopLimitPrice;
         return $this;
     }
@@ -361,6 +364,7 @@ class EtradeOrderBuilder
     public function addEquity(string $orderAction, float $quantity = 1, array $overrides = []): self
     {
         $this->assertValidEnum($orderAction, self::VALID_ORDER_ACTIONS, 'orderAction');
+        $this->assertPositiveFloat($quantity, 'quantity');
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
         $securityType = $overrides['securityType'] ?? 'EQ';
 
@@ -483,6 +487,8 @@ class EtradeOrderBuilder
     private function addOptionLeg(string $callPut, string $orderAction, float $strikePrice, float $quantity, array $overrides): self
     {
         $this->assertValidEnum($orderAction, self::VALID_ORDER_ACTIONS, 'orderAction');
+        $this->assertPositiveFloat($strikePrice, 'strikePrice');
+        $this->assertPositiveFloat($quantity, 'quantity');
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
         $expiryYear = $overrides['expiryYear'] ?? $this->defaultExpiryYear;
         $expiryMonth = $overrides['expiryMonth'] ?? $this->defaultExpiryMonth;
@@ -564,6 +570,30 @@ class EtradeOrderBuilder
     {
         if (!checkdate($month, $day, $year)) {
             throw new InvalidArgumentException('Expiry date must be a valid calendar date.');
+        }
+    }
+
+    /**
+     * @param float $value
+     * @param string $field
+     * @return void
+     */
+    private function assertPositiveFloat(float $value, string $field): void
+    {
+        if ($value <= 0) {
+            throw new InvalidArgumentException(sprintf('%s must be greater than 0.', $field));
+        }
+    }
+
+    /**
+     * @param float $value
+     * @param string $field
+     * @return void
+     */
+    private function assertNonNegativeFloat(float $value, string $field): void
+    {
+        if ($value < 0) {
+            throw new InvalidArgumentException(sprintf('%s must be 0 or greater.', $field));
         }
     }
 
