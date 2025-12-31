@@ -107,7 +107,7 @@ class EtradeOrderBuilder
      */
     public function orderType(string $orderType): self
     {
-        $this->assertValidOrderType($orderType);
+        $this->assertValidEnum($orderType, self::VALID_ORDER_TYPES, 'orderType');
         $this->orderType = $orderType;
         return $this;
     }
@@ -162,7 +162,7 @@ class EtradeOrderBuilder
      */
     public function quantityType(string $quantityType): self
     {
-        $this->assertValidQuantityType($quantityType);
+        $this->assertValidEnum($quantityType, self::VALID_QUANTITY_TYPES, 'quantityType');
         $this->defaultQuantityType = $quantityType;
         return $this;
     }
@@ -173,7 +173,7 @@ class EtradeOrderBuilder
      */
     public function term(string $orderTerm): self
     {
-        $this->assertValidOrderTerm($orderTerm);
+        $this->assertValidEnum($orderTerm, self::VALID_ORDER_TERMS, 'orderTerm');
         $this->orderDetailFields['orderTerm'] = $orderTerm;
         return $this;
     }
@@ -200,7 +200,7 @@ class EtradeOrderBuilder
      */
     public function priceType(string $priceType): self
     {
-        $this->assertValidPriceType($priceType);
+        $this->assertValidEnum($priceType, self::VALID_PRICE_TYPES, 'priceType');
         $this->orderDetailFields['priceType'] = $priceType;
         return $this;
     }
@@ -267,7 +267,7 @@ class EtradeOrderBuilder
      */
     public function marketSession(string $marketSession): self
     {
-        $this->assertValidMarketSession($marketSession);
+        $this->assertValidEnum($marketSession, self::VALID_MARKET_SESSIONS, 'marketSession');
         $this->orderDetailFields['marketSession'] = $marketSession;
         return $this;
     }
@@ -361,7 +361,7 @@ class EtradeOrderBuilder
      */
     public function addEquity(string $orderAction, float $quantity = 1, array $overrides = []): self
     {
-        $this->assertValidOrderAction($orderAction);
+        $this->assertValidEnum($orderAction, self::VALID_ORDER_ACTIONS, 'orderAction');
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
         $securityType = $overrides['securityType'] ?? 'EQ';
 
@@ -369,7 +369,7 @@ class EtradeOrderBuilder
             throw new InvalidArgumentException('Symbol is required for equity legs. Use withSymbol() or pass symbol override.');
         }
 
-        $this->assertValidSecurityType($securityType);
+        $this->assertValidEnum($securityType, self::VALID_SECURITY_TYPES, 'securityType');
 
         $instrument = [
             'orderAction' => $orderAction,
@@ -477,7 +477,7 @@ class EtradeOrderBuilder
      */
     private function addOptionLeg(string $callPut, string $orderAction, float $strikePrice, float $quantity, array $overrides): self
     {
-        $this->assertValidOrderAction($orderAction);
+        $this->assertValidEnum($orderAction, self::VALID_ORDER_ACTIONS, 'orderAction');
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
         $expiryYear = $overrides['expiryYear'] ?? $this->defaultExpiryYear;
         $expiryMonth = $overrides['expiryMonth'] ?? $this->defaultExpiryMonth;
@@ -491,7 +491,7 @@ class EtradeOrderBuilder
             throw new InvalidArgumentException('Expiry year, month, and day are required for option legs. Use withExpiry() or pass expiry overrides.');
         }
 
-        $this->assertValidSecurityType($securityType);
+        $this->assertValidEnum($securityType, self::VALID_SECURITY_TYPES, 'securityType');
 
         $instrument = [
             'orderAction' => $orderAction,
@@ -524,7 +524,7 @@ class EtradeOrderBuilder
             return $this->defaultQuantityType;
         }
 
-        $this->assertValidQuantityType($quantityType);
+        $this->assertValidEnum($quantityType, self::VALID_QUANTITY_TYPES, 'quantityType');
 
         return $quantityType;
     }
@@ -533,109 +533,20 @@ class EtradeOrderBuilder
      * @param string $quantityType
      * @return void
      */
-    private function assertValidQuantityType(string $quantityType): void
-    {
-        if (!in_array($quantityType, self::VALID_QUANTITY_TYPES, true)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'quantityType must be one of: %s',
-                    implode(', ', self::VALID_QUANTITY_TYPES)
-                )
-            );
-        }
-    }
-
     /**
-     * @param string $orderTerm
+     * @param string $value
+     * @param array<int, string> $allowed
+     * @param string $field
      * @return void
      */
-    private function assertValidOrderTerm(string $orderTerm): void
+    private function assertValidEnum(string $value, array $allowed, string $field): void
     {
-        if (!in_array($orderTerm, self::VALID_ORDER_TERMS, true)) {
+        if (!in_array($value, $allowed, true)) {
             throw new InvalidArgumentException(
                 sprintf(
-                    'orderTerm must be one of: %s',
-                    implode(', ', self::VALID_ORDER_TERMS)
-                )
-            );
-        }
-    }
-
-    /**
-     * @param string $orderType
-     * @return void
-     */
-    private function assertValidOrderType(string $orderType): void
-    {
-        if (!in_array($orderType, self::VALID_ORDER_TYPES, true)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'orderType must be one of: %s',
-                    implode(', ', self::VALID_ORDER_TYPES)
-                )
-            );
-        }
-    }
-
-    /**
-     * @param string $priceType
-     * @return void
-     */
-    private function assertValidPriceType(string $priceType): void
-    {
-        if (!in_array($priceType, self::VALID_PRICE_TYPES, true)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'priceType must be one of: %s',
-                    implode(', ', self::VALID_PRICE_TYPES)
-                )
-            );
-        }
-    }
-
-    /**
-     * @param string $marketSession
-     * @return void
-     */
-    private function assertValidMarketSession(string $marketSession): void
-    {
-        if (!in_array($marketSession, self::VALID_MARKET_SESSIONS, true)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'marketSession must be one of: %s',
-                    implode(', ', self::VALID_MARKET_SESSIONS)
-                )
-            );
-        }
-    }
-
-    /**
-     * @param string $orderAction
-     * @return void
-     */
-    private function assertValidOrderAction(string $orderAction): void
-    {
-        if (!in_array($orderAction, self::VALID_ORDER_ACTIONS, true)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'orderAction must be one of: %s',
-                    implode(', ', self::VALID_ORDER_ACTIONS)
-                )
-            );
-        }
-    }
-
-    /**
-     * @param string $securityType
-     * @return void
-     */
-    private function assertValidSecurityType(string $securityType): void
-    {
-        if (!in_array($securityType, self::VALID_SECURITY_TYPES, true)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'securityType must be one of: %s',
-                    implode(', ', self::VALID_SECURITY_TYPES)
+                    '%s must be one of: %s',
+                    $field,
+                    implode(', ', $allowed)
                 )
             );
         }
