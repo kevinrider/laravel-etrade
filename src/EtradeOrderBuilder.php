@@ -439,9 +439,15 @@ class EtradeOrderBuilder
                 return $id;
             }
             if (is_array($id)) {
+                if (!array_key_exists('previewId', $id)) {
+                    throw new InvalidArgumentException('previewId must be provided for each previewIds entry.');
+                }
                 return new PreviewIdDTO($id);
             }
-            return new PreviewIdDTO(['previewId' => $id]);
+            if (is_int($id)) {
+                return new PreviewIdDTO(['previewId' => $id]);
+            }
+            throw new InvalidArgumentException('previewIds must be PreviewIdDTO, array with previewId, or integer preview id.');
         }, $previewIds);
 
         return new PlaceOrderRequestDTO([
