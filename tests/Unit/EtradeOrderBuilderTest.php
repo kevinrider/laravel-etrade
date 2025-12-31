@@ -271,6 +271,23 @@ it('requires symbol and expiry when adding option legs', function () {
         ->toThrow(InvalidArgumentException::class, 'Expiry year, month, and day are required for option legs. Use withExpiry() or pass expiry overrides.');
 });
 
+it('validates expiry dates', function () {
+    $builder = EtradeOrderBuilder::forAccount('ID')
+        ->orderType('OPTN')
+        ->clientOrderId('CID');
+
+    expect(fn () => $builder->withExpiry(2024, 13, 1))
+        ->toThrow(InvalidArgumentException::class, 'Expiry date must be a valid calendar date.');
+
+    $builderWithSymbol = EtradeOrderBuilder::forAccount('ID')
+        ->orderType('OPTN')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL');
+
+    expect(fn () => $builderWithSymbol->addLongCall(100, 1, ['expiryYear' => 2024, 'expiryMonth' => 2, 'expiryDay' => 30]))
+        ->toThrow(InvalidArgumentException::class, 'Expiry date must be a valid calendar date.');
+});
+
 it('normalizes empty stop prices to blank strings', function () {
     $builder = EtradeOrderBuilder::forAccount('ID')
         ->orderType('EQ')
