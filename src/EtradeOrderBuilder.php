@@ -300,12 +300,10 @@ class EtradeOrderBuilder
      */
     public function addInstrument(InstrumentDTO|array $instrument): self
     {
-        if (is_array($instrument)) {
-            $instrument = new InstrumentDTO($instrument);
-        }
+        $data = $instrument instanceof InstrumentDTO ? $instrument->toArray() : $instrument;
+        $data['quantityType'] = $this->resolveQuantityType($data['quantityType'] ?? null);
 
-        $instrument->quantityType = $this->resolveQuantityType($instrument->quantityType);
-        $this->instruments[] = $instrument;
+        $this->instruments[] = new InstrumentDTO($data);
         return $this;
     }
 
