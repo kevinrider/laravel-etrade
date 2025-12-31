@@ -55,6 +55,17 @@ class EtradeOrderBuilder
         'LIMIT_ON_CLOSE',
     ];
     private const array VALID_MARKET_SESSIONS = ['REGULAR', 'EXTENDED'];
+    private const array VALID_ORDER_ACTIONS = [
+        'BUY',
+        'SELL',
+        'BUY_TO_COVER',
+        'SELL_SHORT',
+        'BUY_OPEN',
+        'BUY_CLOSE',
+        'SELL_OPEN',
+        'SELL_CLOSE',
+        'EXCHANGE',
+    ];
 
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
@@ -349,6 +360,7 @@ class EtradeOrderBuilder
      */
     public function addEquity(string $orderAction, float $quantity = 1, array $overrides = []): self
     {
+        $this->assertValidOrderAction($orderAction);
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
 
         if (!$symbol) {
@@ -461,6 +473,7 @@ class EtradeOrderBuilder
      */
     private function addOptionLeg(string $callPut, string $orderAction, float $strikePrice, float $quantity, array $overrides): self
     {
+        $this->assertValidOrderAction($orderAction);
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
         $expiryYear = $overrides['expiryYear'] ?? $this->defaultExpiryYear;
         $expiryMonth = $overrides['expiryMonth'] ?? $this->defaultExpiryMonth;
@@ -584,6 +597,22 @@ class EtradeOrderBuilder
                 sprintf(
                     'marketSession must be one of: %s',
                     implode(', ', self::VALID_MARKET_SESSIONS)
+                )
+            );
+        }
+    }
+
+    /**
+     * @param string $orderAction
+     * @return void
+     */
+    private function assertValidOrderAction(string $orderAction): void
+    {
+        if (!in_array($orderAction, self::VALID_ORDER_ACTIONS, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'orderAction must be one of: %s',
+                    implode(', ', self::VALID_ORDER_ACTIONS)
                 )
             );
         }
