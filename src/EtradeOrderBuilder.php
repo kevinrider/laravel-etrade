@@ -66,6 +66,7 @@ class EtradeOrderBuilder
         'SELL_CLOSE',
         'EXCHANGE',
     ];
+    private const array VALID_SECURITY_TYPES = ['EQ', 'OPTN', 'MF', 'MMF'];
 
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
@@ -362,10 +363,13 @@ class EtradeOrderBuilder
     {
         $this->assertValidOrderAction($orderAction);
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
+        $securityType = $overrides['securityType'] ?? 'EQ';
 
         if (!$symbol) {
             throw new InvalidArgumentException('Symbol is required for equity legs. Use withSymbol() or pass symbol override.');
         }
+
+        $this->assertValidSecurityType($securityType);
 
         $instrument = [
             'orderAction' => $orderAction,
@@ -374,7 +378,7 @@ class EtradeOrderBuilder
             'orderedQuantity' => $overrides['orderedQuantity'] ?? null,
             'product' => [
                 'symbol' => $symbol,
-                'securityType' => $overrides['securityType'] ?? 'EQ',
+                'securityType' => $securityType,
             ],
         ];
 
@@ -478,6 +482,7 @@ class EtradeOrderBuilder
         $expiryYear = $overrides['expiryYear'] ?? $this->defaultExpiryYear;
         $expiryMonth = $overrides['expiryMonth'] ?? $this->defaultExpiryMonth;
         $expiryDay = $overrides['expiryDay'] ?? $this->defaultExpiryDay;
+        $securityType = $overrides['securityType'] ?? $this->defaultSecurityType;
 
         if (!$symbol) {
             throw new InvalidArgumentException('Symbol is required for option legs. Use withSymbol() or pass symbol override.');
@@ -486,6 +491,8 @@ class EtradeOrderBuilder
             throw new InvalidArgumentException('Expiry year, month, and day are required for option legs. Use withExpiry() or pass expiry overrides.');
         }
 
+        $this->assertValidSecurityType($securityType);
+
         $instrument = [
             'orderAction' => $orderAction,
             'quantityType' => $overrides['quantityType'] ?? $this->defaultQuantityType,
@@ -493,7 +500,7 @@ class EtradeOrderBuilder
             'orderedQuantity' => $overrides['orderedQuantity'] ?? $quantity,
             'product' => [
                 'symbol' => $symbol,
-                'securityType' => $overrides['securityType'] ?? $this->defaultSecurityType,
+                'securityType' => $securityType,
                 'callPut' => $callPut,
                 'expiryYear' => $expiryYear,
                 'expiryMonth' => $expiryMonth,
@@ -613,6 +620,22 @@ class EtradeOrderBuilder
                 sprintf(
                     'orderAction must be one of: %s',
                     implode(', ', self::VALID_ORDER_ACTIONS)
+                )
+            );
+        }
+    }
+
+    /**
+     * @param string $securityType
+     * @return void
+     */
+    private function assertValidSecurityType(string $securityType): void
+    {
+        if (!in_array($securityType, self::VALID_SECURITY_TYPES, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'securityType must be one of: %s',
+                    implode(', ', self::VALID_SECURITY_TYPES)
                 )
             );
         }
