@@ -178,7 +178,7 @@ it('builds place spread order payload', function () {
         ->addLongCall(130)
         ->addShortCall(131);
 
-    $request = $builder->buildPlaceRequest(['3429218279']);
+    $request = $builder->buildPlaceRequest([3429218279]);
 
     expect(normalizeForFixture($request->toRequestBody()))->toEqual(orderFixture('PlaceOrderRequestSpread.json'));
 });
@@ -237,6 +237,21 @@ it('validates preview and place requirements', function () {
 
     expect(fn () => $builder->buildPlaceRequest([]))
         ->toThrow(InvalidArgumentException::class, 'At least one previewId is required to place an order.');
+});
+
+it('validates preview id entries when placing orders', function () {
+    $builder = EtradeOrderBuilder::forAccount('ID')
+        ->orderType('EQ')
+        ->clientOrderId('CID')
+        ->withSymbol('AAPL')
+        ->quantityType('QUANTITY')
+        ->addEquity('BUY');
+
+    expect(fn () => $builder->buildPlaceRequest([['notPreviewId' => 1]]))
+        ->toThrow(InvalidArgumentException::class, 'previewId must be provided for each previewIds entry.')
+        ->and(fn () => $builder->buildPlaceRequest(['not-an-id']))
+        ->toThrow(InvalidArgumentException::class, 'previewIds must be PreviewIdDTO, array with previewId, or integer preview id.');
+
 });
 
 it('requires symbol and expiry when adding option legs', function () {
