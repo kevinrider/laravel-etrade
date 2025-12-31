@@ -530,10 +530,6 @@ class EtradeOrderBuilder
     }
 
     /**
-     * @param string $quantityType
-     * @return void
-     */
-    /**
      * @param string $value
      * @param array<int, string> $allowed
      * @param string $field
