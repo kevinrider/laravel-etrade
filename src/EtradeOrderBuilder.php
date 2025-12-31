@@ -35,6 +35,10 @@ class EtradeOrderBuilder
      */
     private array $orderDetailFields = [];
 
+    /**
+     * @param string $accountIdKey
+     * @return self
+     */
     public static function forAccount(string $accountIdKey): self
     {
         $instance = new self();
@@ -43,30 +47,52 @@ class EtradeOrderBuilder
         return $instance;
     }
 
+    /**
+     * @param string $orderType
+     * @return $this
+     */
     public function orderType(string $orderType): self
     {
         $this->orderType = $orderType;
         return $this;
     }
 
+    /**
+     * @param string $clientOrderId
+     * @return $this
+     */
     public function clientOrderId(string $clientOrderId): self
     {
         $this->clientOrderId = $clientOrderId;
         return $this;
     }
 
+    /**
+     * @param int $orderId
+     * @return $this
+     */
     public function orderId(int $orderId): self
     {
         $this->orderId = $orderId;
         return $this;
     }
 
+    /**
+     * @param string $symbol
+     * @return $this
+     */
     public function withSymbol(string $symbol): self
     {
         $this->defaultSymbol = $symbol;
         return $this;
     }
 
+    /**
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @return $this
+     */
     public function withExpiry(int $year, int $month, int $day): self
     {
         $this->defaultExpiryYear = $year;
@@ -75,6 +101,10 @@ class EtradeOrderBuilder
         return $this;
     }
 
+    /**
+     * @param string $quantityType
+     * @return $this
+     */
     public function quantityType(string $quantityType): self
     {
         $this->assertValidQuantityType($quantityType);
@@ -82,73 +112,122 @@ class EtradeOrderBuilder
         return $this;
     }
 
+    /**
+     * @param string $orderTerm
+     * @return $this
+     */
     public function term(string $orderTerm): self
     {
         $this->orderDetailFields['orderTerm'] = $orderTerm;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function gfd(): self
     {
         return $this->term('GOOD_FOR_DAY');
     }
 
+    /**
+     * @return $this
+     */
     public function gtc(): self
     {
         return $this->term('GOOD_UNTIL_CANCEL');
     }
 
+    /**
+     * @param string $priceType
+     * @return $this
+     */
     public function priceType(string $priceType): self
     {
         $this->orderDetailFields['priceType'] = $priceType;
         return $this;
     }
 
+    /**
+     * @param float $limitPrice
+     * @return self
+     */
     public function netCredit(float $limitPrice): self
     {
         return $this->priceType('NET_CREDIT')->limitPrice($limitPrice);
     }
 
+    /**
+     * @param float $limitPrice
+     * @return self
+     */
     public function netDebit(float $limitPrice): self
     {
         return $this->priceType('NET_DEBIT')->limitPrice($limitPrice);
     }
 
+    /**
+     * @return $this
+     */
     public function market(): self
     {
         return $this->priceType('MARKET');
     }
 
+    /**
+     * @param float $limitPrice
+     * @return $this
+     */
     public function limitPrice(float $limitPrice): self
     {
         $this->orderDetailFields['limitPrice'] = $limitPrice;
         return $this;
     }
 
+    /**
+     * @param float $stopPrice
+     * @return $this
+     */
     public function stopPrice(float $stopPrice): self
     {
         $this->orderDetailFields['stopPrice'] = $stopPrice;
         return $this;
     }
 
+    /**
+     * @param float $stopLimitPrice
+     * @return $this
+     */
     public function stopLimitPrice(float $stopLimitPrice): self
     {
         $this->orderDetailFields['stopLimitPrice'] = $stopLimitPrice;
         return $this;
     }
 
+    /**
+     * @param string $marketSession
+     * @return $this
+     */
     public function marketSession(string $marketSession): self
     {
         $this->orderDetailFields['marketSession'] = $marketSession;
         return $this;
     }
 
+    /**
+     * @param bool $allOrNone
+     * @return $this
+     */
     public function allOrNone(bool $allOrNone): self
     {
         $this->orderDetailFields['allOrNone'] = $allOrNone;
         return $this;
     }
 
+    /**
+     * @param DisclosureDTO $disclosure
+     * @return $this
+     */
     public function disclosure(DisclosureDTO $disclosure): self
     {
         $this->orderDetailFields['disclosure'] = $disclosure->toArray();
@@ -172,26 +251,56 @@ class EtradeOrderBuilder
         return $this;
     }
 
+    /**
+     * @param float $strikePrice
+     * @param float $quantity
+     * @param array $overrides
+     * @return self
+     */
     public function addLongCall(float $strikePrice, float $quantity = 1, array $overrides = []): self
     {
         return $this->addOptionLeg('CALL', 'BUY_OPEN', $strikePrice, $quantity, $overrides);
     }
 
+    /**
+     * @param float $strikePrice
+     * @param float $quantity
+     * @param array $overrides
+     * @return self
+     */
     public function addShortCall(float $strikePrice, float $quantity = 1, array $overrides = []): self
     {
         return $this->addOptionLeg('CALL', 'SELL_OPEN', $strikePrice, $quantity, $overrides);
     }
 
+    /**
+     * @param float $strikePrice
+     * @param float $quantity
+     * @param array $overrides
+     * @return self
+     */
     public function addLongPut(float $strikePrice, float $quantity = 1, array $overrides = []): self
     {
         return $this->addOptionLeg('PUT', 'BUY_OPEN', $strikePrice, $quantity, $overrides);
     }
 
+    /**
+     * @param float $strikePrice
+     * @param float $quantity
+     * @param array $overrides
+     * @return self
+     */
     public function addShortPut(float $strikePrice, float $quantity = 1, array $overrides = []): self
     {
         return $this->addOptionLeg('PUT', 'SELL_OPEN', $strikePrice, $quantity, $overrides);
     }
 
+    /**
+     * @param string $orderAction
+     * @param float $quantity
+     * @param array $overrides
+     * @return $this
+     */
     public function addEquity(string $orderAction, float $quantity = 1, array $overrides = []): self
     {
         $symbol = $overrides['symbol'] ?? $this->defaultSymbol;
@@ -226,6 +335,9 @@ class EtradeOrderBuilder
         return $this;
     }
 
+    /**
+     * @return PreviewOrderRequestDTO
+     */
     public function buildPreviewRequest(): PreviewOrderRequestDTO
     {
         $this->assertRequiredForPreview();
@@ -336,6 +448,10 @@ class EtradeOrderBuilder
         return $this;
     }
 
+    /**
+     * @param string|null $quantityType
+     * @return string|null
+     */
     private function resolveQuantityType(?string $quantityType): ?string
     {
         if ($quantityType === null) {
@@ -347,6 +463,10 @@ class EtradeOrderBuilder
         return $quantityType;
     }
 
+    /**
+     * @param string $quantityType
+     * @return void
+     */
     private function assertValidQuantityType(string $quantityType): void
     {
         if (!in_array($quantityType, self::VALID_QUANTITY_TYPES, true)) {
@@ -359,6 +479,9 @@ class EtradeOrderBuilder
         }
     }
 
+    /**
+     * @return void
+     */
     private function assertRequiredForPreview(): void
     {
         if (!$this->accountIdKey) {
