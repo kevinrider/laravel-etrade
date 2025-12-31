@@ -20,6 +20,18 @@ class EtradeOrderBuilder
         'IMMEDIATE_OR_CANCEL',
         'FILL_OR_KILL',
     ];
+    private const array VALID_ORDER_TYPES = [
+        'EQ',
+        'OPTN',
+        'SPREADS',
+        'BUY_WRITES',
+        'BUTTERFLY',
+        'IRON_BUTTERFLY',
+        'CONDOR',
+        'IRON_CONDOR',
+        'MF',
+        'MMF',
+    ];
 
     private ?string $accountIdKey = null;
     private ?string $orderType = null;
@@ -60,6 +72,7 @@ class EtradeOrderBuilder
      */
     public function orderType(string $orderType): self
     {
+        $this->assertValidOrderType($orderType);
         $this->orderType = $orderType;
         return $this;
     }
@@ -498,6 +511,22 @@ class EtradeOrderBuilder
                 sprintf(
                     'orderTerm must be one of: %s',
                     implode(', ', self::VALID_ORDER_TERMS)
+                )
+            );
+        }
+    }
+
+    /**
+     * @param string $orderType
+     * @return void
+     */
+    private function assertValidOrderType(string $orderType): void
+    {
+        if (!in_array($orderType, self::VALID_ORDER_TYPES, true)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'orderType must be one of: %s',
+                    implode(', ', self::VALID_ORDER_TYPES)
                 )
             );
         }
