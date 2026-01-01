@@ -1,6 +1,6 @@
 {
     "name": "kevinrider/laravel-etrade",
-    "description": "PHP E*Trade REST API v1 Client Library for Laravel",
+    "description": "Laravel E*TRADE v1 API client package",
     "type": "library",
     "license": "Apache-2.0",
     "authors": [
