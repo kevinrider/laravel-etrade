@@ -1,4 +1,9 @@
 # laravel-etrade
+[![Latest Version](https://img.shields.io/github/release/kevinrider/laravel-etrade.svg?style=flat-square)](https://github.com/kevinrider/laravel-etrade/releases)
+[![Unit tests](https://github.com/kevinrider/laravel-etrade/actions/workflows/tests.yml/badge.svg)](https://github.com/kevinrider/laravel-etrade/actions)
+[![GitHub last commit](https://img.shields.io/github/last-commit/kevinrider/laravel-etrade)](https://github.com/kevinrider/laravel-etrade/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/kevinrider/laravel-etrade)](https://github.com/kevinrider/laravel-etrade/issues)
+[![License](https://img.shields.io/github/license/kevinrider/laravel-etrade)](https://github.com/kevinrider/laravel-etrade/blob/main/LICENSE)
 
 [Laravel](https://laravel.com/) client for the [E*TRADE v1 API](https://developer.etrade.com/). This is a rewrite of
 [phpetrade](https://github.com/kevinrider/phpetrade) that uses Laravel
