@@ -58,9 +58,11 @@ php artisan vendor:publish --provider="KevinRider\LaravelEtrade\LaravelEtradeSer
 You should consider locking to a specific laravel-etrade version in `composer.json`. For example in the `composer.json` require section:
 
 ```
-"require": {
-        "kevinrider/laravel-etrade": "1.0.0",
-},
+{
+  "require": {
+          "kevinrider/laravel-etrade": "1.0.0"
+  }
+}
 ```
 will prevent updates and lock to version 1.0.0. If newer versions are released you can test and then release to your Laravel app as needed.
 
