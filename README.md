@@ -1,20 +1,12 @@
 <div align="center">
-  <img src="https://repository-images.githubusercontent.com/1093108803/57c68ce0-60a7-46c1-ac52-c8325ae473be" alt="social-preview" width="640">
+<img src="https://repository-images.githubusercontent.com/1093108803/57c68ce0-60a7-46c1-ac52-c8325ae473be" alt="social-preview" width="640">
 </div>
 
 <div align="center">
-  <a href="https://github.com/kevinrider/laravel-etrade/releases">
-    <img src="https://img.shields.io/github/release/kevinrider/laravel-etrade.svg?style=flat-square" alt="Latest Version">
-  </a>
-  <a href="https://github.com/kevinrider/laravel-etrade/actions">
-    <img src="https://github.com/kevinrider/laravel-etrade/actions/workflows/tests.yml/badge.svg" alt="Unit tests">
-  </a>
-  <a href="https://github.com/kevinrider/laravel-etrade/issues">
-    <img src="https://img.shields.io/github/issues/kevinrider/laravel-etrade" alt="GitHub issues">
-  </a>
-  <a href="https://github.com/kevinrider/laravel-etrade/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/kevinrider/laravel-etrade" alt="License">
-  </a>
+<a href="https://github.com/kevinrider/laravel-etrade/releases"><img src="https://img.shields.io/github/release/kevinrider/laravel-etrade.svg?style=flat-square" alt="Latest Version"></a>
+<a href="https://github.com/kevinrider/laravel-etrade/actions"><img src="https://github.com/kevinrider/laravel-etrade/actions/workflows/tests.yml/badge.svg" alt="Unit tests"></a>
+<a href="https://github.com/kevinrider/laravel-etrade/issues"><img src="https://img.shields.io/github/issues/kevinrider/laravel-etrade" alt="GitHub issues"></a>
+<a href="https://github.com/kevinrider/laravel-etrade/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kevinrider/laravel-etrade" alt="License"></a>
 </div>
 
 [Laravel](https://laravel.com/) client for the [E*TRADE v1 API](https://developer.etrade.com/). This is a rewrite of
@@ -29,13 +21,12 @@ conventions, [Guzzle](https://github.com/guzzle/guzzle), [Carbon](https://github
 **Use the sandbox environment before moving to production, especially if you are going to place orders! When starting in the production environment you should create and test your trades and code. This can include submitting orders when the regular market session is closed and setting the marketSession to REGULAR. You can also submit trades with a limit price that is far below the market bid if going long or well above the ask if you are going short. Do not use priceType=MARKET trades unless you want an immediate fill on the order. MARKET trades are definitely not recommended for options, especially those on low liquidity symbols or on strike prices that are deep OTM.**
 
 ## Features
-- Access your E\*Trade account within a Laravel app!
+- Access your E\*Trade accounts within a Laravel app!
 - Guzzle-powered OAuth 1.0a flow and request signing
 - DTOs for request/response payloads
 - Order builder for previewing and placing orders
 - Encrypted token storage and management via Laravel cache
 - Interactive Artisan demo against your E\*Trade account
-- Extensive unit test coverage
 
 ## Key files
 - **EtradeApiClient**: [Full E\*Trade API coverage](https://apisb.etrade.com/docs/api/account/api-account-v1.html)
