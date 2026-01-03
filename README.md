@@ -154,7 +154,7 @@ $previewRequest = $builder->buildPreviewRequest();
 
 ## Examples and demo
 
-`LarvelEtradeDemo` serves as both a complete demonstration of all E\*Trade API endpoints but also as example code of how to use the package in a variety of scenarios and trade types.
+`LarvelEtradeDemo` serves as a demonstration of all E\*Trade API endpoints but also as `EtradeApiClient` and `EtradeOrderBuilder` example code in a variety of scenarios and trade types.
 
 Run the interactive demo via artisan:
 
@@ -164,11 +164,11 @@ php artisan laravel-etrade:demo
 
 It walks through OAuth, read-only endpoints, and order flows with warnings before any destructive actions or placing any orders. 
 
-Be careful! `LarvelEtradeDemo` will place live orders if production mode is used!
+**Be careful!** `LarvelEtradeDemo` will place live orders if production mode is used!
 
 ## Testing
 
-If you installed the with dev dependency the following will run all tests:
+If you installed with dev dependency the following will run all tests:
 ```bash
 composer test
 ```
