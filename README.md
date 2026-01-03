@@ -1,9 +1,21 @@
-# laravel-etrade
-[![Latest Version](https://img.shields.io/github/release/kevinrider/laravel-etrade.svg?style=flat-square)](https://github.com/kevinrider/laravel-etrade/releases)
-[![Unit tests](https://github.com/kevinrider/laravel-etrade/actions/workflows/tests.yml/badge.svg)](https://github.com/kevinrider/laravel-etrade/actions)
-[![GitHub last commit](https://img.shields.io/github/last-commit/kevinrider/laravel-etrade)](https://github.com/kevinrider/laravel-etrade/commits/main)
-[![GitHub issues](https://img.shields.io/github/issues/kevinrider/laravel-etrade)](https://github.com/kevinrider/laravel-etrade/issues)
-[![License](https://img.shields.io/github/license/kevinrider/laravel-etrade)](https://github.com/kevinrider/laravel-etrade/blob/main/LICENSE)
+<div align="center">
+  <img src="https://repository-images.githubusercontent.com/1093108803/57c68ce0-60a7-46c1-ac52-c8325ae473be" alt="social-preview" width="640">
+</div>
+
+<div align="center">
+  <a href="https://github.com/kevinrider/laravel-etrade/releases">
+    <img src="https://img.shields.io/github/release/kevinrider/laravel-etrade.svg?style=flat-square" alt="Latest Version">
+  </a>
+  <a href="https://github.com/kevinrider/laravel-etrade/actions">
+    <img src="https://github.com/kevinrider/laravel-etrade/actions/workflows/tests.yml/badge.svg" alt="Unit tests">
+  </a>
+  <a href="https://github.com/kevinrider/laravel-etrade/issues">
+    <img src="https://img.shields.io/github/issues/kevinrider/laravel-etrade" alt="GitHub issues">
+  </a>
+  <a href="https://github.com/kevinrider/laravel-etrade/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/kevinrider/laravel-etrade" alt="License">
+  </a>
+</div>
 
 [Laravel](https://laravel.com/) client for the [E*TRADE v1 API](https://developer.etrade.com/). This is a rewrite of
 [phpetrade](https://github.com/kevinrider/phpetrade) that uses Laravel
@@ -26,14 +38,14 @@ conventions, [Guzzle](https://github.com/guzzle/guzzle), [Carbon](https://github
 - Extensive unit test coverage
 
 ## Key files
-- EtradeApiClient: [Full E\*Trade API coverage](https://apisb.etrade.com/docs/api/account/api-account-v1.html)
+- **EtradeApiClient**: [Full E\*Trade API coverage](https://apisb.etrade.com/docs/api/account/api-account-v1.html)
   - Authorization: request/renew/revoke access tokens
   - Accounts: list, balance, transactions, transaction details, portfolio
   - Alerts: list, details, delete
   - Market: quotes, lookup, option chains, option expirations
   - Orders: list, preview, place, change preview, place change, cancel
-- EtradeOrderBuilder: Quickly and easily compose complex orders 
-- LarvelEtradeDemo: Example code that is also an interactive demo
+- **EtradeOrderBuilder**: Quickly and easily compose complex orders 
+- **LarvelEtradeDemo**: Interactive cli command with extensive **EtradeApiClient** and **EtradeOrderBuilder** example usage
 
 ## Requirements
 - PHP 8.3+
@@ -49,7 +61,7 @@ Install via Composer:
 composer require kevinrider/laravel-etrade
 ```
 
-Or without dev dependencies:
+or without dev dependencies:
 ```bash
 composer require kevinrider/laravel-etrade --no-dev
 ```
@@ -164,8 +176,8 @@ It walks through OAuth, read-only endpoints, and order flows with warnings befor
 Be careful! `LarvelEtradeDemo` will place live orders if production mode is used!
 
 ## Testing
-Tests are mocked and do not hit E\*TRADE.
 
+If you installed the with dev dependency the following will run all tests:
 ```bash
 composer test
 ```
