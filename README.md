@@ -37,6 +37,7 @@ conventions, [Guzzle](https://github.com/guzzle/guzzle), [Carbon](https://github
   - Orders: list, preview, place, change preview, place change, cancel
 - **EtradeOrderBuilder**: Quickly and easily compose complex orders
 - **LaravelEtradeDemo**: Interactive CLI command with extensive **EtradeApiClient** and **EtradeOrderBuilder** example usage
+<img width="769" height="280" alt="demo" src="https://github.com/user-attachments/assets/6f449caf-e637-477e-93ea-f4695a29b4b4" />
 
 ## Requirements
 - PHP 8.3+
