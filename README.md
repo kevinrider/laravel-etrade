@@ -53,11 +53,6 @@ Install via Composer:
 composer require kevinrider/laravel-etrade
 ```
 
-or without dev dependencies:
-```bash
-composer require kevinrider/laravel-etrade --no-dev
-```
-
 Publish the config file:
 
 ```bash
@@ -69,7 +64,7 @@ You should consider locking to a specific laravel-etrade version in `composer.js
 ```
 {
   "require": {
-          "kevinrider/laravel-etrade": "1.0.0"
+          "kevinrider/laravel-etrade": "v1.0.0"
   }
 }
 ```
