@@ -1247,7 +1247,7 @@ class LaravelEtradeDemo extends Command
         $options = [];
         foreach ($accounts->accounts as $account) {
             $key = $account->accountIdKey ?? '';
-            $options[$key] = "$account->accountName ($account->accountId)";
+            $options[$key] = "$account->accountDesc $account->accountName ($account->accountId)";
         }
 
         $selected = $this->choice('Select an account', array_map(fn ($label, $key) => "$label [$key]", $options, array_keys($options)));
