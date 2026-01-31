@@ -1477,9 +1477,11 @@ class LaravelEtradeDemo extends Command
      */
     private function reportError(string $context, Throwable $e): void
     {
-        $message = $e instanceof EtradeApiException || $e instanceof GuzzleException
-            ? $e->getMessage()
-            : ($e->getMessage() ?: get_class($e));
+        if ($e instanceof EtradeApiException) {
+            $message = 'API response: ' . $e->getBody();
+        } else {
+            $message = $e->getMessage();
+        }
 
         $this->error("$context failed: $message");
     }
