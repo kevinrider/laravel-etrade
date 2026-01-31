@@ -3,7 +3,6 @@
 namespace KevinRider\LaravelEtrade\Commands;
 
 use Carbon\CarbonInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\Response\AccountBalanceResponseDTO;
