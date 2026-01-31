@@ -3,7 +3,6 @@
 namespace KevinRider\LaravelEtrade\Commands;
 
 use Carbon\CarbonInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use KevinRider\LaravelEtrade\Dtos\Response\AccountBalanceResponseDTO;
@@ -406,7 +405,6 @@ class LaravelEtradeDemo extends Command
                 'three-leg' => 'Three-leg (call spread + short put)',
                 'iron-condor' => 'Four-leg iron condor',
                 'buy-write' => 'Buy-write (stock + covered call)',
-                'collar' => 'Collar (stock + long put + short call)',
                 'back' => 'Back',
             ],
             'equity'
@@ -1249,7 +1247,7 @@ class LaravelEtradeDemo extends Command
         $options = [];
         foreach ($accounts->accounts as $account) {
             $key = $account->accountIdKey ?? '';
-            $options[$key] = "$account->accountName ($account->accountId)";
+            $options[$key] = "$account->accountDesc $account->accountName ($account->accountId)";
         }
 
         $selected = $this->choice('Select an account', array_map(fn ($label, $key) => "$label [$key]", $options, array_keys($options)));
@@ -1343,22 +1341,12 @@ class LaravelEtradeDemo extends Command
                 ->addLongCall((float) $this->ask('Long call strike', '195'), $quantity),
 
             'buy-write' => $baseBuilder
-                ->orderType('SPREADS')
+                ->orderType('BUY_WRITES')
                 ->withSymbol($symbol)
-                ->priceType('LIMIT')
+                ->priceType('NET_DEBIT')
                 ->limitPrice($limit)
-                ->addEquity('BUY', $quantity)
+                ->addEquity('BUY', 100)
                 ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
-                ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
-
-            'collar' => $baseBuilder
-                ->orderType('SPREADS')
-                ->withSymbol($symbol)
-                ->priceType('LIMIT')
-                ->limitPrice($limit)
-                ->addEquity('BUY', $quantity)
-                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
-                ->addLongPut((float) $this->ask('Protective put strike', '120'), $quantity)
                 ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
 
             default => null,
@@ -1477,9 +1465,11 @@ class LaravelEtradeDemo extends Command
      */
     private function reportError(string $context, Throwable $e): void
     {
-        $message = $e instanceof EtradeApiException || $e instanceof GuzzleException
-            ? $e->getMessage()
-            : ($e->getMessage() ?: get_class($e));
+        if ($e instanceof EtradeApiException) {
+            $message = 'API response: ' . $e->getBody();
+        } else {
+            $message = $e->getMessage();
+        }
 
         $this->error("$context failed: $message");
     }
