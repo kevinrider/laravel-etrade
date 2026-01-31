@@ -1343,11 +1343,11 @@ class LaravelEtradeDemo extends Command
                 ->addLongCall((float) $this->ask('Long call strike', '195'), $quantity),
 
             'buy-write' => $baseBuilder
-                ->orderType('SPREADS')
+                ->orderType('BUY_WRITES')
                 ->withSymbol($symbol)
-                ->priceType('LIMIT')
+                ->priceType('NET_DEBIT')
                 ->limitPrice($limit)
-                ->addEquity('BUY', $quantity)
+                ->addEquity('BUY', 100)
                 ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
                 ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
 
