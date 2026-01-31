@@ -405,7 +405,6 @@ class LaravelEtradeDemo extends Command
                 'three-leg' => 'Three-leg (call spread + short put)',
                 'iron-condor' => 'Four-leg iron condor',
                 'buy-write' => 'Buy-write (stock + covered call)',
-                'collar' => 'Collar (stock + long put + short call)',
                 'back' => 'Back',
             ],
             'equity'
@@ -1348,16 +1347,6 @@ class LaravelEtradeDemo extends Command
                 ->limitPrice($limit)
                 ->addEquity('BUY', 100)
                 ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
-                ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
-
-            'collar' => $baseBuilder
-                ->orderType('SPREADS')
-                ->withSymbol($symbol)
-                ->priceType('LIMIT')
-                ->limitPrice($limit)
-                ->addEquity('BUY', $quantity)
-                ->withExpiry($expiryYear, $expiryMonth, $expiryDay)
-                ->addLongPut((float) $this->ask('Protective put strike', '120'), $quantity)
                 ->addShortCall((float) $this->ask('Covered call strike', '210'), $quantity),
 
             default => null,
