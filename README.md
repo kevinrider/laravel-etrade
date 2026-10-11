@@ -13,6 +13,8 @@
 [phpetrade](https://github.com/kevinrider/phpetrade) that uses Laravel
 conventions, [Guzzle](https://github.com/guzzle/guzzle), [Carbon](https://github.com/briannesbitt/Carbon), and complete data transfer object (DTO) coverage for E\*TRADE API request and response objects.
 
+For Python applications, see [etrade-python](https://github.com/kevinrider/etrade-python#readme), a typed, async-first E*TRADE REST API client.
+
 ## Disclosure
 **This package is not affiliated with, endorsed by, or supported by E\*TRADE or any of its affiliates or owners. Use at your own risk and review the E\*TRADE API terms before use.**
 
